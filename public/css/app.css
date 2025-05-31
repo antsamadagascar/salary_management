@@ -1,0 +1,397 @@
+/* Styles de base - Variables de thème */
+:root {
+    --primary-color: #0d6efd;
+    --secondary-color: #6c757d;
+    --background-color: #f8f9fa;
+    --text-color: #333;
+    --sidebar-bg: #fff;
+    --sidebar-text: #333;
+    --sidebar-hover: rgba(13, 110, 253, 0.1);
+    --sidebar-active: #0d6efd;
+    --sidebar-active-text: #fff;
+    --card-bg: #fff;
+    --header-bg: #0d6efd;
+    --header-text: #fff;
+    --border-color: rgba(0, 0, 0, 0.125);
+}
+
+/* Thème sombre */
+[data-theme="dark"] {
+    --primary-color: #375a7f;
+    --secondary-color: #adb5bd;
+    --background-color: #222;
+    --text-color: #eee;
+    --sidebar-bg: #333;
+    --sidebar-text: #eee;
+    --sidebar-hover: rgba(255, 255, 255, 0.1);
+    --sidebar-active: #375a7f;
+    --sidebar-active-text: #fff;
+    --card-bg: #333;
+    --header-bg: #2c3e50;
+    --header-text: #fff;
+    --border-color: rgba(255, 255, 255, 0.125);
+}
+
+/* Thème clair */
+[data-theme="light"] {
+    --primary-color: #6c757d;
+    --secondary-color: #adb5bd;
+    --background-color: #fff;
+    --text-color: #333;
+    --sidebar-bg: #f8f9fa;
+    --sidebar-text: #333;
+    --sidebar-hover: rgba(108, 117, 125, 0.1);
+    --sidebar-active: #6c757d;
+    --sidebar-active-text: #fff;
+    --card-bg: #fff;
+    --header-bg: #6c757d;
+    --header-text: #fff;
+    --border-color: rgba(0, 0, 0, 0.125);
+}
+/* Thème violet */
+[data-theme="violet"] {
+    --primary-color: #6f42c1; /* Couleur principale violette */
+    --secondary-color: #d63384; /* Couleur secondaire rose */
+    --background-color: #f8f0fc; /* Fond clair violet */
+    --text-color: #4a1e6a; /* Texte foncé violet */
+    --sidebar-bg: #e9d8fd; /* Fond de la sidebar */
+    --sidebar-text: #4a1e6a; /* Texte de la sidebar */
+    --sidebar-hover: rgba(111, 66, 193, 0.1); /* Couleur de survol */
+    --sidebar-active: #6f42c1; /* Couleur de l'élément actif */
+    --sidebar-active-text: #fff; /* Texte de l'élément actif */
+    --card-bg: #fff; /* Fond des cartes */
+    --header-bg: #6f42c1; /* Fond du header */
+    --header-text: #fff; /* Texte du header */
+    --border-color: rgba(111, 66, 193, 0.125); /* Couleur des bordures */
+}
+
+
+/* Thème rouge */
+[data-theme="red"] {
+    --primary-color: #dc3545;
+    --secondary-color: #ff6b6b;
+    --background-color: #fff5f5;
+    --text-color: #8b0000;
+    --sidebar-bg: #ffe6e6;
+    --sidebar-text: #8b0000;
+    --sidebar-hover: rgba(220, 53, 69, 0.1);
+    --sidebar-active: #dc3545;
+    --sidebar-active-text: #fff;
+    --card-bg: #fff;
+    --header-bg: #dc3545;
+    --header-text: #fff;
+    --border-color: rgba(220, 53, 69, 0.125);
+}
+/* Thème bleu */
+[data-theme="blue"] {
+    --primary-color: #007bff;
+    --secondary-color: #17a2b8;
+    --background-color: #f0f8ff;
+    --text-color: #003366;
+    --sidebar-bg: #e6f2ff;
+    --sidebar-text: #003366;
+    --sidebar-hover: rgba(0, 123, 255, 0.1);
+    --sidebar-active: #007bff;
+    --sidebar-active-text: #fff;
+    --card-bg: #fff;
+    --header-bg: #1a73e8;
+    --header-text: #fff;
+    --border-color: rgba(0, 123, 255, 0.125);
+}
+
+/* Thème vert */
+[data-theme="green"] {
+    --primary-color: #28a745;
+    --secondary-color: #20c997;
+    --background-color: #f0fff4;
+    --text-color: #1e4620;
+    --sidebar-bg: #e6ffed;
+    --sidebar-text: #1e4620;
+    --sidebar-hover: rgba(40, 167, 69, 0.1);
+    --sidebar-active: #28a745;
+    --sidebar-active-text: #fff;
+    --card-bg: #fff;
+    --header-bg: #2e7d32;
+    --header-text: #fff;
+    --border-color: rgba(40, 167, 69, 0.125);
+}
+
+/* Styles de base */
+body {
+    font-size: 0.875rem;
+    background-color: var(--background-color);
+    color: var(--text-color);
+    line-height: 1.6;
+    transition: all 0.3s ease;
+}
+
+/* Navbar */
+.navbar {
+    padding: 0.75rem 1rem;
+    background-color: var(--header-bg) !important;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.navbar-brand {
+    font-size: 1.25rem;
+    font-weight: bold;
+    color: var(--header-text);
+    padding-top: .75rem;
+    padding-bottom: .75rem;
+    background-color: rgba(0, 0, 0, .25);
+    box-shadow: inset -1px 0 0 rgba(0, 0, 0, .25);
+}
+
+.navbar-toggler {
+    border: none;
+    padding: 0.5rem;
+    margin-right: 1rem;
+}
+
+.navbar-toggler:focus {
+    outline: none;
+    box-shadow: none;
+}
+
+/* Sidebar - nouvelle version avec offcanvas */
+.sidebar {
+    background-color: var(--sidebar-bg);
+    transition: all 0.3s ease;
+}
+
+/* Styles pour l'affichage desktop de la sidebar */
+@media (min-width: 768px) {
+    .sidebar {
+        position: fixed;
+        top: 56px; /* Hauteur du header */
+        left: 0;
+        bottom: 0;
+        z-index: 1019;
+        box-shadow: inset -1px 0 0 var(--border-color);
+    }
+
+    /* Pas besoin d'offcanvas sur desktop */
+    .offcanvas-md {
+        position: static;
+        visibility: visible !important;
+        transform: none !important;
+        width: 100% !important;
+        z-index: 1 !important;
+    }
+    
+    .offcanvas-header {
+        display: none !important;
+    }
+    
+    .offcanvas-body {
+        display: block !important;
+        overflow-y: auto;
+        height: calc(100vh - 56px);
+    }
+    
+    /* Ajustement du contenu principal */
+    main {
+        margin-left: 16.666667% !important; /* col-md-2 width */
+    }
+    
+    .col-lg-10 {
+        width: 83.333333% !important;
+    }
+}
+
+/* Styles spécifiques pour mobile avec offcanvas */
+@media (max-width: 767.98px) {
+    .offcanvas-md {
+        width: 75% !important; /* Large sidebar sur mobile */
+        background-color: var(--sidebar-bg) !important;
+    }
+    
+    .offcanvas-title {
+        color: var(--text-color);
+    }
+    
+    .offcanvas-header {
+        border-bottom: 1px solid var(--border-color);
+    }
+
+    /* Assurer que le contenu principal prend toute la largeur */
+    main {
+        width: 100% !important;
+    }
+
+    .btn-close {
+        background-color: var(--text-color);
+    }
+}
+
+/* Styles de navigation communs */
+.sidebar .nav-link {
+    font-weight: 500;
+    color: var(--sidebar-text);
+    padding: 0.75rem 1rem;
+    border-radius: 4px;
+    margin: 0.25rem 0.5rem;
+    transition: all 0.2s ease;
+}
+
+.sidebar .nav-link:hover {
+    background-color: var(--sidebar-hover);
+}
+
+.sidebar .nav-link.active {
+    color: var(--sidebar-active-text);
+    background-color: var(--sidebar-active);
+}
+
+.sidebar .nav-link i {
+    margin-right: 8px;
+    width: 20px;
+    text-align: center;
+}
+
+.sidebar-heading {
+    font-size: .75rem;
+    text-transform: uppercase;
+    color: var(--secondary-color);
+    padding: 0.75rem 1rem;
+    margin-top: 1rem;
+}
+
+/* Contenu principal */
+main {
+    padding-top: 56px; /* Hauteur du header */
+    transition: margin-left 0.3s ease-in-out;
+}
+
+/* Styles pour les dropdowns */
+.dropdown-menu {
+    position: absolute !important;
+    background-color: var(--card-bg);
+    color: var(--text-color);
+    border: 1px solid var(--border-color);
+    border-radius: 0.25rem;
+    z-index: 1035 !important; /* Plus élevé que le header */
+    box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+    padding: 0.5rem 0;
+    margin: 0;
+    min-width: 10rem;
+}
+
+.dropdown-item {
+    padding: 0.5rem 1rem;
+    color: var(--text-color);
+}
+
+.dropdown-item:hover, .dropdown-item:focus {
+    background-color: var(--sidebar-hover);
+    color: var(--text-color);
+}
+
+/* Cards */
+.card {
+    background-color: var(--card-bg);
+    margin-bottom: 20px;
+    box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+    border: 1px solid var(--border-color);
+    transition: all 0.3s ease;
+}
+
+.card-header {
+    background-color: rgba(0, 0, 0, 0.03);
+    border-bottom: 1px solid var(--border-color);
+}
+
+/* Utilitaires de couleur pour thèmes */
+.bg-primary {
+    background-color: var(--primary-color) !important;
+}
+
+.bg-sidebar {
+    background-color: var(--sidebar-bg) !important;
+}
+
+.text-primary {
+    color: var(--primary-color) !important;
+}
+
+.btn-primary {
+    background-color: var(--primary-color);
+    border-color: var(--primary-color);
+}
+
+.text-muted {
+    color: var(--secondary-color) !important;
+}
+.custom-header {
+    height: 60px; /* Ajustez la hauteur selon vos besoins */
+    min-height: 60px; /* Garantit une hauteur minimale */
+    padding-top: 0.75rem; /* Ajustez le padding vertical */
+    padding-bottom: 0.75rem; /* Ajustez le padding vertical */
+}
+
+.custom-header .navbar-nav {
+    height: 100%; /* Assure que le conteneur prend toute la hauteur */
+    display: flex;
+    align-items: center; /* Centre les éléments verticalement */
+}
+
+.custom-header .nav-link {
+    padding-top: 0.5rem; /* Ajustez le padding des liens */
+    padding-bottom: 0.5rem; /* Ajustez le padding des liens */
+}
+
+.footer {
+    background-color: #f8f9fa; /* Couleur de fond légèrement grise (bg-light) */
+    padding: 20px 0; /* Remplace py-3 pour plus de contrôle */
+    border-top: 1px solid #e9ecef; /* Bordure subtile en haut */
+    font-size: 0.9rem; /* Taille de police légèrement réduite */
+    box-shadow: 0 -2px 5px rgba(0, 0, 0, 0.05); /* Ombre douce en haut */
+    position: relative;
+    width: 100%;
+    bottom: 0;
+}
+
+.footer .container {
+    max-width: 1140px; /* Largeur maximale pour une mise en page équilibrée */
+}
+
+.footer .d-flex {
+    align-items: center; /* Centre verticalement les éléments */
+}
+
+.footer span.text-muted {
+    color: #6c757d; /* Couleur par défaut de text-muted */
+    transition: color 0.3s ease; /* Transition douce pour les interactions */
+}
+
+/* Style pour le texte à gauche */
+.footer .d-flex span:first-child {
+    font-weight: 500; /* Légère mise en gras pour le copyright */
+}
+
+/* Style pour la version à droite */
+.footer .d-flex span:last-child {
+    background-color: #e9ecef; /* Fond légèrement plus foncé */
+    padding: 4px 10px; /* Espacement interne */
+    border-radius: 12px; /* Coins arrondis */
+    font-size: 0.85rem; /* Légèrement plus petit */
+}
+
+/* Effet au survol */
+.footer span.text-muted:hover {
+    color: #495057; /* Couleur plus sombre au survol */
+}
+
+/* Responsive : ajustement pour petits écrans */
+@media (max-width: 576px) {
+    .footer .d-flex {
+        flex-direction: column; /* Passe en colonne sur petits écrans */
+        text-align: center;
+        gap: 10px; /* Espacement entre les éléments */
+    }
+
+    .footer .d-flex span:last-child {
+        padding: 3px 8px; /* Réduit légèrement sur mobile */
+    }
+}
+
