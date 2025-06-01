@@ -7,6 +7,7 @@ use App\Http\Controllers\ErpController;
 use App\Http\Controllers\InvoiceController;
 use App\Http\Controllers\PayrollController;
 
+use App\Http\Controllers\StatsSalaryController;
 
 Route::get('/', function () {
     return redirect()->route('login');
@@ -60,5 +61,11 @@ Route::middleware([\App\Http\Middleware\FrappeAuthMiddleware::class])->group(fun
         // Export Excel
         Route::get('/export/excel', [PayrollController::class, 'exportEmployeesExcel'])->name('export.excel');
         
+    });
+
+    Route::prefix('stats')->name('stats.')->group(function () {
+        Route::get('/', [StatsSalaryController::class, 'index'])->name('index');
+        Route::get('/data', [StatsSalaryController::class, 'getPayrollData'])->name('data');
+        Route::get('/export', [StatsSalaryController::class, 'exportCsv'])->name('export');
     });
 });
