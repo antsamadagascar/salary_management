@@ -1,0 +1,4 @@
+salary structure,name,Abbr,type,valeur,Remarque
+gasy1,Salaire Base,SB,earning,100%,
+gasy1,Indemnité,IND,earning,30%,salaire base
+gasy1,Taxe sociale,TS,deduction,20%,salaire base + indemnité
