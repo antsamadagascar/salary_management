@@ -69,6 +69,69 @@ class ErpApiService
         }
     }
 
+
+    public function createResource(string $resource, array $data): bool
+    {
+        try {
+            $response = $this->client->post("{$this->apiUrl}/api/resource/{$resource}", [
+                'headers' => $this->headers,
+                'json' => $data
+            ]);
+            
+            return $response->getStatusCode() === 200;
+        } catch (GuzzleException $e) {
+            throw new Exception("Failed to create resource {$resource}: " . $e->getMessage());
+        }
+    }
+
+
+    public function deleteResource(string $resource): bool
+    {
+        try {
+            $response = $this->client->delete("{$this->apiUrl}/api/resource/{$resource}", [
+                'headers' => $this->headers
+            ]);
+            
+            return $response->getStatusCode() === 202;
+        } catch (GuzzleException $e) {
+            throw new Exception("Failed to delete resource {$resource}: " . $e->getMessage());
+        }
+    }
+
+    public function getResourceByName(string $resource, string $name): ?array
+    {
+        try {
+            $response = $this->client->get("{$this->apiUrl}/api/resource/{$resource}/{$name}", [
+                'headers' => $this->headers
+            ]);
+            
+            if ($response->getStatusCode() === 200) {
+                return json_decode($response->getBody(), true)['data'] ?? null;
+            }
+            
+            return null;
+        } catch (GuzzleException $e) {
+            return null;
+        }
+    }
+
+
+    public function executeMethod(string $resource, string $method, array $data = []): array
+    {
+        try {
+            $response = $this->client->post("{$this->apiUrl}/api/method/{$resource}.{$method}", [
+                'headers' => $this->headers,
+                'json' => $data
+            ]);
+            
+            return json_decode($response->getBody(), true) ?? [];
+        } catch (GuzzleException $e) {
+            throw new Exception("Failed to execute method {$method} on {$resource}: " . $e->getMessage());
+        }
+
+    }
+
+
     private function prepareQueryParams(array $params): array
     {
         return array_map(function ($value) {

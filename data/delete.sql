@@ -1,11 +1,5 @@
-DELETE FROM `tabPayment Entry`;
-DELETE FROM `tabPurchase Invoice`;
-DELETE FROM `tabPurchase Receipt`;
-DELETE FROM `tabPurchase Order`;
-DELETE FROM `tabSupplier Quotation Item`;
-DELETE FROM `tabMaterial Request`;
-DELETE FROM `tabSupplier`;
-DELETE FROM `tabItem`;
-DELETE FROM `tabSupplier Group`;
-DELETE FROM `tabItem Group`;
-DELETE FROM`tabMaterial Request Item`;
+delete from tabCompany where name='My Company';
+delete from tabEmployee;
+delete from `tabSalary Structure` 
+delete from `tabSalary Component` 
+DELETE  from `tabSalary Detail`  
