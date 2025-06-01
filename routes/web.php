@@ -5,6 +5,9 @@ use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\ErpController;
 use App\Http\Controllers\InvoiceController;
+use App\Http\Controllers\PayrollController;
+
+use App\Http\Controllers\StatsSalaryController;
 
 Route::get('/', function () {
     return redirect()->route('login');
@@ -24,5 +27,45 @@ Route::middleware([\App\Http\Middleware\FrappeAuthMiddleware::class])->group(fun
         Route::post('/process', [App\Http\Controllers\ImportController::class, 'processImport'])->name('process');
         Route::post('/preview', [App\Http\Controllers\ImportController::class, 'previewFiles'])->name('preview');
     });
+
+    Route::prefix('employees')->name('employees.')->group(function () {
+        Route::get('/', [App\Http\Controllers\EmployeeController::class, 'index'])->name('index');
+        Route::get('/search', [App\Http\Controllers\EmployeeController::class, 'search'])->name('search');
+        Route::get('/create', [App\Http\Controllers\EmployeeController::class, 'create'])->name('create');
+        Route::post('/', [App\Http\Controllers\EmployeeController::class, 'store'])->name('store');
+        Route::get('/{name}', [App\Http\Controllers\EmployeeController::class, 'show'])->name('show');
+        Route::get('/{name}/edit', [App\Http\Controllers\EmployeeController::class, 'edit'])->name('edit');
+        Route::put('/{name}', [App\Http\Controllers\EmployeeController::class, 'update'])->name('update');
+        Route::delete('/{name}', [App\Http\Controllers\EmployeeController::class, 'destroy'])->name('destroy');
+    });
     
+    // Routes pour la gestion de la paie
+    Route::prefix('payroll')->name('payroll.')->group(function () {
+        
+        // Liste des employés
+        Route::get('/', [PayrollController::class, 'index'])->name('index');
+        
+        // Recherche d'employés
+        Route::get('/search', [PayrollController::class, 'search'])->name('search');
+        
+        // Fiche employé avec salaires par mois
+        Route::get('/employee/{employeeId}', [PayrollController::class, 'show'])->name('employee.show');
+        
+        // Afficher une fiche de paie spécifique
+        Route::get('/salary-slip/{salarySlipId}', [PayrollController::class, 'showSalarySlip'])->name('salary-slip.show');
+        
+        // Exports PDF
+        Route::get('/salary-slip/{salarySlipId}/pdf', [PayrollController::class, 'exportSalarySlipPdf'])->name('salary-slip.pdf');
+        Route::get('/employee/{employeeId}/month/{month}/pdf', [PayrollController::class, 'exportMonthlyPdf'])->name('employee.monthly.pdf');
+        
+        // Export Excel
+        Route::get('/export/excel', [PayrollController::class, 'exportEmployeesExcel'])->name('export.excel');
+        
+    });
+
+    Route::prefix('stats')->name('stats.')->group(function () {
+        Route::get('/', [StatsSalaryController::class, 'index'])->name('index');
+        Route::get('/data', [StatsSalaryController::class, 'getPayrollData'])->name('data');
+        Route::get('/export', [StatsSalaryController::class, 'exportCsv'])->name('export');
+    });
 });

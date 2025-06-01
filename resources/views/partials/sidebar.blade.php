@@ -22,42 +22,39 @@
                         
                         <!-- Section Employés -->
                         <li class="nav-item">
-                            <h6 class="sidebar-heading d-flex justify-content-between align-items-center px-3 mt-4 mb-1 text-muted">
-                                <span>GESTION EMPLOYÉS</span>
-                            </h6>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link" href="">
-                                <i class="fas fa-users"></i> Liste des Employés
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link" href="">
-                                <i class="fas fa-user-plus"></i> Ajouter Employé
-                            </a>
-                        </li>
-                        
+                        <h6 class="sidebar-heading d-flex justify-content-between align-items-center px-3 mt-4 mb-1 text-muted" style="font-size: 0.75rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.1rem;">
+                            <span>GESTION EMPLOYÉS</span>
+                        </h6>
+                    </li>
+                        <a class="nav-link {{ request()->routeIs('employees.index') ? 'active' : '' }}" href="{{ route('employees.index') }}">
+                            <i class="fas fa-users me-2"></i>Liste des Employés
+                        </a>
+                        <!-- <a class="nav-link {{ request()->routeIs('employees.create') ? 'active' : '' }}" href="{{ route('employees.create') }}">
+                            <i class="fas fa-user-plus me-2"></i>Ajouter Employé
+                        </a>
+                         -->
+                            
                         <!-- Section Salaires -->
                         <li class="nav-item">
                             <h6 class="sidebar-heading d-flex justify-content-between align-items-center px-3 mt-4 mb-1 text-muted">
                                 <span>GESTION SALAIRES</span>
                             </h6>
                         </li>
-                        <li class="nav-item">
-                            <a class="nav-link" href="">
+                        <!-- <li class="nav-item">
+                            <a class="nav-link" href="{{ route('payroll.index') }}">
                                 <i class="fas fa-money-bill-wave"></i> Éléments de Salaire
                             </a>
-                        </li>
+                        </li> -->
                         <li class="nav-item">
-                            <a class="nav-link" href="">
-                                <i class="fas fa-file-invoice-dollar"></i> Fiches de Paie
+                            <a class="nav-link" href="{{ route('payroll.index') }}">
+                                <i class="fas fa-file-invoice-dollar"></i> Fiches Employés  
                             </a>
                         </li>
-                        <li class="nav-item">
+                        <!-- <li class="nav-item">
                             <a class="nav-link" href="">
                                 <i class="fas fa-chart-bar"></i> Rapport Mensuel
                             </a>
-                        </li>
+                        </li> -->
                         
                         <!-- Section Import/Export -->
                         <li class="nav-item">
@@ -72,13 +69,13 @@
                             </a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link" href="">
+                            <a class="nav-link" href="{{ route('stats.index') }}">
                                 <i class="fas fa-file-export"></i> Export Rapports
                             </a>
                         </li>
                         
                         <!-- Section Configuration -->
-                        <li class="nav-item">
+                        <!-- <li class="nav-item">
                             <h6 class="sidebar-heading d-flex justify-content-between align-items-center px-3 mt-4 mb-1 text-muted">
                                 <span>CONFIGURATION</span>
                             </h6>
@@ -92,7 +89,7 @@
                             <a class="nav-link" href="">
                                 <i class="fas fa-history"></i> Logs API
                             </a>
-                        </li>
+                        </li> -->
                         
                         <hr>
                     </ul>
