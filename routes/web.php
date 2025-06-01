@@ -5,6 +5,8 @@ use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\ErpController;
 use App\Http\Controllers\InvoiceController;
+use App\Http\Controllers\PayrollController;
+
 
 Route::get('/', function () {
     return redirect()->route('login');
@@ -36,5 +38,27 @@ Route::middleware([\App\Http\Middleware\FrappeAuthMiddleware::class])->group(fun
         Route::delete('/{name}', [App\Http\Controllers\EmployeeController::class, 'destroy'])->name('destroy');
     });
     
-    
+    // Routes pour la gestion de la paie
+    Route::prefix('payroll')->name('payroll.')->group(function () {
+        
+        // Liste des employés
+        Route::get('/', [PayrollController::class, 'index'])->name('index');
+        
+        // Recherche d'employés
+        Route::get('/search', [PayrollController::class, 'search'])->name('search');
+        
+        // Fiche employé avec salaires par mois
+        Route::get('/employee/{employeeId}', [PayrollController::class, 'show'])->name('employee.show');
+        
+        // Afficher une fiche de paie spécifique
+        Route::get('/salary-slip/{salarySlipId}', [PayrollController::class, 'showSalarySlip'])->name('salary-slip.show');
+        
+        // Exports PDF
+        Route::get('/salary-slip/{salarySlipId}/pdf', [PayrollController::class, 'exportSalarySlipPdf'])->name('salary-slip.pdf');
+        Route::get('/employee/{employeeId}/month/{month}/pdf', [PayrollController::class, 'exportMonthlyPdf'])->name('employee.monthly.pdf');
+        
+        // Export Excel
+        Route::get('/export/excel', [PayrollController::class, 'exportEmployeesExcel'])->name('export.excel');
+        
+    });
 });

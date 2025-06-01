@@ -131,9 +131,9 @@
                         <!-- Actions -->
                         <td>
                             <div class="btn-group-vertical" role="group">
-                                <a href="{{ route('employees.show', $employee['name']) }}" 
+                            <a href="{{ route('payroll.employee.show', $employee['name']) }}" 
                                    class="btn btn-sm btn-outline-info btn-action mb-1" 
-                                   title="Voir les détails">
+                                   title="Voir les détails">Voir fiche
                                     <i class="fas fa-eye"></i>
                                 </a>
                                 <!-- <a href="{{ route('employees.edit', $employee['name']) }}" 

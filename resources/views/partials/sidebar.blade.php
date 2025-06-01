@@ -40,21 +40,21 @@
                                 <span>GESTION SALAIRES</span>
                             </h6>
                         </li>
-                        <li class="nav-item">
-                            <a class="nav-link" href="">
+                        <!-- <li class="nav-item">
+                            <a class="nav-link" href="{{ route('payroll.index') }}">
                                 <i class="fas fa-money-bill-wave"></i> Éléments de Salaire
                             </a>
-                        </li>
+                        </li> -->
                         <li class="nav-item">
-                            <a class="nav-link" href="">
-                                <i class="fas fa-file-invoice-dollar"></i> Fiches de Paie
+                            <a class="nav-link" href="{{ route('payroll.index') }}">
+                                <i class="fas fa-file-invoice-dollar"></i> Fiches Employés  
                             </a>
                         </li>
-                        <li class="nav-item">
+                        <!-- <li class="nav-item">
                             <a class="nav-link" href="">
                                 <i class="fas fa-chart-bar"></i> Rapport Mensuel
                             </a>
-                        </li>
+                        </li> -->
                         
                         <!-- Section Import/Export -->
                         <li class="nav-item">
@@ -75,7 +75,7 @@
                         </li>
                         
                         <!-- Section Configuration -->
-                        <li class="nav-item">
+                        <!-- <li class="nav-item">
                             <h6 class="sidebar-heading d-flex justify-content-between align-items-center px-3 mt-4 mb-1 text-muted">
                                 <span>CONFIGURATION</span>
                             </h6>
@@ -89,7 +89,7 @@
                             <a class="nav-link" href="">
                                 <i class="fas fa-history"></i> Logs API
                             </a>
-                        </li>
+                        </li> -->
                         
                         <hr>
                     </ul>
