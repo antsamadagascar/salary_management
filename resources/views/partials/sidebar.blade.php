@@ -66,7 +66,8 @@
                             </h6>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link" href="">
+                        <a class="nav-link {{ request()->routeIs('import.*') ? 'active' : '' }}" 
+                        href="{{ route('import.form') }}">
                                 <i class="fas fa-file-csv"></i> Import CSV
                             </a>
                         </li>
