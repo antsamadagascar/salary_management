@@ -31,6 +31,7 @@ class SalaryStructureService
                         continue;
                     }
 
+                    // Créer tous les composants de salaire
                     foreach ($components as $component) {
                         $componentName = trim($component['name']);
                         if (!$this->ensureSalaryComponentExists($componentName, $component)) {
@@ -38,6 +39,7 @@ class SalaryStructureService
                         }
                     }
 
+                    // Créer ou mettre à jour la structure salariale
                     $structureData = $this->prepareSalaryStructureData($structureName, $components);
                     $resource = "Salary Structure/{$structureName}";
                     $success = $this->apiService->resourceExists($resource)
@@ -46,6 +48,8 @@ class SalaryStructureService
 
                     if ($success) {
                         $results['success']++;
+                        // NOTE: Les assignments seront créés lors de l'import des fiches de paie
+                        // avec les bons salaires de base et dates appropriées
                     } else {
                         $results['errors'][] = "Échec de la création/mise à jour de la structure salariale: {$structureName}";
                     }
@@ -59,6 +63,8 @@ class SalaryStructureService
 
         return $results;
     }
+
+    // MÉTHODE SUPPRIMÉE: Les assignments seront créés lors de l'import payroll
 
     public function previewFile(UploadedFile $file, string $type): array
     {
@@ -79,7 +85,7 @@ class SalaryStructureService
     public function checkDependencies(): array
     {
         return [
-            'salary_components' => [], 
+            'salary_components' => [],
             'salary_structures' => array_column($this->apiService->getResource('Salary Structure'), 'name'),
         ];
     }
@@ -93,6 +99,7 @@ class SalaryStructureService
 
             $salaryComponentData = [
                 'salary_component' => $componentName,
+                'salary_component_abbr' => trim($componentData['Abbr']), 
                 'type' => trim($componentData['type']) === 'earning' ? 'Earning' : 'Deduction',
                 'depends_on_payment_days' => 0,
                 'is_tax_applicable' => trim($componentData['type']) === 'earning' ? 1 : 0,
@@ -115,10 +122,10 @@ class SalaryStructureService
             $componentData = [
                 'salary_component' => trim($component['name']),
                 'abbr' => trim($component['Abbr']),
-                'amount_based_on_formula' => 1, 
+                'amount_based_on_formula' => 1,
                 'formula' => $this->parseFormula(trim($component['valeur']), trim($component['Remarque'] ?? '')),
             ];
-
+            
             if (trim($component['type']) === 'earning') {
                 $earnings[] = $componentData;
             } else {
@@ -131,10 +138,14 @@ class SalaryStructureService
             'company' => 'My Company',
             'earnings' => $earnings,
             'deductions' => $deductions,
+            'docstatus' => 1,
             'is_active' => 'Yes',
         ];
     }
 
+    /**
+     * MÉTHODE CORRIGÉE: Amélioration du parsing des formules
+     */
     private function parseFormula(string $valeur, string $remarque = ''): string
     {
         if (empty($valeur)) {
@@ -144,6 +155,7 @@ class SalaryStructureService
         $valeur = trim($valeur);
         $remarque = trim($remarque);
 
+        // Gestion des pourcentages
         if (strpos($valeur, '%') !== false) {
             $percentage = str_replace(['%', ' '], '', $valeur);
             if (is_numeric($percentage)) {
@@ -152,14 +164,18 @@ class SalaryStructureService
             }
         }
 
-        // Si c'est un montant fixe
+        // Valeur numérique fixe
         if (is_numeric($valeur)) {
             return $valeur;
         }
 
+        // Retourner la valeur telle quelle si c'est déjà une formule
         return $valeur;
     }
 
+    /**
+     * MÉTHODE CORRIGÉE: Amélioration de la détection de la base de calcul
+     */
     private function getBaseFormula(string $remarque): string
     {
         if (empty($remarque)) {
@@ -167,18 +183,32 @@ class SalaryStructureService
         }
 
         $remarque = strtolower(trim($remarque));
-        
-        // Cas: "salaire base"
-        if (strpos($remarque, 'salaire base') !== false && strpos($remarque, '+') === false) {
+
+        // Si la remarque contient "salaire base + indemnité" ou similaire
+        if (strpos($remarque, 'salaire base') !== false && 
+            (strpos($remarque, '+') !== false || strpos($remarque, 'indemnité') !== false)) {
+            return 'base + IND';
+        }
+
+        // Si c'est juste sur le salaire de base
+        if (strpos($remarque, 'salaire base') !== false) {
             return 'base';
         }
-        
-        // Cas: "salaire base + indemnité"
-        if (strpos($remarque, 'salaire base') !== false && strpos($remarque, 'indemnité') !== false) {
-            return 'base + IND'; 
-        }
-        
 
-        return 'base'; // Par défaut
+        // Par défaut, utiliser la base
+        return 'base';
+    }
+    
+    public function submitDocument(string $doctype, $nameOrId): bool
+    {
+        try {
+            $response = $this->apiService->updateResource("{$doctype}/{$nameOrId}", [
+                'docstatus' => 1
+            ]);
+            return $response !== false;
+        } catch (\Exception $e) {
+            Log::error("Failed to submit {$doctype} {$nameOrId}: " . $e->getMessage());
+            return false;
+        }
     }
 }
