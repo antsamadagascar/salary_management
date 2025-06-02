@@ -13,6 +13,7 @@ class CompanyEmployeeService
     private const REQUIRED_FIELDS = ['Ref', 'Nom', 'Prenom', 'genre', 'Date embauche', 'date naissance', 'company'];
     private const VALID_GENDERS = ['Masculin', 'Feminin'];
 
+
     protected ErpApiService $apiService;
 
     public function __construct(ErpApiService $apiService)
@@ -21,58 +22,72 @@ class CompanyEmployeeService
     }
 
     public function import(UploadedFile $file): array
-    {
-        $results = ['success' => 0, 'errors' => [], 'skipped' => 0];
-        try {
-            $csv = Reader::createFromPath($file->getPathname(), 'r');
-            $csv->setHeaderOffset(0);
-            $lineNumber = 1;
+{
+    $results = ['success' => 0, 'errors' => [], 'skipped' => 0];
 
-            $existingEmployees = $this->getExistingEmployees();
+    try {
+        $csv = Reader::createFromPath($file->getPathname(), 'r');
+        $csv->setHeaderOffset(0);
+        $lineNumber = 1;
 
-            foreach ($csv->getRecords() as $record) {
-                $lineNumber++;
-                try {
-                    $validation = $this->validateEmployeeData($record, $lineNumber);
-                    if (!$validation['valid']) {
-                        $results['errors'][] = $validation['error'];
-                        continue;
-                    }
+        $records = iterator_to_array($csv->getRecords());
 
-                    $employeeRef = trim($record['Ref']);
+        $existingEmployees = $this->getExistingEmployees();
 
-                    if (in_array($employeeRef, $existingEmployees)) {
-                        $results['skipped']++;
-                        $results['errors'][] = "Ligne {$lineNumber}: L'employé avec la référence '{$employeeRef}' existe déjà - ignoré";
-                        continue;
-                    }
+        $genres = array_unique(array_map(
+            fn($r) => trim($r['genre'] ?? ''),
+            $records
+        ));
 
-                    $companyName = trim($record['company']);
-                    if (!$this->ensureCompanyExists($companyName)) {
-                        $results['errors'][] = "Ligne {$lineNumber}: Impossible de créer/trouver l'entreprise: {$companyName}";
-                        continue;
-                    }
-
-                    $employeeData = $this->prepareEmployeeData($record);
-                    
-                    $success = $this->apiService->createResource('Employee', $employeeData);
-
-                    if ($success) {
-                        $results['success']++;
-                        $existingEmployees[] = $employeeRef;
-                    } else {
-                        $results['errors'][] = "Ligne {$lineNumber}: Échec de la création de l'employé {$record['Nom']} {$record['Prenom']}";
-                    }
-                } catch (\Exception $e) {
-                    $results['errors'][] = "Ligne {$lineNumber}: " . $e->getMessage();
-                }
+        foreach ($genres as $genre) {
+            if ($genre && !$this->ensureGenderExists($genre)) {
+                $results['errors'][] = "Genre manquant : Impossible de créer le genre '{$genre}'";
             }
-        } catch (CsvException $e) {
-            $results['errors'][] = "Erreur de lecture du fichier CSV: " . $e->getMessage();
         }
 
-        return $results;
+        foreach ($records as $record) {
+            $lineNumber++;
+            try {
+                $validation = $this->validateEmployeeData($record, $lineNumber);
+                if (!$validation['valid']) {
+                    $results['errors'][] = $validation['error'];
+                    continue;
+                }
+
+                $employeeRef = trim($record['Ref']);
+
+                if (in_array($employeeRef, $existingEmployees)) {
+                    $results['skipped']++;
+                    $results['errors'][] = "Ligne {$lineNumber}: L'employé avec la référence '{$employeeRef}' existe déjà - ignoré";
+                    continue;
+                }
+
+                $companyName = trim($record['company']);
+                if (!$this->ensureCompanyExists($companyName)) {
+                    $results['errors'][] = "Ligne {$lineNumber}: Impossible de créer/trouver l'entreprise: {$companyName}";
+                    continue;
+                }
+
+                $employeeData = $this->prepareEmployeeData($record);
+                $success = $this->apiService->createResource('Employee', $employeeData);
+
+                if ($success) {
+                    $results['success']++;
+                    $existingEmployees[] = $employeeRef;
+                } else {
+                    $results['errors'][] = "Ligne {$lineNumber}: Échec de la création de l'employé {$record['Nom']} {$record['Prenom']}";
+                }
+            } catch (\Exception $e) {
+                $results['errors'][] = "Ligne {$lineNumber}: " . $e->getMessage();
+            }
+        }
+    } catch (CsvException $e) {
+        $results['errors'][] = "Erreur de lecture du fichier CSV: " . $e->getMessage();
     }
+
+    return $results;
+}
+
 
     public function previewFile(UploadedFile $file, string $type): array
     {
@@ -104,11 +119,34 @@ class CompanyEmployeeService
     private function getExistingEmployees(): array
     {
         try {
-            $employees = $this->apiService->getResource('Employee', ['limit_page_length' => 1000]);
-            return array_column($employees, 'employee_number');
+            $employees = $this->apiService->getResource('Employee', [
+                'limit_page_length' => 1000,
+                'fields' => ['employee_number']
+            ]);
+
+            return array_values(array_filter(
+                array_column($employees, 'employee_number'),
+                fn($number) => !empty($number)
+            ));
         } catch (\Exception $e) {
             Log::warning('Impossible de récupérer la liste des employés existants: ' . $e->getMessage());
             return [];
+        }
+    }
+
+    private function ensureGenderExists(string $gender): bool
+    {
+        try {
+            if ($this->apiService->resourceExists("Gender/{$gender}")) {
+                return true;
+            }
+
+            return $this->apiService->createResource('Gender', [
+                'gender' => $gender
+            ]);
+        } catch (\Exception $e) {
+            Log::error("Erreur lors de la création du genre {$gender}: " . $e->getMessage());
+            return false;
         }
     }
 
@@ -128,6 +166,7 @@ class CompanyEmployeeService
                 'abbr' => 'MC',
                 'default_currency' => $this->getCurrencyToUse(),
                 'country' => 'Madagascar',
+                'default_holiday_list' => 'Global Holiday List 2025' //hoilday list default
             ];
 
             $success = $this->apiService->createResource('Company', $companyData);
@@ -216,10 +255,10 @@ class CompanyEmployeeService
         } catch (\Exception $e) {
             return ['valid' => false, 'error' => "Ligne {$lineNumber}: Format de date invalide (attendu: jj/mm/aaaa)"];
         }
-
         if (!in_array(trim($record['genre']), self::VALID_GENDERS)) {
             return ['valid' => false, 'error' => "Ligne {$lineNumber}: Genre invalide (Masculin ou Feminin attendu)"];
         }
+
 
         return ['valid' => true];
     }
@@ -233,7 +272,8 @@ class CompanyEmployeeService
             'gender' => trim($record['genre']) === 'Masculin' ? 'Male' : 'Female',
             'date_of_joining' => Carbon::createFromFormat('d/m/Y', trim($record['Date embauche']))->format('Y-m-d'),
             'date_of_birth' => Carbon::createFromFormat('d/m/Y', trim($record['date naissance']))->format('Y-m-d'),
-            'company' => trim($record['company'])
+            'company' => trim($record['company']),
+ 
           //  'status' => 'Active',
         ];
     }

@@ -4,7 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Services\CompanyEmployeeService;
 use App\Services\SalaryStructureService;
-use App\Services\PayrollService;
+use App\Services\PayrollServiceImport;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\DB;
@@ -17,12 +17,12 @@ class ImportController extends Controller
 
     protected CompanyEmployeeService $companyEmployeeService;
     protected SalaryStructureService $salaryStructureService;
-    protected PayrollService $payrollService;
+    protected PayrollServiceImport $payrollService;
 
     public function __construct(
         CompanyEmployeeService $companyEmployeeService,
         SalaryStructureService $salaryStructureService,
-        PayrollService $payrollService
+        PayrollServiceImport $payrollService
     ) {
         $this->companyEmployeeService = $companyEmployeeService;
         $this->salaryStructureService = $salaryStructureService;
