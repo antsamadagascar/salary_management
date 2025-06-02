@@ -76,7 +76,8 @@
                         </li> 
                         <li class="nav-item">
                             <a class="nav-link" href="{{ route('reset-data.show') }}">
-                                <i class="fas fa-file-export"></i> Reset Data
+                             <i class="fas fa-trash-restore"></i> Reset Data
+
                             </a>
                         </li>
                         <!-- Section Configuration -->
