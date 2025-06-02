@@ -8,6 +8,7 @@ use App\Http\Controllers\InvoiceController;
 use App\Http\Controllers\PayrollController;
 
 use App\Http\Controllers\StatsSalaryController;
+use App\Http\Controllers\ResetDataController;
 
 Route::get('/', function () {
     return redirect()->route('login');
@@ -68,4 +69,23 @@ Route::middleware([\App\Http\Middleware\FrappeAuthMiddleware::class])->group(fun
         Route::get('/data', [StatsSalaryController::class, 'getPayrollData'])->name('data');
         Route::get('/export', [StatsSalaryController::class, 'exportCsv'])->name('export');
     });
+
+    Route::get('reset-data', [ResetDataController::class, 'showConfirmation'])
+        ->name('reset-data.show');
+    
+    // Vérifier les données existantes
+    Route::get('reset-data/check', [ResetDataController::class, 'checkData'])
+        ->name('reset-data.check');
+    
+    // Réinitialiser toutes les données
+    Route::post('reset-data/all', [ResetDataController::class, 'resetAllData'])
+        ->name('reset-data.all');
+    
+    // Réinitialiser une table spécifique
+    Route::post('reset-data/table/{table}', [ResetDataController::class, 'resetSpecificTable'])
+        ->name('reset-data.table');
+    
+    // API de confirmation avec double vérification
+    Route::post('reset-data/confirm', [ResetDataController::class, 'confirmReset'])
+        ->name('reset-data.confirm');
 });
