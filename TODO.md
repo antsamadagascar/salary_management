@@ -32,16 +32,19 @@ I-  Fonctionnalites :
 
 ### Doctypes:
 -company:
-    ->select * from tabCompany;
+    ->select * from `tabCompany`;
 
 -branche (name)
-    ->SELECT * from tabBranch tb 
+    ->SELECT * from `tabBranch` tb 
 
 -Department (name,departement_name) :
-    ->SELECT  * from tabDepartment td 
+    ->SELECT  * from `tabDepartment` td 
 
 -Employee(last_name,first_name,gender,date_of_birth,salutation,date_of_joining,status,branch,department,employee_number,ctc,salary_currency,salary_mode):
     ->SELECT * from `tabEmployee` te 
+
+-Holiday List :
+    ->SELECT * FROM `tabHoliday List` thl
 
 -Salary Structure :
     ->SELECT * FROM `tabSalary Structure` tss 
@@ -49,11 +52,15 @@ I-  Fonctionnalites :
 -Salary Component:
     ->select * from `tabSalary Component` tsc 
 
+-Salary Structure Assignment:
+    ->select * from `tabSalary Structure Assignment` tssa
+
 -Salary Detail:
     ->select * from `tabSalary Detail` tsd 
 
 Salary Slip:
     ->select * from `tabSalary Slip` tss 
+
 
 ### API (endoint:epnext.localhost:8000/):
 -branche:
