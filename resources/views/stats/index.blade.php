@@ -214,7 +214,7 @@
 </div>
 @endsection
 
-@push('scripts')
+@section('scripts')
 <script>
 function filterByMonth() {
     const selectedMonth = document.getElementById('monthFilter').value;
@@ -361,9 +361,8 @@ function exportCsv() {
     window.location.href = `{{ route('stats.export') }}?month=${selectedMonth}`;
 }
 </script>
-@endpush
-
-@push('styles')
+@endsection
+@section('styles')
 <style>
 .info-box {
     box-shadow: 0 0 1px rgba(0,0,0,.125), 0 1px 3px rgba(0,0,0,.2);
@@ -420,4 +419,4 @@ function exportCsv() {
     border-bottom: none;
 }
 </style>
-@endpush
+@endSection
