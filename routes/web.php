@@ -40,9 +40,7 @@ Route::middleware([\App\Http\Middleware\FrappeAuthMiddleware::class])->group(fun
         Route::delete('/{name}', [App\Http\Controllers\EmployeeController::class, 'destroy'])->name('destroy');
     });
     
-    // Routes pour la gestion de la paie
     Route::prefix('payroll')->name('payroll.')->group(function () {
-        
         // Liste des employés
         Route::get('/', [PayrollController::class, 'index'])->name('index');
         
@@ -52,17 +50,20 @@ Route::middleware([\App\Http\Middleware\FrappeAuthMiddleware::class])->group(fun
         // Fiche employé avec salaires par mois
         Route::get('/employee/{employeeId}', [PayrollController::class, 'show'])->name('employee.show');
         
-        // Afficher une fiche de paie spécifique
-        Route::get('/salary-slip/{salarySlipId}', [PayrollController::class, 'showSalarySlip'])->name('salary-slip.show');
+        // CORRECTION: Utiliser {salarySlipId} avec une contrainte pour accepter les slashes
+        Route::get('/salary-slip/{salarySlipId}', [PayrollController::class, 'showSalarySlip'])
+             ->name('salary-slip.show')
+             ->where('salarySlipId', '.*'); // Accepte tous les caractères y compris les slashes
         
-        // Exports PDF
-        Route::get('/salary-slip/{salarySlipId}/pdf', [PayrollController::class, 'exportSalarySlipPdf'])->name('salary-slip.pdf');
+        // Export PDF - même correction
+        Route::get('/salary-slip/{salarySlipId}/pdf', [PayrollController::class, 'exportSalarySlipPdf'])
+             ->name('salary-slip.pdf')
+             ->where('salarySlipId', '.*');
+        
         Route::get('/employee/{employeeId}/month/{month}/pdf', [PayrollController::class, 'exportMonthlyPdf'])->name('employee.monthly.pdf');
-        
-        // Export Excel
         Route::get('/export/excel', [PayrollController::class, 'exportEmployeesExcel'])->name('export.excel');
-        
     });
+    
 
     Route::prefix('stats')->name('stats.')->group(function () {
         Route::get('/', [StatsSalaryController::class, 'index'])->name('index');
