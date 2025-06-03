@@ -137,7 +137,7 @@ class PayrollController extends Controller
             $filename = 'salaires_' . str_replace([' ', '/'], '_', $employee['employee_name']) . '_' . $month . '.pdf';
 
             return $this->exportService->exportToPdf(
-                'payroll.monthly-salary',
+                'payroll.pdf.monthly-salary',
                 [
                     'employee' => $employee,
                     'salarySlips' => $salarySlips,
