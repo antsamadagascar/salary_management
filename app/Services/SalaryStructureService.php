@@ -26,8 +26,11 @@ class SalaryStructureService
 
             foreach ($structureGroups as $structureName => $components) {
                 try {
-                    if (!$this->apiService->resourceExists('Company/My Company')) {
-                        $results['errors'][] = "Impossible de trouver l'entreprise: My Company";
+                    $firstComponent = reset($components);
+                    $companyName = trim($firstComponent['company']);
+                    
+                    if (!$this->apiService->resourceExists("Company/{$companyName}")) {
+                        $results['errors'][] = "Impossible de trouver l'entreprise: {$companyName}";
                         continue;
                     }
 
@@ -79,7 +82,7 @@ class SalaryStructureService
     public function checkDependencies(): array
     {
         return [
-            'salary_components' => [], 
+            'salary_components' => [],
             'salary_structures' => array_column($this->apiService->getResource('Salary Structure'), 'name'),
         ];
     }
@@ -93,10 +96,11 @@ class SalaryStructureService
 
             $salaryComponentData = [
                 'salary_component' => $componentName,
+                'salary_component_abbr' => trim($componentData['Abbr']), 
                 'type' => trim($componentData['type']) === 'earning' ? 'Earning' : 'Deduction',
                 'depends_on_payment_days' => 0,
                 'is_tax_applicable' => trim($componentData['type']) === 'earning' ? 1 : 0,
-                'company' => 'My Company',
+                'company' => trim($componentData['company']), 
             ];
 
             return $this->apiService->createResource('Salary Component', $salaryComponentData);
@@ -110,15 +114,18 @@ class SalaryStructureService
     {
         $earnings = [];
         $deductions = [];
+        
+        $firstComponent = reset($components);
+        $companyName = trim($firstComponent['company']);
 
         foreach ($components as $component) {
             $componentData = [
                 'salary_component' => trim($component['name']),
                 'abbr' => trim($component['Abbr']),
-                'amount_based_on_formula' => 1, 
-                'formula' => $this->parseFormula(trim($component['valeur']), trim($component['Remarque'] ?? '')),
+                'amount_based_on_formula' => 1,
+                'formula' => $this->parseFormula(trim($component['valeur'])),
             ];
-
+            
             if (trim($component['type']) === 'earning') {
                 $earnings[] = $componentData;
             } else {
@@ -128,57 +135,46 @@ class SalaryStructureService
 
         return [
             'name' => $structureName,
-            'company' => 'My Company',
+            'company' => $companyName, 
             'earnings' => $earnings,
             'deductions' => $deductions,
+            'docstatus' => 1,
             'is_active' => 'Yes',
         ];
     }
 
-    private function parseFormula(string $valeur, string $remarque = ''): string
+    /**
+     * MÉTHODE SIMPLIFIÉE: Parse les formules - tout est dynamique
+     */
+    private function parseFormula(string $valeur): string
     {
         if (empty($valeur)) {
             return '';
         }
 
         $valeur = trim($valeur);
-        $remarque = trim($remarque);
 
-        if (strpos($valeur, '%') !== false) {
-            $percentage = str_replace(['%', ' '], '', $valeur);
-            if (is_numeric($percentage)) {
-                $baseFormula = $this->getBaseFormula($remarque);
-                return "({$baseFormula}) * {$percentage} / 100";
-            }
+        // Si c'est "base", on garde tel quel (salaire de base dans ERPNext)
+        if (strtolower($valeur) === 'base') {
+            return 'base';
         }
 
-        // Si c'est un montant fixe
         if (is_numeric($valeur)) {
             return $valeur;
         }
-
         return $valeur;
     }
-
-    private function getBaseFormula(string $remarque): string
+    
+    public function submitDocument(string $doctype, $nameOrId): bool
     {
-        if (empty($remarque)) {
-            return 'base';
+        try {
+            $response = $this->apiService->updateResource("{$doctype}/{$nameOrId}", [
+                'docstatus' => 1
+            ]);
+            return $response !== false;
+        } catch (\Exception $e) {
+            Log::error("Failed to submit {$doctype} {$nameOrId}: " . $e->getMessage());
+            return false;
         }
-
-        $remarque = strtolower(trim($remarque));
-        
-        // Cas: "salaire base"
-        if (strpos($remarque, 'salaire base') !== false && strpos($remarque, '+') === false) {
-            return 'base';
-        }
-        
-        // Cas: "salaire base + indemnité"
-        if (strpos($remarque, 'salaire base') !== false && strpos($remarque, 'indemnité') !== false) {
-            return 'base + IND'; 
-        }
-        
-
-        return 'base'; // Par défaut
     }
 }

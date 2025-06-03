@@ -62,18 +62,24 @@
                                 <span>IMPORT/EXPORT</span>
                             </h6>
                         </li>
+
+                        <li class="nav-item">
+                            <a class="nav-link" href="{{ route('stats.index') }}">
+                            <i class="fas fa-chart-bar"></i> Stats
+                            </a>
+                        </li>
                         <li class="nav-item">
                         <a class="nav-link {{ request()->routeIs('import.*') ? 'active' : '' }}" 
                         href="{{ route('import.form') }}">
                                 <i class="fas fa-file-csv"></i> Import CSV
                             </a>
-                        </li>
+                        </li> 
                         <li class="nav-item">
-                            <a class="nav-link" href="{{ route('stats.index') }}">
-                                <i class="fas fa-file-export"></i> Export Rapports
+                            <a class="nav-link" href="{{ route('reset-data.show') }}">
+                             <i class="fas fa-trash-restore"></i> Reset Data
+
                             </a>
                         </li>
-                        
                         <!-- Section Configuration -->
                         <!-- <li class="nav-item">
                             <h6 class="sidebar-heading d-flex justify-content-between align-items-center px-3 mt-4 mb-1 text-muted">

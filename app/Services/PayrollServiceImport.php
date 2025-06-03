@@ -8,7 +8,7 @@ use League\Csv\Reader;
 use League\Csv\Exception as CsvException;
 use Carbon\Carbon;
 
-class PayrollService
+class PayrollServiceImport
 {
     private const REQUIRED_FIELDS = ['Mois', 'Ref Employe', 'Salaire Base', 'Salaire'];
 
@@ -40,6 +40,7 @@ class PayrollService
 
                     $employeeNumber = trim($record['Ref Employe']);
                     $month = trim($record['Mois']);
+                    $baseSalary = (float) $record['Salaire Base'];
 
                     $employee = $this->findEmployeeByNumber($employeeNumber);
                     if (!$employee) {
@@ -49,6 +50,7 @@ class PayrollService
 
                     $employeeRef = $employee['name'];
 
+                    // CORRECTION 4: Utiliser le bon format de clé pour vérifier les doublons
                     $payrollKey = $this->generatePayrollKey($employeeRef, $month);
                     if (isset($existingPayrolls[$payrollKey])) {
                         $results['skipped']++;
@@ -62,14 +64,20 @@ class PayrollService
                         continue;
                     }
 
+                    // CORRECTION 5: S'assurer que Company existe
                     $companyName = isset($record['company']) && !empty(trim($record['company'])) 
                         ? trim($record['company']) 
                         : 'My Company';
+                    
+                    if (!$this->ensureCompanyExists($companyName)) {
+                        $results['errors'][] = "Ligne {$lineNumber}: Impossible de créer/trouver l'entreprise: {$companyName}";
+                        continue;
+                    }
 
-                    // Vérifier et créer/assigner une Holiday List si nécessaire
-                    $holidayListValidation = $this->ensureHolidayList($employee, $companyName);
-                    if (!$holidayListValidation['success']) {
-                        $results['errors'][] = "Ligne {$lineNumber}: {$holidayListValidation['error']}";
+                    // Créer/Mettre à jour le Salary Structure Assignment
+                    $assignmentResult = $this->ensureSalaryAssignment($employeeRef, $salaryStructureRef, $baseSalary, $month, $companyName);
+                    if (!$assignmentResult) {
+                        $results['errors'][] = "Ligne {$lineNumber}: Échec de la création/mise à jour du salary assignment pour l'employé {$employeeRef}";
                         continue;
                     }
 
@@ -85,6 +93,7 @@ class PayrollService
                     }
                 } catch (\Exception $e) {
                     $results['errors'][] = "Ligne {$lineNumber}: " . $e->getMessage();
+                    Log::error("Erreur ligne {$lineNumber}: " . $e->getMessage());
                 }
             }
         } catch (CsvException $e) {
@@ -94,161 +103,106 @@ class PayrollService
         return $results;
     }
 
-    private function companyExists(string $companyName): bool
+    // CORRECTION 6: Ajouter la méthode pour s'assurer que Company existe
+    private function ensureCompanyExists(string $companyName): bool
     {
         try {
-            $companies = $this->apiService->getResource('Company', [
-                'filters' => [['name', '=', $companyName]],
-                'limit_page_length' => 1
-            ]);
-            return !empty($companies);
+            if ($this->apiService->resourceExists("Company/{$companyName}")) {
+                return true;
+            }
+
+            $companyData = [
+                'company_name' => $companyName,
+                'abbr' => strtoupper(substr($companyName, 0, 3)),
+                'default_currency' => 'MGA',
+                'country' => 'Madagascar',
+            ];
+
+            return $this->apiService->createResource('Company', $companyData);
         } catch (\Exception $e) {
-            Log::warning("Erreur lors de la vérification de l'existence de l'entreprise {$companyName}: " . $e->getMessage());
+            Log::error("Erreur lors de la création de l'entreprise {$companyName}: " . $e->getMessage());
             return false;
         }
     }
 
-    private function ensureHolidayList(array $employee, string $companyName): array
+    // CORRECTION 7: Renommer et améliorer la méthode pour gérer les Salary Structure Assignment
+    private function ensureSalaryAssignment(string $employeeRef, string $salaryStructure, float $baseSalary, string $month, string $companyName): bool
     {
-        // Vérifier si l'employé a déjà une Holiday List
-        if (!empty($employee['default_holiday_list'])) {
-            return ['success' => true];
-        }
+        try {
+            $payrollDate = Carbon::createFromFormat('d/m/Y', $month);
+            $payrollDateStr = $payrollDate->format('Y-m-d');
+            
+            // Chercher les assignments existants pour cet employé
+            $assignments = $this->apiService->getResource('Salary Structure Assignment', [
+                'filters' => [
+                    ['employee', '=', $employeeRef],
+                    ['salary_structure', '=', $salaryStructure]
+                ],
+                'limit_page_length' => 50
+            ]);
 
-        // Vérifier si l'entreprise a une Holiday List par défaut
-        $company = $this->getCompanyHolidayList($companyName);
-        if ($company && !empty($company['default_holiday_list'])) {
-            return ['success' => true];
-        }
-
-        // Rechercher une Holiday List existante ou en créer une
-        $holidayList = $this->findOrCreateHolidayList($companyName);
-        if (!$holidayList) {
-            // Dernière tentative : utiliser n'importe quelle Holiday List du système
-            try {
-                $anyHolidayList = $this->apiService->getResource('Holiday List', ['limit_page_length' => 1]);
-                if (!empty($anyHolidayList)) {
-                    $holidayList = $anyHolidayList[0]['name'];
-                    Log::info("Utilisation de la Holiday List par défaut du système: " . $holidayList);
-                } else {
-                    return [
-                        'success' => false, 
-                        'error' => "Aucune Holiday List disponible dans le système. Veuillez créer manuellement une Holiday List dans ERPNext."
-                    ];
+            $validAssignment = null;
+            
+            // Chercher un assignment valide pour cette période
+            foreach ($assignments as $assignment) {
+                $fromDate = $assignment['from_date'];
+                $toDate = $assignment['to_date'] ?? null;
+                
+                if ($fromDate <= $payrollDateStr && (empty($toDate) || $toDate >= $payrollDateStr)) {
+                    $validAssignment = $assignment;
+                    break;
                 }
-            } catch (\Exception $e) {
-                return [
-                    'success' => false, 
-                    'error' => "Impossible d'accéder aux Holiday Lists du système: " . $e->getMessage()
+            }
+
+            if ($validAssignment) {
+                // Mettre à jour l'assignment existant si nécessaire
+                $updateData = [];
+                
+                if ($validAssignment['base'] != $baseSalary) {
+                    $updateData['base'] = $baseSalary;
+                }
+                
+                if ($validAssignment['docstatus'] == 0) {
+                    $updateData['docstatus'] = 1;
+                }
+                
+                if (!empty($updateData)) {
+                    $updated = $this->apiService->updateResource("Salary Structure Assignment/{$validAssignment['name']}", $updateData);
+                    
+                    if ($updated) {
+                        Log::info("Assignment mis à jour: {$validAssignment['name']} pour employé {$employeeRef}");
+                        return true;
+                    } else {
+                        Log::error("Échec de la mise à jour de l'assignment: {$validAssignment['name']}");
+                        return false;
+                    }
+                } else {
+                    // Assignment déjà OK
+                    return true;
+                }
+            } else {
+                // Créer un nouvel assignment
+                $assignmentData = [
+                    'employee' => $employeeRef,
+                    'salary_structure' => $salaryStructure,
+                    'company' => $companyName,
+                    'from_date' => $payrollDateStr,
+                    'base' => $baseSalary,
+                    'docstatus' => 1,
                 ];
+
+                $assignmentName = $this->apiService->createResource('Salary Structure Assignment', $assignmentData);
+                
+                if ($assignmentName) {
+                    Log::info("Nouvel assignment créé: {$assignmentName} pour employé {$employeeRef}");
+                    return true;
+                } else {
+                    Log::error("Échec de la création de l'assignment pour employé {$employeeRef}");
+                    return false;
+                }
             }
-        }
-
-        // Assigner la Holiday List à l'employé si nécessaire
-        if (empty($employee['default_holiday_list'])) {
-            $updateSuccess = $this->assignHolidayListToEmployee($employee['name'], $holidayList);
-            if (!$updateSuccess) {
-                Log::warning("Impossible d'assigner la Holiday List à l'employé {$employee['name']}, mais on continue le traitement");
-                // On ne fait pas échouer le processus, on continue avec la Holiday List trouvée
-            }
-        }
-
-        return ['success' => true];
-    }
-
-    private function getCompanyHolidayList(string $companyName): ?array
-    {
-        try {
-            $companies = $this->apiService->getResource('Company', [
-                'filters' => [['name', '=', $companyName]],
-                'limit_page_length' => 1
-            ]);
-            return $companies[0] ?? null;
         } catch (\Exception $e) {
-            Log::warning("Erreur lors de la récupération de l'entreprise {$companyName}: " . $e->getMessage());
-            return null;
-        }
-    }
-
-    private function findOrCreateHolidayList(string $companyName): ?string
-    {
-        try {
-            // 1. Rechercher une Holiday List existante pour cette entreprise
-            $holidayLists = $this->apiService->getResource('Holiday List', [
-                'filters' => [['company', '=', $companyName]],
-                'limit_page_length' => 1
-            ]);
-
-            if (!empty($holidayLists)) {
-                Log::info("Holiday List trouvée pour l'entreprise {$companyName}: " . $holidayLists[0]['name']);
-                return $holidayLists[0]['name'];
-            }
-
-            // 2. Rechercher toutes les Holiday List existantes (sans filtre company)
-            $allHolidayLists = $this->apiService->getResource('Holiday List', [
-                'limit_page_length' => 100
-            ]);
-
-            if (!empty($allHolidayLists)) {
-                // Utiliser la première Holiday List disponible
-                Log::info("Utilisation de la Holiday List existante: " . $allHolidayLists[0]['name']);
-                return $allHolidayLists[0]['name'];
-            }
-
-            // 3. Tenter de créer une Holiday List simple
-            $currentYear = date('Y');
-            $holidayListName = "Holiday List {$currentYear}";
-            
-            // Vérifier si cette Holiday List existe déjà
-            $existingByName = $this->apiService->getResource('Holiday List', [
-                'filters' => [['name', '=', $holidayListName]],
-                'limit_page_length' => 1
-            ]);
-
-            if (!empty($existingByName)) {
-                Log::info("Holiday List existante trouvée par nom: " . $holidayListName);
-                return $holidayListName;
-            }
-
-            // Créer une nouvelle Holiday List avec les champs minimum requis
-            $holidayListData = [
-                'holiday_list_name' => $holidayListName,
-                'from_date' => "{$currentYear}-01-01",
-                'to_date' => "{$currentYear}-12-31"
-            ];
-
-            // Ajouter la company seulement si elle existe dans ERPNext
-            if ($this->companyExists($companyName)) {
-                $holidayListData['company'] = $companyName;
-            }
-
-            Log::info("Tentative de création de Holiday List avec les données: " . json_encode($holidayListData));
-            
-            $created = $this->apiService->createResource('Holiday List', $holidayListData);
-            if ($created) {
-                Log::info("Holiday List créée avec succès: " . $holidayListName);
-                return $holidayListName;
-            }
-
-            Log::error("Échec de la création de Holiday List");
-            return null;
-
-        } catch (\Exception $e) {
-            Log::error("Erreur lors de la création/recherche de Holiday List: " . $e->getMessage());
-            return null;
-        }
-    }
-
-    private function assignHolidayListToEmployee(string $employeeName, string $holidayListName): bool
-    {
-        try {
-            $updateData = [
-                'default_holiday_list' => $holidayListName
-            ];
-
-            return $this->apiService->updateResource("Employee/{$employeeName}", $updateData);
-        } catch (\Exception $e) {
-            Log::error("Erreur lors de l'assignation de Holiday List à l'employé {$employeeName}: " . $e->getMessage());
+            Log::error("Erreur lors de la gestion du salary assignment pour {$employeeRef}: " . $e->getMessage());
             return false;
         }
     }
@@ -259,7 +213,9 @@ class PayrollService
             $payrolls = $this->apiService->getResource('Salary Slip', ['limit_page_length' => 2000]);
             $existing = [];
             foreach ($payrolls as $payroll) {
-                $key = $this->generatePayrollKey($payroll['employee'], $payroll['payroll_period']);
+                // CORRECTION 8: Utiliser le bon champ pour la période
+                $period = $payroll['start_date'] ? Carbon::parse($payroll['start_date'])->format('Y-m') : $payroll['payroll_period'];
+                $key = $this->generatePayrollKey($payroll['employee'], $period);
                 $existing[$key] = true;
             }
             return $existing;
@@ -287,20 +243,16 @@ class PayrollService
 
     private function findEmployeeByNumber(string $employeeNumber): ?array
     {
-        $employees = $this->apiService->getResource('Employee', [
-            'filters' => [['employee_number', '=', $employeeNumber]],
-            'limit_page_length' => 1
-        ]);
-        return $employees[0] ?? null;
-    }
-
-    private function getEmployeeHolidayList(string $employeeRef): ?string
-    {
-        $employees = $this->apiService->getResource('Employee', [
-            'filters' => [['name', '=', $employeeRef]],
-            'limit_page_length' => 1
-        ]);
-        return $employees[0]['default_holiday_list'] ?? null;
+        try {
+            $employees = $this->apiService->getResource('Employee', [
+                'filters' => [['employee_number', '=', $employeeNumber]],
+                'limit_page_length' => 1
+            ]);
+            return $employees[0] ?? null;
+        } catch (\Exception $e) {
+            Log::error("Erreur lors de la recherche de l'employé {$employeeNumber}: " . $e->getMessage());
+            return null;
+        }
     }
 
     private function validatePayrollData(array $record, int $lineNumber): array
@@ -327,39 +279,18 @@ class PayrollService
     private function preparePayrollData(array $record, string $companyName, string $employeeRef): array
     {
         $payrollDate = Carbon::createFromFormat('d/m/Y', trim($record['Mois']));
-        $holidayList = $this->getEmployeeHolidayList($employeeRef);
-
+        
         $data = [
             'payroll_period' => $payrollDate->format('Y-m'),
             'start_date' => $payrollDate->copy()->startOfMonth()->format('Y-m-d'),
             'end_date' => $payrollDate->copy()->endOfMonth()->format('Y-m-d'),
             'salary_structure' => trim($record['Salaire']),
             'company' => $companyName,
-            'base_salary' => (float) $record['Salaire Base'],
             'employee' => $employeeRef,
+            'payroll_frequency' => 'Monthly'
         ];
-
-        if ($holidayList) {
-            $data['employee_holiday_list'] = $holidayList;
-        }
 
         return $data;
-    }
-
-    public function previewFile(UploadedFile $file, string $type): array
-    {
-        $csv = Reader::createFromPath($file->getPathname(), 'r');
-        $csv->setHeaderOffset(0);
-        $headers = $csv->getHeader();
-        $records = iterator_to_array($csv->getRecords());
-        $preview = array_slice($records, 0, 5, true);
-
-        return [
-            'headers' => $headers,
-            'data' => $preview,
-            'total_rows' => count($records),
-            'type' => $type,
-        ];
     }
 
     public function checkDependencies(): array
