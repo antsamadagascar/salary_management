@@ -272,22 +272,6 @@ class PayrollServiceImport
         return $data;
     }
 
-    public function previewFile(UploadedFile $file, string $type): array
-    {
-        $csv = Reader::createFromPath($file->getPathname(), 'r');
-        $csv->setHeaderOffset(0);
-        $headers = $csv->getHeader();
-        $records = iterator_to_array($csv->getRecords());
-        $preview = array_slice($records, 0, 5, true);
-
-        return [
-            'headers' => $headers,
-            'data' => $preview,
-            'total_rows' => count($records),
-            'type' => $type,
-        ];
-    }
-
     public function checkDependencies(): array
     {
         return [
