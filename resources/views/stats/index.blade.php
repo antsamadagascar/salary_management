@@ -71,9 +71,9 @@
                                     <i class="fas fa-dollar-sign"></i>
                                 </span>
                                 <div class="info-box-content">
-                                    <span class="info-box-text">Salaire Brut Total</span>
+                                    <span class="info-box-text"> Salaire Brut Total</span>
                                     <span class="info-box-number" id="totalGrossPay">
-                                        {{ number_format($totals['total_gross_pay'], 2) }} €
+                                        {{ number_format($totals['total_gross_pay'], 2) }} 
                                     </span>
                                 </div>
                             </div>
@@ -86,7 +86,7 @@
                                 <div class="info-box-content">
                                     <span class="info-box-text">Total Déductions</span>
                                     <span class="info-box-number" id="totalDeductions">
-                                        {{ number_format($totals['total_deductions'], 2) }} €
+                                        {{ number_format($totals['total_deductions'], 2) }} 
                                     </span>
                                 </div>
                             </div>
@@ -99,7 +99,7 @@
                                 <div class="info-box-content">
                                     <span class="info-box-text">Salaire Net Total</span>
                                     <span class="info-box-number" id="totalNetPay">
-                                        {{ number_format($totals['total_net_pay'], 2) }} €
+                                        {{ number_format($totals['total_net_pay'], 2) }} 
                                     </span>
                                 </div>
                             </div>
@@ -138,18 +138,18 @@
                                         <td>{{ $employee['department'] }}</td>
                                         <td>{{ $employee['designation'] }}</td>
                                         <td class="text-right">
-                                            <span class="badge badge-success">
-                                                {{ number_format($employee['gross_pay'], 2) }} €
+                                            <span class="badge badge-success text-dark">
+                                                {{ number_format($employee['gross_pay'], 2) }} 
                                             </span>
                                         </td>
                                         <td class="text-right">
-                                            <span class="badge badge-warning">
-                                                {{ number_format($employee['total_deduction'], 2) }} €
+                                            <span class="badge badge-warning text-dark">
+                                                {{ number_format($employee['total_deduction'], 2) }} 
                                             </span>
                                         </td>
                                         <td class="text-right">
-                                            <span class="badge badge-primary">
-                                                {{ number_format($employee['net_pay'], 2) }} €
+                                           <span class="badge badge-primary text-dark">
+                                                {{ number_format($employee['net_pay'], 2) }} 
                                             </span>
                                         </td>
                                         <td>
@@ -277,18 +277,18 @@ function updatePayrollTable(payrollData) {
                 <td>${employee.department}</td>
                 <td>${employee.designation}</td>
                 <td class="text-right">
-                    <span class="badge badge-success">
-                        ${parseFloat(employee.gross_pay).toLocaleString('fr-FR', {minimumFractionDigits: 2})} €
+                    <span class="badge badge-success text-dark">
+                        ${parseFloat(employee.gross_pay).toLocaleString('fr-FR', {minimumFractionDigits: 2})} 
                     </span>
                 </td>
                 <td class="text-right">
-                    <span class="badge badge-warning">
-                        ${parseFloat(employee.total_deduction).toLocaleString('fr-FR', {minimumFractionDigits: 2})} €
+                    <span class="badge badge-warning text-dark">
+                        ${parseFloat(employee.total_deduction).toLocaleString('fr-FR', {minimumFractionDigits: 2})} 
                     </span>
                 </td>
                 <td class="text-right">
-                    <span class="badge badge-primary">
-                        ${parseFloat(employee.net_pay).toLocaleString('fr-FR', {minimumFractionDigits: 2})} €
+                   <span class="badge badge-primary text-dark">
+                        ${parseFloat(employee.net_pay).toLocaleString('fr-FR', {minimumFractionDigits: 2})} 
                     </span>
                 </td>
                 <td>
@@ -307,11 +307,11 @@ function updatePayrollTable(payrollData) {
 function updateTotals(totals) {
     document.getElementById('totalEmployees').textContent = totals.total_employees;
     document.getElementById('totalGrossPay').textContent = 
-        parseFloat(totals.total_gross_pay).toLocaleString('fr-FR', {minimumFractionDigits: 2}) + ' €';
+        parseFloat(totals.total_gross_pay).toLocaleString('fr-FR', {minimumFractionDigits: 2}) + ' ';
     document.getElementById('totalDeductions').textContent = 
-        parseFloat(totals.total_deductions).toLocaleString('fr-FR', {minimumFractionDigits: 2}) + ' €';
+        parseFloat(totals.total_deductions).toLocaleString('fr-FR', {minimumFractionDigits: 2}) + ' ';
     document.getElementById('totalNetPay').textContent = 
-        parseFloat(totals.total_net_pay).toLocaleString('fr-FR', {minimumFractionDigits: 2}) + ' €';
+        parseFloat(totals.total_net_pay).toLocaleString('fr-FR', {minimumFractionDigits: 2}) + ' ';
 }
 
 function showEmployeeDetails(employeeId, employeeData) {
@@ -325,8 +325,8 @@ function showEmployeeDetails(employeeId, employeeData) {
             earningsDiv.innerHTML += `
                 <div class="d-flex justify-content-between mb-2">
                     <span>${earning.component}</span>
-                    <span class="badge badge-success">
-                        ${parseFloat(earning.amount).toLocaleString('fr-FR', {minimumFractionDigits: 2})} €
+                    <span class="badge badge-success text-dark">
+                        ${parseFloat(earning.amount).toLocaleString('fr-FR', {minimumFractionDigits: 2})} 
                     </span>
                 </div>
             `;
@@ -343,8 +343,8 @@ function showEmployeeDetails(employeeId, employeeData) {
             deductionsDiv.innerHTML += `
                 <div class="d-flex justify-content-between mb-2">
                     <span>${deduction.component}</span>
-                    <span class="badge badge-warning">
-                        ${parseFloat(deduction.amount).toLocaleString('fr-FR', {minimumFractionDigits: 2})} €
+                    <span class="badge badge-warning text-dark">
+                        ${parseFloat(deduction.amount).toLocaleString('fr-FR', {minimumFractionDigits: 2})} 
                     </span>
                 </div>
             `;
@@ -399,6 +399,7 @@ function exportCsv() {
 .info-box .info-box-number {
     display: block;
     margin-top: .25rem;
+    color:black;
     font-weight: 700;
 }
 
