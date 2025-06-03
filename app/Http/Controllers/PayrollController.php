@@ -68,7 +68,7 @@ class PayrollController extends Controller
     {
         try {
             $decodedId = urldecode($salarySlipId);
-            $decodedId = str_replace('-', ' ', $decodedId); // Convertir tirets en espaces
+            $decodedId = str_replace('-', ' ', $decodedId);
             
             \Log::info("ID reçu brut: $salarySlipId");
             \Log::info("ID décodé et normalisé: $decodedId");
@@ -84,39 +84,6 @@ class PayrollController extends Controller
         } catch (\Exception $e) {
             \Log::error("Erreur lors du chargement de la fiche de paie $salarySlipId: " . $e->getMessage());
             return redirect()->route('payroll.index')->withError('Erreur lors du chargement de la fiche de paie: ' . $e->getMessage());
-        }
-    }
-
-    /**
-     * Export PDF d'une fiche de paie spécifique
-     */
-    public function exportSalarySlipPdf(string $salarySlipId): Response|RedirectResponse
-    {
-        try {
-            $decodedId = urldecode($salarySlipId);
-            $decodedId = str_replace('-', ' ', $decodedId); // Convertir tirets en espaces
-            
-            \Log::info("ID reçu brut pour export PDF: $salarySlipId");
-            \Log::info("ID décodé et normalisé pour export PDF: $decodedId");
-            
-            $salarySlip = $this->payrollService->getSalarySlip($decodedId);
-            
-            if (!$salarySlip) {
-                \Log::warning("Fiche de paie non trouvée pour export PDF: $decodedId");
-                return redirect()->route('payroll.index')->withError('Fiche de paie non trouvée');
-            }
-
-            $filename = 'fiche_paie_' . str_replace([' ', '/'], '_', $salarySlip['employee_name']) . '_' . 
-                        Carbon::parse($salarySlip['posting_date'])->format('Y_m') . '.pdf';
-
-            return $this->exportService->exportToPdf(
-                'payroll.pdf.salary-slip',
-                ['salarySlip' => $salarySlip],
-                $filename
-            );
-        } catch (\Exception $e) {
-            \Log::error("Erreur lors de l'export PDF de la fiche de paie $salarySlipId: " . $e->getMessage());
-            return redirect()->route('payroll.index')->withError('Erreur lors de l\'export PDF: ' . $e->getMessage());
         }
     }
 
@@ -137,7 +104,7 @@ class PayrollController extends Controller
             $filename = 'salaires_' . str_replace([' ', '/'], '_', $employee['employee_name']) . '_' . $month . '.pdf';
 
             return $this->exportService->exportToPdf(
-                'payroll.monthly-salary',
+                'payroll.pdf.monthly-salary',
                 [
                     'employee' => $employee,
                     'salarySlips' => $salarySlips,
@@ -155,44 +122,44 @@ class PayrollController extends Controller
     /**
      * Exporter la liste des employés avec leurs salaires en Excel
      */
-    public function exportEmployeesExcel(): Response|RedirectResponse
-    {
-        try {
-            $employees = $this->payrollService->getEmployees();
-            $data = [];
+    // public function exportEmployeesExcel(): Response|RedirectResponse
+    // {
+    //     try {
+    //         $employees = $this->payrollService->getEmployees();
+    //         $data = [];
             
-            foreach ($employees as $employee) {
-                $stats = $this->payrollService->getPayrollStats($employee['name']);
-                $data[] = [
-                    $employee['employee_number'] ?? '',
-                    $employee['employee_name'] ?? '',
-                    $employee['department'] ?? '',
-                    $employee['designation'] ?? '',
-                    number_format($stats['total_gross_pay'], 2),
-                    number_format($stats['total_deductions'], 2),
-                    number_format($stats['total_net_pay'], 2),
-                    number_format($stats['average_net_pay'], 2),
-                    $stats['months_count']
-                ];
-            }
+    //         foreach ($employees as $employee) {
+    //             $stats = $this->payrollService->getPayrollStats($employee['name']);
+    //             $data[] = [
+    //                 $employee['employee_number'] ?? '',
+    //                 $employee['employee_name'] ?? '',
+    //                 $employee['department'] ?? '',
+    //                 $employee['designation'] ?? '',
+    //                 number_format($stats['total_gross_pay'], 2),
+    //                 number_format($stats['total_deductions'], 2),
+    //                 number_format($stats['total_net_pay'], 2),
+    //                 number_format($stats['average_net_pay'], 2),
+    //                 $stats['months_count']
+    //             ];
+    //         }
 
-            $headers = [
-                'Matricule',
-                'Nom',
-                'Département',
-                'Poste',
-                'Total Brut',
-                'Total Déductions',
-                'Total Net',
-                'Moyenne Net',
-                'Nb Mois'
-            ];
+    //         $headers = [
+    //             'Matricule',
+    //             'Nom',
+    //             'Département',
+    //             'Poste',
+    //             'Total Brut',
+    //             'Total Déductions',
+    //             'Total Net',
+    //             'Moyenne Net',
+    //             'Nb Mois'
+    //         ];
 
-            return $this->exportService->exportToExcel($data, $headers, 'employes_salaires.xlsx');
-        } catch (\Exception $e) {
-            return redirect()->route('payroll.index')->withError('Erreur lors de l\'export Excel: ' . $e->getMessage());
-        }
-    }
+    //         return $this->exportService->exportToExcel($data, $headers, 'employes_salaires.xlsx');
+    //     } catch (\Exception $e) {
+    //         return redirect()->route('payroll.index')->withError('Erreur lors de l\'export Excel: ' . $e->getMessage());
+    //     }
+    // }
 
     /**
      * Rechercher des employés
