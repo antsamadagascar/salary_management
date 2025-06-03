@@ -68,22 +68,20 @@ class PayrollController extends Controller
     {
         try {
             $decodedId = urldecode($salarySlipId);
-            $decodedId = str_replace('-', ' ', $decodedId);
-            
-            \Log::info("ID reçu brut: $salarySlipId");
-            \Log::info("ID décodé et normalisé: $decodedId");
-            
+            \Log::info("ID brut: $salarySlipId");
+            \Log::info("ID décodé: $decodedId");
+    
             $salarySlip = $this->payrollService->getSalarySlip($decodedId);
             
             if (!$salarySlip) {
-                \Log::warning("Fiche de paie non trouvée: $decodedId");
-                return redirect()->route('payroll.index')->withError('Fiche de paie non trouvée');
+                \Log::warning("Fiche de paie non trouvée pour ID: $decodedId");
+                return redirect()->route('payroll.index')->withError('Fiche de paie non trouvée ou accès non autorisé');
             }
-            
+    
             return view('payroll.salary-slip', compact('salarySlip'));
         } catch (\Exception $e) {
-            \Log::error("Erreur lors du chargement de la fiche de paie $salarySlipId: " . $e->getMessage());
-            return redirect()->route('payroll.index')->withError('Erreur lors du chargement de la fiche de paie: ' . $e->getMessage());
+            \Log::error("Erreur lors du chargement de la fiche de paie $decodedId: " . $e->getMessage());
+            return redirect()->route('payroll.index')->withError('Erreur lors du chargement de la fiche de paie: accès non autorisé ou erreur serveur');
         }
     }
 

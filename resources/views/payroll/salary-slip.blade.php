@@ -14,11 +14,6 @@
                             Fiche de Paie Détaillée
                         </h5>
                         <div class="d-flex gap-2">
-                            <a href="{{ route('payroll.salary-slip.pdf', $salarySlip['name']) }}" 
-                               class="btn btn-danger btn-sm">
-                                <i class="fas fa-file-pdf me-1"></i>
-                                Export PDF
-                            </a>
                             <a href="{{ route('payroll.employee.show', $salarySlip['employee']) }}" 
                                class="btn btn-light btn-sm">
                                 <i class="fas fa-arrow-left me-1"></i>
