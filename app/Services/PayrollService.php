@@ -83,7 +83,41 @@ class PayrollService
             throw new Exception("Erreur lors de la récupération des salaires: " . $e->getMessage());
         }
     }
-
+    /**
+ * Récupère les données complètes d'un employé pour un mois donné (pour export PDF)
+ */
+public function getEmployeeMonthlyData(string $employeeId, string $month): array
+{
+    try {
+        // Récupérer les fiches de paie du mois
+        $salarySlips = $this->getSalarySlipsForMonth($employeeId, $month);
+        
+        // Calculer les totaux
+        $totals = [
+            'total_gross_pay' => 0,
+            'total_deductions' => 0,
+            'total_net_pay' => 0,
+            'slips_count' => count($salarySlips)
+        ];
+        
+        foreach ($salarySlips as $slip) {
+            $totals['total_gross_pay'] += floatval($slip['gross_pay'] ?? 0);
+            $totals['total_deductions'] += floatval($slip['total_deduction'] ?? 0);
+            $totals['total_net_pay'] += floatval($slip['net_pay'] ?? 0);
+        }
+        
+        return [
+            'salary_slips' => $salarySlips,
+            'totals' => $totals,
+            'month' => $month,
+            'month_name' => Carbon::createFromFormat('Y-m', $month)->locale('fr')->translatedFormat('F Y')
+        ];
+        
+    } catch (Exception $e) {
+        throw new Exception("Erreur lors de la récupération des données mensuelles: " . $e->getMessage());
+    }
+}
+    
     /**
      * Récupére une fiche de paie spécifique
      */
