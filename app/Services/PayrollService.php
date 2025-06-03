@@ -83,73 +83,26 @@ class PayrollService
             throw new Exception("Erreur lors de la récupération des salaires: " . $e->getMessage());
         }
     }
-    /**
- * Récupère les données complètes d'un employé pour un mois donné (pour export PDF)
- */
-public function getEmployeeMonthlyData(string $employeeId, string $month): array
-{
-    try {
-        // Récupérer les fiches de paie du mois
-        $salarySlips = $this->getSalarySlipsForMonth($employeeId, $month);
-        
-        // Calculer les totaux
-        $totals = [
-            'total_gross_pay' => 0,
-            'total_deductions' => 0,
-            'total_net_pay' => 0,
-            'slips_count' => count($salarySlips)
-        ];
-        
-        foreach ($salarySlips as $slip) {
-            $totals['total_gross_pay'] += floatval($slip['gross_pay'] ?? 0);
-            $totals['total_deductions'] += floatval($slip['total_deduction'] ?? 0);
-            $totals['total_net_pay'] += floatval($slip['net_pay'] ?? 0);
-        }
-        
-        return [
-            'salary_slips' => $salarySlips,
-            'totals' => $totals,
-            'month' => $month,
-            'month_name' => Carbon::createFromFormat('Y-m', $month)->locale('fr')->translatedFormat('F Y')
-        ];
-        
-    } catch (Exception $e) {
-        throw new Exception("Erreur lors de la récupération des données mensuelles: " . $e->getMessage());
-    }
-}
-    
+
     /**
      * Récupére une fiche de paie spécifique
      */
     public function getSalarySlip(string $salarySlipId): ?array
-    {
-        try {
-            $salarySlip = $this->erpApiService->getResourceByName('Salary Slip', $salarySlipId);
-            
-            if ($salarySlip) {
-                // Récupére les détails des gains et déductions
-                $salarySlip['earnings'] = $this->erpApiService->getResource('Salary Detail', [
-                    'filters' => [
-                        ['parent', '=', $salarySlipId],
-                        ['parentfield', '=', 'earnings']
-                    ]
-                ]);
+{
+    try {
+        $salarySlip = $this->erpApiService->getResourceByName('Salary Slip', $salarySlipId, [
+            'params' => ['include_child_documents' => 'true']
+        ]);
 
-                $salarySlip['deductions'] = $this->erpApiService->getResource('Salary Detail', [
-                    'filters' => [
-                        ['parent', '=', $salarySlipId],
-                        ['parentfield', '=', 'deductions']
-                    ]
-                ]);
-
-                $salarySlip['employee_details'] = $this->getEmployee($salarySlip['employee']);
-            }
-
-            return $salarySlip;
-        } catch (Exception $e) {
-            return null;
+        if ($salarySlip) {
+            $salarySlip['employee_details'] = $this->getEmployee($salarySlip['employee']);
         }
+
+        return $salarySlip;
+    } catch (Exception $e) {
+        return null;
     }
+}
 
     /**
      * Récupére les fiches de paie pour un mois donné
