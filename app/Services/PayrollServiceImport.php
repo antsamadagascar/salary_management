@@ -149,7 +149,6 @@ class PayrollServiceImport
                     return false;
                 }
             } else {
-                // Créer un nouvel assignment pour cette période
                 $assignmentData = [
                     'employee' => $employeeRef,
                     'salary_structure' => $salaryStructure,
