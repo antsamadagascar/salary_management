@@ -212,11 +212,7 @@
                                                                            title="Voir détails">
                                                                             <i class="fas fa-eye"></i>
                                                                         </a>
-                                                                        <a href="{{ route('payroll.salary-slip.pdf', $slip['name']) }}" 
-                                                                           class="btn btn-outline-danger btn-sm" 
-                                                                           title="Export PDF">
-                                                                            <i class="fas fa-file-pdf"></i>
-                                                                        </a>
+
                                                                     </div>
                                                                 </td>
                                                             </tr>
