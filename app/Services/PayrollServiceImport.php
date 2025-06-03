@@ -50,6 +50,7 @@ class PayrollServiceImport
 
                     $employeeRef = $employee['name'];
 
+                    // CORRECTION 4: Utiliser le bon format de clé pour vérifier les doublons
                     $payrollKey = $this->generatePayrollKey($employeeRef, $month);
                     if (isset($existingPayrolls[$payrollKey])) {
                         $results['skipped']++;
@@ -63,16 +64,22 @@ class PayrollServiceImport
                         continue;
                     }
 
-                    // CORRECTION: Mettre à jour l'assignment avec le salaire de base AVANT de créer la fiche de paie
-                    $assignmentResult = $this->updateSalaryAssignment($employeeRef, $salaryStructureRef, $baseSalary, $month);
-                    if (!$assignmentResult) {
-                        $results['errors'][] = "Ligne {$lineNumber}: Échec de la mise à jour du salary assignment pour l'employé {$employeeRef}";
-                        continue;
-                    }
-
+                    // CORRECTION 5: S'assurer que Company existe
                     $companyName = isset($record['company']) && !empty(trim($record['company'])) 
                         ? trim($record['company']) 
                         : 'My Company';
+                    
+                    if (!$this->ensureCompanyExists($companyName)) {
+                        $results['errors'][] = "Ligne {$lineNumber}: Impossible de créer/trouver l'entreprise: {$companyName}";
+                        continue;
+                    }
+
+                    // Créer/Mettre à jour le Salary Structure Assignment
+                    $assignmentResult = $this->ensureSalaryAssignment($employeeRef, $salaryStructureRef, $baseSalary, $month, $companyName);
+                    if (!$assignmentResult) {
+                        $results['errors'][] = "Ligne {$lineNumber}: Échec de la création/mise à jour du salary assignment pour l'employé {$employeeRef}";
+                        continue;
+                    }
 
                     $payrollData = $this->preparePayrollData($record, $companyName, $employeeRef);
 
@@ -96,16 +103,36 @@ class PayrollServiceImport
         return $results;
     }
 
-    /**
-     * MÉTHODE CORRIGÉE: Met à jour le salary assignment avec le bon salaire de base
-     */
-    private function updateSalaryAssignment(string $employeeRef, string $salaryStructure, float $baseSalary, string $month): bool
+    // CORRECTION 6: Ajouter la méthode pour s'assurer que Company existe
+    private function ensureCompanyExists(string $companyName): bool
+    {
+        try {
+            if ($this->apiService->resourceExists("Company/{$companyName}")) {
+                return true;
+            }
+
+            $companyData = [
+                'company_name' => $companyName,
+                'abbr' => strtoupper(substr($companyName, 0, 3)),
+                'default_currency' => 'MGA',
+                'country' => 'Madagascar',
+            ];
+
+            return $this->apiService->createResource('Company', $companyData);
+        } catch (\Exception $e) {
+            Log::error("Erreur lors de la création de l'entreprise {$companyName}: " . $e->getMessage());
+            return false;
+        }
+    }
+
+    // CORRECTION 7: Renommer et améliorer la méthode pour gérer les Salary Structure Assignment
+    private function ensureSalaryAssignment(string $employeeRef, string $salaryStructure, float $baseSalary, string $month, string $companyName): bool
     {
         try {
             $payrollDate = Carbon::createFromFormat('d/m/Y', $month);
             $payrollDateStr = $payrollDate->format('Y-m-d');
             
-            // Chercher l'assignment existant pour cet employé et cette structure
+            // Chercher les assignments existants pour cet employé
             $assignments = $this->apiService->getResource('Salary Structure Assignment', [
                 'filters' => [
                     ['employee', '=', $employeeRef],
@@ -121,7 +148,6 @@ class PayrollServiceImport
                 $fromDate = $assignment['from_date'];
                 $toDate = $assignment['to_date'] ?? null;
                 
-                // Vérifier si l'assignment couvre la période de paie
                 if ($fromDate <= $payrollDateStr && (empty($toDate) || $toDate >= $payrollDateStr)) {
                     $validAssignment = $assignment;
                     break;
@@ -129,32 +155,40 @@ class PayrollServiceImport
             }
 
             if ($validAssignment) {
-                // Mettre à jour l'assignment existant avec le nouveau salaire de base
-                $updateData = [
-                    'base' => $baseSalary
-                ];
+                // Mettre à jour l'assignment existant si nécessaire
+                $updateData = [];
                 
-                // Si l'assignment n'est pas encore soumis, le soumettre
+                if ($validAssignment['base'] != $baseSalary) {
+                    $updateData['base'] = $baseSalary;
+                }
+                
                 if ($validAssignment['docstatus'] == 0) {
                     $updateData['docstatus'] = 1;
                 }
                 
-                $updated = $this->apiService->updateResource("Salary Structure Assignment/{$validAssignment['name']}", $updateData);
-                
-                if ($updated) {
-                    Log::info("Assignment mis à jour: {$validAssignment['name']} pour employé {$employeeRef}");
-                    return true;
+                if (!empty($updateData)) {
+                    $updated = $this->apiService->updateResource("Salary Structure Assignment/{$validAssignment['name']}", $updateData);
+                    
+                    if ($updated) {
+                        Log::info("Assignment mis à jour: {$validAssignment['name']} pour employé {$employeeRef}");
+                        return true;
+                    } else {
+                        Log::error("Échec de la mise à jour de l'assignment: {$validAssignment['name']}");
+                        return false;
+                    }
                 } else {
-                    Log::error("Échec de la mise à jour de l'assignment: {$validAssignment['name']}");
-                    return false;
+                    // Assignment déjà OK
+                    return true;
                 }
             } else {
+                // Créer un nouvel assignment
                 $assignmentData = [
                     'employee' => $employeeRef,
                     'salary_structure' => $salaryStructure,
+                    'company' => $companyName,
                     'from_date' => $payrollDateStr,
                     'base' => $baseSalary,
-                    'docstatus' => 1, // Directement soumis
+                    'docstatus' => 1,
                 ];
 
                 $assignmentName = $this->apiService->createResource('Salary Structure Assignment', $assignmentData);
@@ -168,21 +202,7 @@ class PayrollServiceImport
                 }
             }
         } catch (\Exception $e) {
-            Log::error("Erreur lors de la mise à jour du salary assignment pour {$employeeRef}: " . $e->getMessage());
-            return false;
-        }
-    }
-
-    private function companyExists(string $companyName): bool
-    {
-        try {
-            $companies = $this->apiService->getResource('Company', [
-                'filters' => [['name', '=', $companyName]],
-                'limit_page_length' => 1
-            ]);
-            return !empty($companies);
-        } catch (\Exception $e) {
-            Log::warning("Erreur lors de la vérification de l'existence de l'entreprise {$companyName}: " . $e->getMessage());
+            Log::error("Erreur lors de la gestion du salary assignment pour {$employeeRef}: " . $e->getMessage());
             return false;
         }
     }
@@ -193,7 +213,9 @@ class PayrollServiceImport
             $payrolls = $this->apiService->getResource('Salary Slip', ['limit_page_length' => 2000]);
             $existing = [];
             foreach ($payrolls as $payroll) {
-                $key = $this->generatePayrollKey($payroll['employee'], $payroll['payroll_period']);
+                // CORRECTION 8: Utiliser le bon champ pour la période
+                $period = $payroll['start_date'] ? Carbon::parse($payroll['start_date'])->format('Y-m') : $payroll['payroll_period'];
+                $key = $this->generatePayrollKey($payroll['employee'], $period);
                 $existing[$key] = true;
             }
             return $existing;
