@@ -54,7 +54,6 @@ Route::middleware([\App\Http\Middleware\FrappeAuthMiddleware::class])->group(fun
             ->name('salary-slip.show')
             ->where('salarySlipId', '.*');
 
-        
         Route::get('/employee/{employeeId}/month/{month}/pdf', [PayrollController::class, 'exportMonthlyPdf'])->name('employee.monthly.pdf');
         Route::get('/export/excel', [PayrollController::class, 'exportEmployeesExcel'])->name('export.excel');
     });
