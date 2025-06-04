@@ -29,23 +29,23 @@
                                     <td>{{ $employee['employee_name'] ?? 'N/A' }}</td>
                                 </tr>
                                 <tr>
-                                    <td><strong>Matricule:</strong></td>
+                                    <td><strong>Réference:</strong></td>
                                     <td><code>{{ $employee['employee_number'] ?? 'N/A' }}</code></td>
                                 </tr>
-                                <tr>
+                                <!-- <tr>
                                     <td><strong>Département:</strong></td>
                                     <td>
                                         <span class="badge bg-info">{{ $employee['department'] ?? 'N/A' }}</span>
                                     </td>
-                                </tr>
+                                </tr> -->
                             </table>
                         </div>
                         <div class="col-md-6">
                             <table class="table table-borderless">
-                                <tr>
+                                <!-- <tr>
                                     <td><strong>Poste:</strong></td>
                                     <td>{{ $employee['designation'] ?? 'N/A' }}</td>
-                                </tr>
+                                </tr> -->
                                 <tr>
                                     <td><strong>Entreprise:</strong></td>
                                     <td>{{ $employee['company'] ?? 'N/A' }}</td>
@@ -207,12 +207,11 @@
                                                                 </td>
                                                                 <td class="text-center">
                                                                     <div class="btn-group btn-group-sm">
-                                                                        <a href="{{ route('payroll.salary-slip.show', $slip['name']) }}" 
-                                                                           class="btn btn-outline-primary btn-sm" 
-                                                                           title="Voir détails">
+                                                                        <a href="{{ route('payroll.salary-slip.show', $slip['name']) }}"
+                                                                        class="btn btn-outline-primary btn-sm"
+                                                                        title="Voir détails">
                                                                             <i class="fas fa-eye"></i>
                                                                         </a>
-
                                                                     </div>
                                                                 </td>
                                                             </tr>

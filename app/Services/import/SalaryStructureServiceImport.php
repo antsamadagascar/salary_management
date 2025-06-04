@@ -1,13 +1,14 @@
 <?php
 
-namespace App\Services;
+namespace App\Services\import;
 
+use App\Services\ErpApiService;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Log;
 use League\Csv\Reader;
 use League\Csv\Exception as CsvException;
 
-class SalaryStructureService
+class SalaryStructureServiceImport
 {
     protected ErpApiService $apiService;
 
@@ -61,30 +62,6 @@ class SalaryStructureService
         }
 
         return $results;
-    }
-
-    public function previewFile(UploadedFile $file, string $type): array
-    {
-        $csv = Reader::createFromPath($file->getPathname(), 'r');
-        $csv->setHeaderOffset(0);
-        $headers = $csv->getHeader();
-        $records = iterator_to_array($csv->getRecords());
-        $preview = array_slice($records, 0, 5, true);
-
-        return [
-            'headers' => $headers,
-            'data' => $preview,
-            'total_rows' => count($records),
-            'type' => $type,
-        ];
-    }
-
-    public function checkDependencies(): array
-    {
-        return [
-            'salary_components' => [],
-            'salary_structures' => array_column($this->apiService->getResource('Salary Structure'), 'name'),
-        ];
     }
 
     private function ensureSalaryComponentExists(string $componentName, array $componentData): bool
@@ -164,17 +141,5 @@ class SalaryStructureService
         }
         return $valeur;
     }
-    
-    public function submitDocument(string $doctype, $nameOrId): bool
-    {
-        try {
-            $response = $this->apiService->updateResource("{$doctype}/{$nameOrId}", [
-                'docstatus' => 1
-            ]);
-            return $response !== false;
-        } catch (\Exception $e) {
-            Log::error("Failed to submit {$doctype} {$nameOrId}: " . $e->getMessage());
-            return false;
-        }
-    }
+
 }

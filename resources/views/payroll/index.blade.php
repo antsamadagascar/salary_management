@@ -55,10 +55,10 @@
                             <table class="table table-striped table-hover">
                                 <thead class="table-dark">
                                     <tr>
-                                        <th>Matricule</th>
+                                        <th>Réference</th>
                                         <th>Nom</th>
-                                        <th>Département</th>
-                                        <th>Poste</th>
+                                        <!--<th>Département</th>
+                                        <th>Poste</th> -->
                                         <th>Entreprise</th>
                                         <th class="text-center">Actions</th>
                                     </tr>
@@ -72,12 +72,12 @@
                                             <td>
                                                 <strong>{{ $employee['employee_name'] ?? 'N/A' }}</strong>
                                             </td>
-                                            <td>
+                                            <!-- <td>
                                                 <span class="badge bg-info">
                                                     {{ $employee['department'] ?? 'N/A' }}
                                                 </span>
                                             </td>
-                                            <td>{{ $employee['designation'] ?? 'N/A' }}</td>
+                                            <td>{{ $employee['designation'] ?? 'N/A' }}</td> -->
                                             <td>{{ $employee['company'] ?? 'N/A' }}</td>
                                             <td class="text-center">
                                                 <a href="{{ route('payroll.employee.show', $employee['name']) }}" 

@@ -50,8 +50,8 @@
                         @if($hasData)
                         <!-- Formulaire de confirmation -->
                         <form id="resetForm">
-                            @csrf
-                            <div class="mb-3">
+                             @csrf
+                            <!-- <div class="mb-3">
                                 <label class="form-label fw-bold">
                                     Pour confirmer la suppression, tapez exactement : 
                                     <code>CONFIRMER_SUPPRESSION</code>
@@ -63,17 +63,23 @@
                                        placeholder="Tapez ici pour confirmer..."
                                        required>
                                 <div class="invalid-feedback" id="confirmationError"></div>
-                            </div>
+                            </div>  -->
 
                             <div class="d-grid gap-2">
-                                <button type="submit" 
+                                <!-- <button type="submit" 
                                         class="btn btn-danger btn-lg" 
                                         id="resetBtn" 
                                         disabled>
                                     <i class="fas fa-trash"></i>
                                     SUPPRIMER TOUTES LES DONNÉES
+                                </button> -->
+                                <button type="submit" 
+                                        class="btn btn-danger btn-lg" 
+                                        id="resetBtn" 
+                                        >
+                                    <i class="fas fa-trash"></i>
+                                    SUPPRIMER TOUTES LES DONNÉES
                                 </button>
-                                
                                 <a href="{{ route('dashboard') }}" class="btn btn-secondary">
                                     <i class="fas fa-arrow-left"></i>
                                     Annuler et retourner au tableau de bord
@@ -105,21 +111,33 @@
             const resetForm = document.getElementById('resetForm');
             const resultsDiv = document.getElementById('results');
 
-            // Fonction pour obtenir le token CSRF
+            // Fonction pour vérifier l'état des données
+            function checkDataStatus() {
+                return fetch('{{ route("reset-data.check") }}', {
+                    method: 'GET',
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest',
+                        'X-CSRF-TOKEN': getCsrfToken()
+                    }
+                })
+                .then(response => response.json())
+                .then(data => {
+                    return data.total_records || 0;
+                })
+                .catch(() => 0);
+            }
+
             function getCsrfToken() {
-                // Essayer d'abord la balise meta
                 const metaToken = document.querySelector('meta[name="csrf-token"]');
                 if (metaToken) {
                     return metaToken.getAttribute('content');
                 }
                 
-                // Sinon, chercher dans le formulaire
                 const csrfInput = document.querySelector('input[name="_token"]');
                 if (csrfInput) {
                     return csrfInput.value;
                 }
                 
-                // En dernier recours, utiliser la variable globale Laravel
                 if (typeof window.Laravel !== 'undefined' && window.Laravel.csrfToken) {
                     return window.Laravel.csrfToken;
                 }
@@ -128,7 +146,25 @@
                 return null;
             }
 
-            // Activer/désactiver le bouton selon la saisie
+            // Fonction pour démarrer le rechargement automatique
+            function startAutoReload(message = 'La page va se recharger automatiquement') {
+                let countdown = 3;
+                const countdownElement = document.getElementById('autoReloadCountdown');
+                
+                const countdownInterval = setInterval(() => {
+                    if (countdownElement) {
+                        countdownElement.textContent = countdown;
+                    }
+                    countdown--;
+                    
+                    if (countdown < 0) {
+                        clearInterval(countdownInterval);
+                        window.location.reload();
+                    }
+                }, 1000);
+            }
+
+            // Active/désactive le bouton selon la saisie (seulement si l'input existe)
             if (confirmationInput) {
                 confirmationInput.addEventListener('input', function() {
                     const isValid = this.value === 'CONFIRMER_SUPPRESSION';
@@ -149,7 +185,8 @@
                 resetForm.addEventListener('submit', function(e) {
                     e.preventDefault();
                     
-                    if (confirmationInput.value !== 'CONFIRMER_SUPPRESSION') {
+                    // Vérifie la confirmation seulement si l'input existe
+                    if (confirmationInput && confirmationInput.value !== 'CONFIRMER_SUPPRESSION') {
                         alert('Veuillez confirmer la suppression correctement.');
                         return;
                     }
@@ -168,10 +205,16 @@
                     resetBtn.disabled = true;
                     resetBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Suppression en cours...';
 
-                    // Préparer les données pour l'envoi
+                    // Prépare les données pour l'envoi
                     const formData = new FormData();
                     formData.append('_token', csrfToken);
-                    formData.append('confirmation', confirmationInput.value);
+                    // Ajoute de confirmation seulement si l'input existe
+                    if (confirmationInput) {
+                        formData.append('confirmation', confirmationInput.value);
+                    } else {
+                        // Si pas d'input de confirmation, envoyer une valeur par défaut
+                        formData.append('confirmation', 'CONFIRMER_SUPPRESSION');
+                    }
 
                     // Envoi de la requête avec FormData
                     fetch('{{ route("reset-data.all") }}', {
@@ -181,11 +224,26 @@
                             'X-Requested-With': 'XMLHttpRequest'
                         }
                     })
-                    .then(response => {
-                        if (!response.ok) {
-                            throw new Error('Erreur HTTP: ' + response.status);
+                    .then(async response => {
+                        const contentType = response.headers.get('content-type');
+                        
+                        if (!contentType || !contentType.includes('application/json')) {
+                            throw new Error('Réponse non-JSON reçue du serveur');
                         }
-                        return response.json();
+                        
+                        const data = await response.json();
+                        
+                        // Vérifie si  le statut de la réponse ET le champ success
+                        if (!response.ok) {
+                            // Si c'est une erreur de validation (422)
+                            if (response.status === 422) {
+                                throw new Error(data.message || 'Erreur de validation');
+                            }
+                            // Autres erreurs serveur
+                            throw new Error(data.message || `Erreur serveur: ${response.status}`);
+                        }
+                        
+                        return data;
                     })
                     .then(data => {
                         resultsDiv.style.display = 'block';
@@ -195,33 +253,90 @@
                                 <div class="alert alert-success">
                                     <h5><i class="fas fa-check-circle"></i> Suppression réussie</h5>
                                     <p>${data.message}</p>
-                                    <details>
-                                        <summary>Détails des suppressions</summary>
-                                        <pre>${JSON.stringify(data.deleted_records, null, 2)}</pre>
-                                    </details>
+                                    ${data.deleted_records ? `
+                                        <details>
+                                            <summary>Détails des suppressions</summary>
+                                            <pre>${JSON.stringify(data.deleted_records, null, 2)}</pre>
+                                        </details>
+                                    ` : ''}
+                                    <div class="mt-3 p-2 bg-light rounded">
+                                        <small class="text-muted">
+                                            <i class="fas fa-sync fa-spin"></i> 
+                                            Rechargement automatique dans <span id="autoReloadCountdown">3</span> secondes...
+                                        </small>
+                                    </div>
                                 </div>
                             `;
                             
-                            // Masquer le formulaire
+                            // Masque le formulaire
                             resetForm.style.display = 'none';
+                            
+                            // Démarre le rechargement automatique
+                            startAutoReload();
                         } else {
                             resultsDiv.innerHTML = `
                                 <div class="alert alert-danger">
                                     <h5><i class="fas fa-exclamation-circle"></i> Erreur</h5>
                                     <p>${data.message}</p>
+                                    ${data.errors ? `
+                                        <ul>
+                                            ${Object.values(data.errors).flat().map(error => `<li>${error}</li>`).join('')}
+                                        </ul>
+                                    ` : ''}
                                 </div>
                             `;
                         }
                     })
-                    .catch(error => {
-                        console.error('Erreur:', error);
+                    .catch(async error => {
+                        console.error('Erreur complète:', error);
+                        
+                        // Vérifie si les données ont été supprimées malgré l'erreur
+                        const remainingRecords = await checkDataStatus();
+                        
                         resultsDiv.style.display = 'block';
-                        resultsDiv.innerHTML = `
-                            <div class="alert alert-danger">
-                                <h5><i class="fas fa-exclamation-circle"></i> Erreur réseau</h5>
-                                <p>Une erreur s'est produite lors de la suppression: ${error.message}</p>
-                            </div>
-                        `;
+                        
+                        if (remainingRecords === 0) {
+                            // Les données ont été supprimées avec succès malgré l'erreur
+                            resultsDiv.innerHTML = `
+                                <div class="alert alert-success">
+                                    <h5><i class="fas fa-check-circle"></i> Suppression réussie !</h5>
+                                    <p>Les données ont été supprimées avec succès.</p>
+                                    <small class="text-muted">
+                                        Une erreur technique s'est produite lors de la confirmation, 
+                                        mais l'opération a bien été effectuée.
+                                    </small>
+                                    <div class="mt-3 p-2 bg-light rounded">
+                                        <small class="text-muted">
+                                            <i class="fas fa-sync fa-spin"></i> 
+                                            Rechargement automatique dans <span id="autoReloadCountdown">3</span> secondes...
+                                        </small>
+                                    </div>
+                                </div>
+                            `;
+                            
+                            // Masque le formulaire
+                            resetForm.style.display = 'none';
+                            
+                            // Démarre le rechargement automatique
+                            startAutoReload();
+                            
+                        } else {
+                            resultsDiv.innerHTML = `
+                                <div class="alert alert-warning">
+                                    <h5><i class="fas fa-exclamation-triangle"></i> Erreur de suppression</h5>
+                                    <p>Une erreur s'est produite: ${error.message}</p>
+                                    <p>
+                                        <strong>Statut:</strong> ${remainingRecords} enregistrement(s) encore présent(s).
+                                        La suppression n'a pas été effectuée.
+                                    </p>
+                                    <div class="d-flex gap-2">
+                                        <button type="button" class="btn btn-primary" onclick="window.location.reload()">
+                                            <i class="fas fa-sync"></i> Actualiser la page
+                                        </button>
+                                    </div>
+                                </div>
+                            `;
+                        }
                     })
                     .finally(() => {
                         resetBtn.disabled = false;
