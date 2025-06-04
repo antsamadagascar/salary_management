@@ -50,8 +50,8 @@
                         @if($hasData)
                         <!-- Formulaire de confirmation -->
                         <form id="resetForm">
-                            @csrf
-                            <div class="mb-3">
+                             @csrf
+                            <!-- <div class="mb-3">
                                 <label class="form-label fw-bold">
                                     Pour confirmer la suppression, tapez exactement : 
                                     <code>CONFIRMER_SUPPRESSION</code>
@@ -63,17 +63,23 @@
                                        placeholder="Tapez ici pour confirmer..."
                                        required>
                                 <div class="invalid-feedback" id="confirmationError"></div>
-                            </div>
+                            </div>  -->
 
                             <div class="d-grid gap-2">
-                                <button type="submit" 
+                                <!-- <button type="submit" 
                                         class="btn btn-danger btn-lg" 
                                         id="resetBtn" 
                                         disabled>
                                     <i class="fas fa-trash"></i>
                                     SUPPRIMER TOUTES LES DONNÉES
+                                </button> -->
+                                <button type="submit" 
+                                        class="btn btn-danger btn-lg" 
+                                        id="resetBtn" 
+                                        >
+                                    <i class="fas fa-trash"></i>
+                                    SUPPRIMER TOUTES LES DONNÉES
                                 </button>
-                                
                                 <a href="{{ route('dashboard') }}" class="btn btn-secondary">
                                     <i class="fas fa-arrow-left"></i>
                                     Annuler et retourner au tableau de bord
@@ -107,19 +113,16 @@
 
             // Fonction pour obtenir le token CSRF
             function getCsrfToken() {
-                // Essayer d'abord la balise meta
                 const metaToken = document.querySelector('meta[name="csrf-token"]');
                 if (metaToken) {
                     return metaToken.getAttribute('content');
                 }
                 
-                // Sinon, chercher dans le formulaire
                 const csrfInput = document.querySelector('input[name="_token"]');
                 if (csrfInput) {
                     return csrfInput.value;
                 }
                 
-                // En dernier recours, utiliser la variable globale Laravel
                 if (typeof window.Laravel !== 'undefined' && window.Laravel.csrfToken) {
                     return window.Laravel.csrfToken;
                 }
@@ -128,7 +131,7 @@
                 return null;
             }
 
-            // Activer/désactiver le bouton selon la saisie
+            // Active/désactive le bouton selon la saisie (seulement si l'input existe)
             if (confirmationInput) {
                 confirmationInput.addEventListener('input', function() {
                     const isValid = this.value === 'CONFIRMER_SUPPRESSION';
@@ -149,7 +152,8 @@
                 resetForm.addEventListener('submit', function(e) {
                     e.preventDefault();
                     
-                    if (confirmationInput.value !== 'CONFIRMER_SUPPRESSION') {
+                    // Vérifie  la confirmation seulement si l'input existe
+                    if (confirmationInput && confirmationInput.value !== 'CONFIRMER_SUPPRESSION') {
                         alert('Veuillez confirmer la suppression correctement.');
                         return;
                     }
@@ -168,10 +172,16 @@
                     resetBtn.disabled = true;
                     resetBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Suppression en cours...';
 
-                    // Préparer les données pour l'envoi
+                    // Prépare les données pour l'envoi
                     const formData = new FormData();
                     formData.append('_token', csrfToken);
-                    formData.append('confirmation', confirmationInput.value);
+                    // Ajoute de confirmation seulement si l'input existe
+                    if (confirmationInput) {
+                        formData.append('confirmation', confirmationInput.value);
+                    } else {
+                        // Si pas d'input de confirmation, envoyer une valeur par défaut
+                        formData.append('confirmation', 'CONFIRMER_SUPPRESSION');
+                    }
 
                     // Envoi de la requête avec FormData
                     fetch('{{ route("reset-data.all") }}', {
@@ -202,7 +212,7 @@
                                 </div>
                             `;
                             
-                            // Masquer le formulaire
+                            // Masque le formulaire
                             resetForm.style.display = 'none';
                         } else {
                             resultsDiv.innerHTML = `
