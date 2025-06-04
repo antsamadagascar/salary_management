@@ -265,18 +265,19 @@
                 <div class="row mt-4">
                     <div class="col-12">
                         <div class="d-flex justify-content-between align-items-center">
-                            <div class="form-check">
+                            <!-- <div class="form-check">
                                 <input class="form-check-input" type="checkbox" id="confirmImport" required>
                                 <label class="form-check-label" for="confirmImport">
                                     Je confirme que les fichiers sont au bon format et prêts à être importés
                                 </label>
-                            </div>
+                            </div> -->
                             <div>
                                 <button type="button" class="btn btn-secondary me-2" onclick="window.history.back()">
                                     <i class="mdi mdi-arrow-left me-1"></i>
                                     Retour
                                 </button>
-                                <button type="submit" class="btn btn-primary" id="submitBtn" disabled>
+                                <!-- <button type="submit" class="btn btn-primary" id="submitBtn" disabled> -->
+                                <button type="submit" class="btn btn-primary" id="submitBtn" >
                                     <i class="mdi mdi-upload me-1"></i>
                                     <span id="submitText">Lancer l'import</span>
                                     <span id="submitSpinner" class="spinner-border spinner-border-sm ms-2" style="display: none;"></span>

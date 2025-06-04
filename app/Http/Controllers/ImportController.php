@@ -5,7 +5,6 @@ namespace App\Http\Controllers;
 use App\Services\import\EmployeeServiceImport;
 use App\Services\import\SalaryStructureServiceImport;
 use App\Services\import\PayrollServiceImport;
-use App\Services\import\ImportService;
 use App\Services\Erp;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
@@ -19,18 +18,15 @@ class ImportController extends Controller
     protected EmployeeServiceImport $employeeService;
     protected SalaryStructureServiceImport $salaryStructureService;
     protected PayrollServiceImport $payrollService;
-    protected ImportService $importService;
 
     public function __construct(
         EmployeeServiceImport $employeeService,
         SalaryStructureServiceImport $salaryStructureService,
         PayrollServiceImport $payrollService,
-        ImportService $importService
     ) {
         $this->employeeService = $employeeService;
         $this->salaryStructureService = $salaryStructureService;
         $this->payrollService = $payrollService;
-        $this->importService = $importService;
     }
 
     public function showImportForm()
@@ -105,30 +101,6 @@ class ImportController extends Controller
                 ->with('error', 'Import annulé: ' . $e->getMessage())
                 ->with('import_results', $results)
                 ->withInput();
-        }
-    }
-
-    public function previewFiles(Request $request)
-    {
-        $validator = Validator::make($request->all(), [
-            'file' => 'required|file|mimes:csv,txt',
-            'type' => 'required|in:' . implode(',', self::FILE_TYPES),
-        ]);
-
-        if ($validator->fails()) {
-            return response()->json(['error' => 'Fichier invalide'], 422);
-        }
-
-        try {
-            $service = $this->importService->getServiceForType($request->input('type'));
-            $preview = $service->previewFile($request->file('file'), $request->input('type'));
-            return response()->json(['data' => $preview]);
-        } catch (\Exception $e) {
-            Log::error('Erreur prévisualisation fichier', [
-                'message' => $e->getMessage(),
-                'type' => $request->input('type'),
-            ]);
-            return response()->json(['error' => 'Erreur lors de la prévisualisation: ' . $e->getMessage()], 500);
         }
     }
 }

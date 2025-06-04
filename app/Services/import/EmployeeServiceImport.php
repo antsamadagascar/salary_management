@@ -12,7 +12,6 @@ use Carbon\Carbon;
 class EmployeeServiceImport
 {
     private const REQUIRED_FIELDS = ['Ref', 'Nom', 'Prenom', 'genre', 'Date embauche', 'date naissance', 'company'];
-    private const VALID_GENDERS = ['Masculin', 'Feminin'];
 
     protected ErpApiService $apiService;
 
@@ -88,14 +87,6 @@ class EmployeeServiceImport
         return $results;
     }
 
-    public function checkDependencies(): array
-    {
-        return [
-            'companies' => array_column($this->apiService->getResource('Company'), 'name'),
-            'employees' => $this->getExistingEmployees(),
-        ];
-    }
-
     private function getExistingEmployees(): array
     {
         try {
@@ -140,7 +131,7 @@ class EmployeeServiceImport
             $companyData = [
                 'company_name' => $companyName,
                 'default_currency' => 'USD', //default currency
-                'country' => 'Madagascar',
+                'country' => 'Madagascar', //default country
                 'default_holiday_list' => 'Global Holiday List 2025' //hoilday list default
             ];
 
@@ -165,11 +156,6 @@ class EmployeeServiceImport
         } catch (\Exception $e) {
             return ['valid' => false, 'error' => "Ligne {$lineNumber}: Format de date invalide (attendu: jj/mm/aaaa)"];
         }
-        if (!in_array(trim($record['genre']), self::VALID_GENDERS)) {
-            return ['valid' => false, 'error' => "Ligne {$lineNumber}: Genre invalide (Masculin ou Feminin attendu)"];
-        }
-
-
         return ['valid' => true];
     }
 

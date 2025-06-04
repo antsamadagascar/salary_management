@@ -64,17 +64,12 @@ class PayrollServiceImport
             $processedRecords = [];
             $companyName = 'My Company'; // Valeur par défaut
             
-            if (!$this->ensureCompanyExists($companyName)) {
-                $results['errors'][] = "Impossible de créer/trouver l'entreprise: {$companyName}";
-                return $results;
-            }
-            
             // Chargement des fiches de paie existantes UNE SEULE FOIS au début
             $existingPayrolls = $this->getExistingPayrolls();
             Log::info("Fiches de paie existantes chargées: " . count($existingPayrolls));
             
             foreach ($validRecords as $validRecord) {
-                $employee = $this->findOrCreateEmployee($validRecord['employeeNumber']);
+                $employee = $this->findEmployee($validRecord['employeeNumber']);
                 if (!$employee) {
                     $results['errors'][] = "Ligne {$validRecord['line']}: Employé non trouvé et impossible à créer: {$validRecord['employeeNumber']}";
                     continue;
@@ -158,44 +153,23 @@ class PayrollServiceImport
         return $results;
     }
 
-    private function findOrCreateEmployee(string $employeeNumber): ?array
+    private function findEmployee(string $employeeNumber): ?array
     {
         try {
-            // D'abord on essaye de trouver l'employé existant
             $employee = $this->findEmployeeByNumber($employeeNumber);
             if ($employee) {
                 Log::info("Employé trouvé: {$employee['name']} (numéro: {$employeeNumber})");
                 return $employee;
             }
 
-            // Si pas trouvé, on crée un nouvel employé
-            Log::info("Création d'un nouvel employé avec le numéro: {$employeeNumber}");
-            
-            $employeeData = [
-                'employee_name' => "Employee {$employeeNumber}",
-                'employee_number' => $employeeNumber,
-                'first_name' => "Employee",
-                'last_name' => $employeeNumber,
-                'company' => 'My Company',
-                'status' => 'Active',
-                'date_of_joining' => date('Y-m-d'),
-            ];
-
-            $createdEmployeeName = $this->apiService->createResource('Employee', $employeeData);
-            
-            if ($createdEmployeeName) {
-                Log::info("Employé créé avec succès: {$createdEmployeeName}");
-                // Récupére l'employé créé
-                return $this->findEmployeeByNumber($employeeNumber);
-            }
-
-            Log::error("Échec de la création de l'employé: {$employeeNumber}");
+            Log::warning("Aucun employé trouvé pour le numéro: {$employeeNumber}");
             return null;
         } catch (\Exception $e) {
-            Log::error("Erreur lors de la création/recherche de l'employé {$employeeNumber}: " . $e->getMessage());
+            Log::error("Erreur lors de la recherche de l'employé {$employeeNumber}: " . $e->getMessage());
             return null;
         }
     }
+
 
     private function createSalaryAssignment(string $employeeRef, string $salaryStructure, float $baseSalary, string $month, string $companyName): bool
     {
@@ -264,31 +238,6 @@ class PayrollServiceImport
             
         } catch (\Exception $e) {
             Log::error("Erreur lors de la création du salary assignment pour {$employeeRef}: " . $e->getMessage());
-            return false;
-        }
-    }
-
-    private function ensureCompanyExists(string $companyName): bool
-    {
-        try {
-            if ($this->apiService->resourceExists("Company/{$companyName}")) {
-                Log::info("Company existe déjà: {$companyName}");
-                return true;
-            }
-
-            Log::info("Création de la company: {$companyName}");
-            $companyData = [
-                'company_name' => $companyName,
-                'abbr' => strtoupper(substr($companyName, 0, 3)),
-                'default_currency' => 'MGA',
-                'country' => 'Madagascar',
-            ];
-
-            $result = $this->apiService->createResource('Company', $companyData);
-            Log::info("Company créée: " . ($result ? 'Succès' : 'Échec'));
-            return $result;
-        } catch (\Exception $e) {
-            Log::error("Erreur lors de la création de l'entreprise {$companyName}: " . $e->getMessage());
             return false;
         }
     }
@@ -400,24 +349,5 @@ class PayrollServiceImport
         Log::info("Données fiche de paie préparées - Employé: {$employeeRef}, Période: {$payrollDate->format('Y-m')}, Posting Date: {$postingDate}");
         
         return $data;
-    }
-
-    public function checkDependencies(): array
-    {
-        try {
-            $employees = $this->apiService->getResource('Employee', ['limit_page_length' => 1000]);
-            $salaryStructures = $this->apiService->getResource('Salary Structure', ['limit_page_length' => 100]);
-            
-            return [
-                'employees' => array_column($employees, 'employee_number'),
-                'salary_structures' => array_column($salaryStructures, 'name'),
-            ];
-        } catch (\Exception $e) {
-            Log::error("Erreur lors de la vérification des dépendances: " . $e->getMessage());
-            return [
-                'employees' => [],
-                'salary_structures' => [],
-            ];
-        }
     }
 }
