@@ -2,10 +2,11 @@
 
 namespace App\Http\Controllers;
 
-use App\Services\CompanyEmployeeService;
-use App\Services\SalaryStructureService;
-use App\Services\ImportService;
-use App\Services\PayrollServiceImport;
+use App\Services\import\EmployeeServiceImport;
+use App\Services\import\SalaryStructureServiceImport;
+use App\Services\import\PayrollServiceImport;
+use App\Services\import\ImportService;
+use App\Services\Erp;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\DB;
@@ -15,18 +16,18 @@ class ImportController extends Controller
 {
     private const FILE_TYPES = ['employees', 'salary_structure', 'payroll'];
 
-    protected CompanyEmployeeService $companyEmployeeService;
-    protected SalaryStructureService $salaryStructureService;
+    protected EmployeeServiceImport $employeeService;
+    protected SalaryStructureServiceImport $salaryStructureService;
     protected PayrollServiceImport $payrollService;
     protected ImportService $importService;
 
     public function __construct(
-        CompanyEmployeeService $companyEmployeeService,
-        SalaryStructureService $salaryStructureService,
+        EmployeeServiceImport $employeeService,
+        SalaryStructureServiceImport $salaryStructureService,
         PayrollServiceImport $payrollService,
         ImportService $importService
     ) {
-        $this->companyEmployeeService = $companyEmployeeService;
+        $this->employeeService = $employeeService;
         $this->salaryStructureService = $salaryStructureService;
         $this->payrollService = $payrollService;
         $this->importService = $importService;
@@ -71,7 +72,7 @@ class ImportController extends Controller
 
         try {
             $importMethods = [
-                'employees' => fn() => $this->companyEmployeeService->import($request->file('employees_file')),
+                'employees' => fn() => $this->employeeService->import($request->file('employees_file')),
                 'salary_structure' => fn() => $this->salaryStructureService->import($request->file('salary_structure_file')),
                 'payroll' => fn() => $this->payrollService->import($request->file('payroll_file')),
             ];

@@ -1,14 +1,15 @@
 <?php
 
-namespace App\Services;
+namespace App\Services\import;
 
+use App\Services\ErpApiService;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Log;
 use League\Csv\Reader;
 use League\Csv\Exception as CsvException;
 use Carbon\Carbon;
 
-class CompanyEmployeeService
+class EmployeeServiceImport
 {
     private const REQUIRED_FIELDS = ['Ref', 'Nom', 'Prenom', 'genre', 'Date embauche', 'date naissance', 'company'];
     private const VALID_GENDERS = ['Masculin', 'Feminin'];
