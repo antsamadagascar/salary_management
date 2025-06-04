@@ -2,3 +2,6 @@ salary structure,name,Abbr,type,valeur,company
 gasy1,Salaire Base,SB,earning,base,My Company
 gasy1,Indemnité,IND,earning,SB * 0.3,My Company
 gasy1,Taxe sociale,TS,deduction,(SB + IND) * 0.2,My Company
+gasy2,Salaire Base,SB,earning,base,My Company
+gasy2,Bonus mensuel,BON,earning,SB * 0.15,My Company
+gasy2,Cotisation retraite,RET,deduction,(SB + BON) * 0.1,My Company

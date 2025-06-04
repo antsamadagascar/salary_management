@@ -1,475 +1,295 @@
 @extends('layouts.app')
 
 @section('content')
-<div class="container-fluid">
-    <div class="row">
-        <div class="col-12">
-            <div class="page-title-box d-sm-flex align-items-center justify-content-between">
-                <h4 class="mb-sm-0">Import des données RH</h4>
-                <div class="page-title-right">
-                    <ol class="breadcrumb m-0">
-                        <li class="breadcrumb-item"><a href="{{ route('dashboard') }}">Dashboard</a></li>
-                        <li class="breadcrumb-item active">Import</li>
-                    </ol>
+<div class="container">
+    <div class="row justify-content-center">
+        <div class="col-md-10">
+            <div class="card">
+                <div class="card-header">
+                    <h4>Import des fichiers</h4>
                 </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Messages de succès/erreur -->
-    @if(session('success'))
-        <div class="alert alert-success alert-dismissible fade show" role="alert">
-            <i class="mdi mdi-check-circle-outline me-2"></i>
-            {{ session('success') }}
-            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-        </div>
-    @endif
-
-    @if(session('error'))
-        <div class="alert alert-danger alert-dismissible fade show" role="alert">
-            <i class="mdi mdi-alert-circle-outline me-2"></i>
-            {{ session('error') }}
-            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-        </div>
-    @endif
-
-    @if($errors->any())
-        <div class="alert alert-danger alert-dismissible fade show" role="alert">
-            <i class="mdi mdi-alert-circle-outline me-2"></i>
-            <strong>Erreurs de validation:</strong>
-            <ul class="mb-0 mt-2">
-                @foreach($errors->all() as $error)
-                    <li>{{ $error }}</li>
-                @endforeach
-            </ul>
-            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-        </div>
-    @endif
-
-    <!-- Résultats d'import -->
-    @if(session('import_results'))
-        <div class="card mb-4">
-            <div class="card-header">
-                <h5 class="card-title mb-0">Résultats de l'import</h5>
-            </div>
-            <div class="card-body">
-                @php $results = session('import_results'); @endphp
-                
-                <div class="row">
-                    <div class="col-md-4">
-                        <div class="card border-primary">
-                            <div class="card-body text-center">
-                                <i class="mdi mdi-account-multiple text-primary display-4"></i>
-                                <h5 class="mt-2">Employés</h5>
-                                <p class="text-success mb-1">{{ $results['employees']['success'] }} importés</p>
-                                @if(count($results['employees']['errors']) > 0)
-                                    <p class="text-danger mb-0">{{ count($results['employees']['errors']) }} erreurs</p>
-                                @endif
-                            </div>
-                        </div>
-                    </div>
+                <div class="card-body">
                     
-                    <div class="col-md-4">
-                        <div class="card border-info">
-                            <div class="card-body text-center">
-                                <i class="mdi mdi-currency-usd text-info display-4"></i>
-                                <h5 class="mt-2">Structure Salariale</h5>
-                                <p class="text-success mb-1">{{ $results['salary_structure']['success'] }} importées</p>
-                                @if(count($results['salary_structure']['errors']) > 0)
-                                    <p class="text-danger mb-0">{{ count($results['salary_structure']['errors']) }} erreurs</p>
-                                @endif
+                    {{-- Zone des messages (sera mise à jour via AJAX) --}}
+                    <div id="messages-container">
+                        {{-- Messages de succès --}}
+                        @if(session('success'))
+                            <div class="alert alert-success alert-dismissible fade show" role="alert">
+                                <strong>Succès !</strong> {{ session('success') }}
+                                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
                             </div>
-                        </div>
-                    </div>
-                    
-                    <div class="col-md-4">
-                        <div class="card border-warning">
-                            <div class="card-body text-center">
-                                <i class="mdi mdi-file-document text-warning display-4"></i>
-                                <h5 class="mt-2">Données de Paie</h5>
-                                <p class="text-success mb-1">{{ $results['payroll']['success'] }} importées</p>
-                                @if(count($results['payroll']['errors']) > 0)
-                                    <p class="text-danger mb-0">{{ count($results['payroll']['errors']) }} erreurs</p>
-                                @endif
-                            </div>
-                        </div>
-                    </div>
-                </div>
+                        @endif
 
-                <!-- Détail des erreurs -->
-                @php 
-                    $allErrors = array_merge(
-                        $results['employees']['errors'],
-                        $results['salary_structure']['errors'],
-                        $results['payroll']['errors']
-                    );
-                @endphp
-                
-                @if(count($allErrors) > 0)
-                    <div class="mt-4">
-                        <button class="btn btn-outline-danger" type="button" data-bs-toggle="collapse" data-bs-target="#errorDetails">
-                            Voir les erreurs ({{ count($allErrors) }})
-                        </button>
-                        <div class="collapse mt-3" id="errorDetails">
-                            <div class="card border-danger">
-                                <div class="card-body">
-                                    <ul class="list-unstyled mb-0">
-                                        @foreach($allErrors as $error)
-                                            <li class="text-danger mb-1">
-                                                <i class="mdi mdi-alert-circle-outline me-1"></i>
-                                                {{ $error }}
-                                            </li>
-                                        @endforeach
-                                    </ul>
+                        {{-- Messages d'erreur généraux --}}
+                        @if(session('error'))
+                            <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                                <strong>Erreur !</strong> {{ session('error') }}
+                                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                            </div>
+                        @endif
+
+                        {{-- Erreurs de validation détaillées --}}
+                        @if(session('validation_errors'))
+                            <div class="alert alert-danger">
+                                <h5><i class="fas fa-exclamation-triangle"></i> Erreurs de validation détaillées :</h5>
+                                
+                                @foreach(session('validation_errors') as $fileType => $fileErrors)
+                                    <div class="mb-3">
+                                        <h6 class="text-danger">
+                                            <strong>📄 Fichier {{ ucfirst(str_replace('_', ' ', $fileType)) }} :</strong>
+                                        </h6>
+                                        
+                                        <div class="card border-danger">
+                                            <div class="card-body p-2">
+                                                <ul class="mb-0 list-unstyled">
+                                                    @foreach($fileErrors as $error)
+                                                        <li class="mb-1">
+                                                            <i class="fas fa-times-circle text-danger"></i>
+                                                            <span class="ms-2">{{ $error }}</span>
+                                                        </li>
+                                                    @endforeach
+                                                </ul>
+                                            </div>
+                                        </div>
+                                    </div>
+                                @endforeach
+                                
+                                <div class="mt-3 p-2 bg-light border-left border-warning">
+                                    <small class="text-muted">
+                                        <i class="fas fa-info-circle"></i>
+                                        <strong>Note :</strong> Tous les fichiers doivent être valides avant de pouvoir procéder à l'import.
+                                    </small>
                                 </div>
                             </div>
+                        @endif
+
+                        {{-- Erreurs de validation Laravel --}}
+                        @if($errors->any())
+                            <div class="alert alert-danger">
+                                <h5><i class="fas fa-exclamation-triangle"></i> Erreurs de fichiers :</h5>
+                                <ul class="mb-0">
+                                    @foreach($errors->all() as $error)
+                                        <li>{{ $error }}</li>
+                                    @endforeach
+                                </ul>
+                            </div>
+                        @endif
+
+                        {{-- Résultats d'import --}}
+                        @if(session('import_results'))
+                            <div class="alert alert-info">
+                                <h5><i class="fas fa-chart-bar"></i> Résultats de l'import :</h5>
+                                
+                                @foreach(session('import_results') as $fileType => $result)
+                                    <div class="mb-2">
+                                        <strong>{{ ucfirst(str_replace('_', ' ', $fileType)) }} :</strong>
+                                        <span class="badge bg-success">{{ $result['success'] ?? 0 }} succès</span>
+                                        
+                                        @if(!empty($result['errors']))
+                                            <span class="badge bg-danger">{{ count($result['errors']) }} erreurs</span>
+                                            <div class="mt-1">
+                                                <small class="text-danger">
+                                                    @foreach($result['errors'] as $error)
+                                                        <div>• {{ $error }}</div>
+                                                    @endforeach
+                                                </small>
+                                            </div>
+                                        @endif
+                                    </div>
+                                @endforeach
+                            </div>
+                        @endif
+                    </div>
+
+                    {{-- Spinner de chargement (caché par défaut) --}}
+                    <div id="loading-spinner" class="text-center py-4" style="display: none;">
+                        <div class="spinner-border text-primary" role="status" style="width: 3rem; height: 3rem;">
+                            <span class="visually-hidden">Chargement...</span>
+                        </div>
+                        <div class="mt-3">
+                            <h5 class="text-primary">Import en cours...</h5>
+                            <p class="text-muted">Veuillez patienter pendant le traitement des fichiers</p>
                         </div>
                     </div>
-                @endif
-            </div>
-        </div>
-    @endif
 
-    <!-- Formulaire d'import -->
-    <div class="card">
-        <div class="card-header">
-            <h5 class="card-title mb-0">
-                <i class="mdi mdi-upload me-2"></i>
-                Import des fichiers CSV
-            </h5>
-        </div>
-        <div class="card-body">
-            <form action="{{ route('import.process') }}" method="POST" enctype="multipart/form-data" id="importForm">
-                @csrf
-                
-                <div class="row">
-                    <!-- Fichier Employés -->
-                    <div class="col-md-4">
-                        <div class="card border-primary">
-                            <div class="card-header bg-primary text-white">
-                                <h6 class="mb-0">
-                                    <i class="mdi mdi-account-multiple me-2"></i>
-                                    Fichier Employés
-                                </h6>
+                    {{-- Formulaire d'upload --}}
+                    <form id="import-form" method="POST" action="{{ route('import.process') }}" enctype="multipart/form-data">
+                        @csrf
+                        
+                        <div class="row">
+                            {{-- Fichier Employés --}}
+                            <div class="col-md-4 mb-3">
+                                <div class="card h-100">
+                                    <div class="card-header bg-primary text-white">
+                                        <h6 class="mb-0"><i class="fas fa-users"></i> Employés</h6>
+                                    </div>
+                                    <div class="card-body">
+                                        <label for="employees_file" class="form-label">Fichier des employés</label>
+                                        <input type="file" 
+                                               class="form-control @error('employees_file') is-invalid @enderror" 
+                                               id="employees_file" 
+                                               name="employees_file" 
+                                               accept=".csv,.txt"
+                                               >
+                                        
+                                        <small class="form-text text-muted mt-2">
+                                            <strong>Colonnes attendues :</strong><br>
+                                            Ref, Nom, Prenom, genre, Date embauche, date naissance, company
+                                        </small>
+                                        
+                                        @error('employees_file')
+                                            <div class="invalid-feedback">{{ $message }}</div>
+                                        @enderror
+                                    </div>
+                                </div>
                             </div>
-                            <div class="card-body">
-                                <div class="mb-3">
-                                    <label for="employees_file" class="form-label">Sélectionner le fichier CSV</label>
-                                    <input type="file" 
-                                           class="form-control @error('employees_file') is-invalid @enderror" 
-                                           id="employees_file" 
-                                           name="employees_file" 
-                                           accept=".csv,.txt"
-                                           data-type="employees">
-                                    @error('employees_file')
-                                        <div class="invalid-feedback">{{ $message }}</div>
-                                    @enderror
+
+                            {{-- Fichier Structure Salariale --}}
+                            <div class="col-md-4 mb-3">
+                                <div class="card h-100">
+                                    <div class="card-header bg-success text-white">
+                                        <h6 class="mb-0"><i class="fas fa-money-bill"></i> Structure Salariale</h6>
+                                    </div>
+                                    <div class="card-body">
+                                        <label for="salary_structure_file" class="form-label">Fichier structure salariale</label>
+                                        <input type="file" 
+                                               class="form-control @error('salary_structure_file') is-invalid @enderror" 
+                                               id="salary_structure_file" 
+                                               name="salary_structure_file" 
+                                               accept=".csv,.txt"
+                                               >
+                                        
+                                        <small class="form-text text-muted mt-2">
+                                            <strong>Colonnes attendues :</strong><br>
+                                            salary structure, name, Abbr, type, valeur, company
+                                        </small>
+                                        
+                                        @error('salary_structure_file')
+                                            <div class="invalid-feedback">{{ $message }}</div>
+                                        @enderror
+                                    </div>
                                 </div>
-                                <div class="text-muted small">
-                                    <strong>Format attendu:</strong><br>
-                                    Ref, Nom, Prenom, genre, Date embauche, date naissance, company
-                                </div>
-                                <div id="employees_preview" class="mt-3" style="display: none;">
-                                    <h6>Aperçu:</h6>
-                                    <div class="table-responsive">
-                                        <table class="table table-sm table-bordered">
-                                            <thead id="employees_headers"></thead>
-                                            <tbody id="employees_data"></tbody>
-                                        </table>
+                            </div>
+
+                            {{-- Fichier Paie --}}
+                            <div class="col-md-4 mb-3">
+                                <div class="card h-100">
+                                    <div class="card-header bg-warning text-dark">
+                                        <h6 class="mb-0"><i class="fas fa-calculator"></i> Paie</h6>
+                                    </div>
+                                    <div class="card-body">
+                                        <label for="payroll_file" class="form-label">Fichier de paie</label>
+                                        <input type="file" 
+                                               class="form-control @error('payroll_file') is-invalid @enderror" 
+                                               id="payroll_file" 
+                                               name="payroll_file" 
+                                               accept=".csv,.txt"
+                                               >
+                                        
+                                        <small class="form-text text-muted mt-2">
+                                            <strong>Colonnes attendues :</strong><br>
+                                            Mois, Ref Employe, Salaire Base, Salaire
+                                        </small>
+                                        
+                                        @error('payroll_file')
+                                            <div class="invalid-feedback">{{ $message }}</div>
+                                        @enderror
                                     </div>
                                 </div>
                             </div>
                         </div>
-                    </div>
 
-                    <!-- Fichier Structure Salariale -->
-                    <div class="col-md-4">
-                        <div class="card border-info">
-                            <div class="card-header bg-info text-white">
-                                <h6 class="mb-0">
-                                    <i class="mdi mdi-currency-usd me-2"></i>
-                                    Structure Salariale
-                                </h6>
-                            </div>
-                            <div class="card-body">
-                                <div class="mb-3">
-                                    <label for="salary_structure_file" class="form-label">Sélectionner le fichier CSV</label>
-                                    <input type="file" 
-                                           class="form-control @error('salary_structure_file') is-invalid @enderror" 
-                                           id="salary_structure_file" 
-                                           name="salary_structure_file" 
-                                           accept=".csv,.txt"
-                                           data-type="salary_structure">
-                                    @error('salary_structure_file')
-                                        <div class="invalid-feedback">{{ $message }}</div>
-                                    @enderror
-                                </div>
-                                <div class="text-muted small">
-                                    <strong>Format attendu:</strong><br>
-                                    salary structure, name, Abbr, type, valeur, Remarque
-                                </div>
-                                <div id="salary_structure_preview" class="mt-3" style="display: none;">
-                                    <h6>Aperçu:</h6>
-                                    <div class="table-responsive">
-                                        <table class="table table-sm table-bordered">
-                                            <thead id="salary_structure_headers"></thead>
-                                            <tbody id="salary_structure_data"></tbody>
-                                        </table>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Fichier Données de Paie -->
-                    <div class="col-md-4">
-                        <div class="card border-warning">
-                            <div class="card-header bg-warning text-white">
-                                <h6 class="mb-0">
-                                    <i class="mdi mdi-file-document me-2"></i>
-                                    Données de Paie
-                                </h6>
-                            </div>
-                            <div class="card-body">
-                                <div class="mb-3">
-                                    <label for="payroll_file" class="form-label">Sélectionner le fichier CSV</label>
-                                    <input type="file" 
-                                           class="form-control @error('payroll_file') is-invalid @enderror" 
-                                           id="payroll_file" 
-                                           name="payroll_file" 
-                                           accept=".csv,.txt"
-                                           data-type="payroll">
-                                    @error('payroll_file')
-                                        <div class="invalid-feedback">{{ $message }}</div>
-                                    @enderror
-                                </div>
-                                <div class="text-muted small">
-                                    <strong>Format attendu:</strong><br>
-                                    Mois, Ref Employe, Salaire Base, Salaire
-                                </div>
-                                <div id="payroll_preview" class="mt-3" style="display: none;">
-                                    <h6>Aperçu:</h6>
-                                    <div class="table-responsive">
-                                        <table class="table table-sm table-bordered">
-                                            <thead id="payroll_headers"></thead>
-                                            <tbody id="payroll_data"></tbody>
-                                        </table>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Actions -->
-                <div class="row mt-4">
-                    <div class="col-12">
-                        <div class="d-flex justify-content-between align-items-center">
-                            <!-- <div class="form-check">
-                                <input class="form-check-input" type="checkbox" id="confirmImport" required>
-                                <label class="form-check-label" for="confirmImport">
-                                    Je confirme que les fichiers sont au bon format et prêts à être importés
-                                </label>
-                            </div> -->
-                            <div>
-                                <button type="button" class="btn btn-secondary me-2" onclick="window.history.back()">
-                                    <i class="mdi mdi-arrow-left me-1"></i>
-                                    Retour
-                                </button>
-                                <!-- <button type="submit" class="btn btn-primary" id="submitBtn" disabled> -->
-                                <button type="submit" class="btn btn-primary" id="submitBtn" >
-                                    <i class="mdi mdi-upload me-1"></i>
-                                    <span id="submitText">Lancer l'import</span>
-                                    <span id="submitSpinner" class="spinner-border spinner-border-sm ms-2" style="display: none;"></span>
+                        {{-- Bouton de soumission --}}
+                        <div class="row mt-4">
+                            <div class="col-12 text-center">
+                                <button type="submit" id="submit-btn" class="btn btn-primary btn-lg">
+                                    <i class="fas fa-upload"></i> Lancer l'import
                                 </button>
                             </div>
                         </div>
-                    </div>
-                </div>
-            </form>
-        </div>
-    </div>
 
-    <!-- Instructions -->
-    <div class="card mt-4">
-        <div class="card-header">
-            <h5 class="card-title mb-0">
-                <i class="mdi mdi-information-outline me-2"></i>
-                Instructions d'import
-            </h5>
-        </div>
-        <div class="card-body">
-            <div class="row">
-                <div class="col-md-6">
-                    <h6 class="text-primary">Format des fichiers CSV</h6>
-                    <ul class="list-unstyled">
-                        <li class="mb-2">
-                            <i class="mdi mdi-check-circle text-success me-2"></i>
-                            Encodage UTF-8 recommandé
-                        </li>
-                        <li class="mb-2">
-                            <i class="mdi mdi-check-circle text-success me-2"></i>
-                            Séparateur : virgule (,)
-                        </li>
-                        <li class="mb-2">
-                            <i class="mdi mdi-check-circle text-success me-2"></i>
-                            Première ligne : en-têtes de colonnes
-                        </li>
-                        <li class="mb-2">
-                            <i class="mdi mdi-check-circle text-success me-2"></i>
-                            Format des dates : jj/mm/aaaa
-                        </li>
-                    </ul>
-                </div>
-                <div class="col-md-6">
-                    <h6 class="text-warning">Points d'attention</h6>
-                    <ul class="list-unstyled">
-                        <li class="mb-2">
-                            <i class="mdi mdi-alert-circle text-warning me-2"></i>
-                            Vérifiez que tous les champs obligatoires sont remplis
-                        </li>
-                        <li class="mb-2">
-                            <i class="mdi mdi-alert-circle text-warning me-2"></i>
-                            Les données existantes seront mises à jour
-                        </li>
-                        <li class="mb-2">
-                            <i class="mdi mdi-alert-circle text-warning me-2"></i>
-                            L'import se fait dans l'ordre : Employés → Structure → Paie
-                        </li>
-                        <li class="mb-2">
-                            <i class="mdi mdi-alert-circle text-warning me-2"></i>
-                            En cas d'erreur, toutes les modifications sont annulées
-                        </li>
-                    </ul>
+                        {{-- Aide --}}
+                        <div class="row mt-4">
+                            <div class="col-12">
+                                <div class="card bg-light">
+                                    <div class="card-body">
+                                        <h6><i class="fas fa-info-circle"></i> Instructions :</h6>
+                                        <ul class="mb-0">
+                                            <li>Tous les fichiers doivent être au format CSV</li>
+                                            <li>Les dates doivent être au format DD/MM/YYYY</li>
+                                            <li>Les fichiers doivent contenir les colonnes exactes mentionnées ci-dessus</li>
+                                            <li>L'import est "tout ou rien" : si un fichier contient des erreurs, aucun import ne sera effectué</li>
+                                        </ul>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </form>
                 </div>
             </div>
         </div>
     </div>
 </div>
-@endsection
 
-@section('scripts')
+{{-- Script simple pour le spinner --}}
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    const form = document.getElementById('importForm');
-    const submitBtn = document.getElementById('submitBtn');
-    const submitText = document.getElementById('submitText');
-    const submitSpinner = document.getElementById('submitSpinner');
-    const confirmCheckbox = document.getElementById('confirmImport');
-    const fileInputs = document.querySelectorAll('input[type="file"]');
-
-    confirmCheckbox.addEventListener('change', function() {
-        submitBtn.disabled = !this.checked;
-    });
-
-
-    fileInputs.forEach(function(input) {
-        input.addEventListener('change', function() {
-            if (this.files.length > 0) {
-                previewFile(this.files[0], this.dataset.type);
-            }
-        });
-    });
+    const form = document.getElementById('import-form');
+    const submitBtn = document.getElementById('submit-btn');
+    const spinner = document.getElementById('loading-spinner');
+    const messagesContainer = document.getElementById('messages-container');
 
     form.addEventListener('submit', function(e) {
+        // Affiche le spinner et masquer les messages précédents
+        spinner.style.display = 'block';
+        messagesContainer.style.display = 'none';
+        
+        // Désactivation du bouton de soumission
         submitBtn.disabled = true;
-        submitText.textContent = 'Import en cours...';
-        submitSpinner.style.display = 'inline-block';
+        submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Import en cours...';
+        
+        // Faire défiler vers le spinner
+        spinner.scrollIntoView({ behavior: 'smooth' });
+        
+    });
 
-        let hasAllFiles = true;
-        fileInputs.forEach(function(input) {
-            if (!input.files.length) {
-                hasAllFiles = false;
-            }
-        });
-
-        if (!hasAllFiles) {
-            e.preventDefault();
-            alert('Veuillez sélectionner tous les fichiers requis.');
-            resetSubmitButton();
-            return false;
+    // Masque le spinner si la page se recharge (en cas de retour avec erreurs)
+    window.addEventListener('pageshow', function(event) {
+        // Si la page est chargée depuis le cache du navigateur, masquer le spinner
+        if (event.persisted) {
+            spinner.style.display = 'none';
+            messagesContainer.style.display = 'block';
+            submitBtn.disabled = false;
+            submitBtn.innerHTML = '<i class="fas fa-upload"></i> Lancer l\'import';
         }
     });
 
-    function resetSubmitButton() {
-        submitBtn.disabled = !confirmCheckbox.checked;
-        submitText.textContent = 'Lancer l\'import';
-        submitSpinner.style.display = 'none';
-    }
 
-    function previewFile(file, type) {
-        const formData = new FormData();
-        formData.append('file', file);
-        formData.append('type', type);
-        formData.append('_token', document.querySelector('meta[name="csrf-token"]').getAttribute('content'));
-
-        fetch('{{ route("import.preview") }}', {
-            method: 'POST',
-            body: formData,
-            headers: {
-                'X-Requested-With': 'XMLHttpRequest'
-            }
-        })
-        .then(response => response.json())
-        .then(data => {
-            if (data.error) {
-                showAlert('Erreur de prévisualisation: ' + data.error, 'danger');
-                return;
-            }
-
-            displayPreview(type, data.data);
-        })
-        .catch(error => {
-            console.error('Erreur:', error);
-            showAlert('Erreur lors de la prévisualisation du fichier', 'danger');
-        });
-    }
-
-    function displayPreview(type, data) {
-        const previewContainer = document.getElementById(type + '_preview');
-        const headersContainer = document.getElementById(type + '_headers');
-        const dataContainer = document.getElementById(type + '_data');
-
-        if (!data.headers || !data.data) {
-            return;
+    setTimeout(function() {
+        if (spinner.style.display === 'block') {
+            spinner.style.display = 'none';
+            messagesContainer.style.display = 'block';
+            submitBtn.disabled = false;
+            submitBtn.innerHTML = '<i class="fas fa-upload"></i> Lancer l\'import';
         }
-
-        headersContainer.innerHTML = '<tr>' + 
-            data.headers.map(header => `<th class="bg-light">${header}</th>`).join('') + 
-            '</tr>';
-
-        dataContainer.innerHTML = '';
-        Object.values(data.data).slice(0, 3).forEach(row => {
-            const tr = document.createElement('tr');
-            tr.innerHTML = data.headers.map(header => `<td>${row[header] || ''}</td>`).join('');
-            dataContainer.appendChild(tr);
-        });
-
-        previewContainer.style.display = 'block';
-        
-        const totalInfo = previewContainer.querySelector('.total-info') || document.createElement('div');
-        totalInfo.className = 'total-info text-muted small mt-2';
-        totalInfo.innerHTML = `<i class="mdi mdi-information-outline me-1"></i>Total: ${data.total_rows} lignes`;
-        if (!previewContainer.querySelector('.total-info')) {
-            previewContainer.appendChild(totalInfo);
-        }
-    }
-
-    function showAlert(message, type) {
-        const alertDiv = document.createElement('div');
-        alertDiv.className = `alert alert-${type} alert-dismissible fade show`;
-        alertDiv.innerHTML = `
-            <i class="mdi mdi-alert-circle-outline me-2"></i>
-            ${message}
-            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-        `;
-        
-        document.querySelector('.container-fluid').insertBefore(alertDiv, document.querySelector('.card'));
-        
-        setTimeout(() => {
-            alertDiv.remove();
-        }, 5000);
-    }
+    }, 30000); // 30 secondes
 });
 </script>
+
+@push('styles')
+<style>
+.border-left {
+    border-left: 4px solid;
+}
+.border-warning {
+    border-left-color: #ffc107 !important;
+}
+.list-unstyled li {
+    padding: 2px 0;
+}
+.card-header h6 {
+    margin: 0;
+}
+</style>
+@endpush
 @endsection
