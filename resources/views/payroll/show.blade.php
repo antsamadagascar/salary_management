@@ -29,23 +29,23 @@
                                     <td>{{ $employee['employee_name'] ?? 'N/A' }}</td>
                                 </tr>
                                 <tr>
-                                    <td><strong>Matricule:</strong></td>
+                                    <td><strong>Réference:</strong></td>
                                     <td><code>{{ $employee['employee_number'] ?? 'N/A' }}</code></td>
                                 </tr>
-                                <tr>
+                                <!-- <tr>
                                     <td><strong>Département:</strong></td>
                                     <td>
                                         <span class="badge bg-info">{{ $employee['department'] ?? 'N/A' }}</span>
                                     </td>
-                                </tr>
+                                </tr> -->
                             </table>
                         </div>
                         <div class="col-md-6">
                             <table class="table table-borderless">
-                                <tr>
+                                <!-- <tr>
                                     <td><strong>Poste:</strong></td>
                                     <td>{{ $employee['designation'] ?? 'N/A' }}</td>
-                                </tr>
+                                </tr> -->
                                 <tr>
                                     <td><strong>Entreprise:</strong></td>
                                     <td>{{ $employee['company'] ?? 'N/A' }}</td>
