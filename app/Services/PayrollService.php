@@ -200,7 +200,8 @@ class PayrollService
                     'end_date',
                     'gross_pay',
                     'net_pay',
-                    'total_deduction'
+                    'total_deduction',
+                    'currency'
                 ]
             ]);
 
@@ -214,6 +215,7 @@ class PayrollService
                     'designation' => $payslip['designation'] ?? 'N/A',
                     'gross_pay' => $payslip['gross_pay'] ?? 0,
                     'total_deduction' => $payslip['total_deduction'] ?? 0,
+                    'currency' => $payslip['currency'] ?? MGA,
                     'net_pay' => $payslip['net_pay'] ?? 0,
                     'earnings' => [],
                     'deductions' => []
