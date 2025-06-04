@@ -138,7 +138,6 @@ class CompanyEmployeeService
 
             $companyData = [
                 'company_name' => $companyName,
-                'abbr' => strtoupper(substr($companyName, 0, 3)),
                 'default_currency' => 'USD', //default currency
                 'country' => 'Madagascar',
                 'default_holiday_list' => 'Global Holiday List 2025' //hoilday list default
