@@ -37,21 +37,21 @@
                                     <td>{{ $salarySlip['employee_name'] ?? 'N/A' }}</td>
                                 </tr>
                                 <tr>
-                                    <td><strong>Matricule:</strong></td>
+                                    <td><strong>Réference:</strong></td>
                                     <td><code>{{ $salarySlip['employee_details']['employee_number'] ?? 'N/A' }}</code></td>
                                 </tr>
-                                <tr>
+                                <!-- <tr>
                                     <td><strong>Département:</strong></td>
                                     <td>
                                         <span class="badge bg-info">
                                             {{ $salarySlip['employee_details']['department'] ?? 'N/A' }}
                                         </span>
                                     </td>
-                                </tr>
-                                <tr>
+                                </tr> -->
+                                <!-- <tr>
                                     <td><strong>Poste:</strong></td>
                                     <td>{{ $salarySlip['employee_details']['designation'] ?? 'N/A' }}</td>
-                                </tr>
+                                </tr> -->
                             </table>
                         </div>
                         <div class="col-md-6">
@@ -97,6 +97,10 @@
 
                     <hr class="my-4">
 
+                    @php
+                        $currency = $salarySlip['currency'] ?? '';
+                    @endphp
+
                     <!-- Détails des gains et déductions -->
                     <div class="row">
                         <!-- Gains -->
@@ -124,7 +128,7 @@
                                                             <td>{{ $earning['salary_component'] ?? 'N/A' }}</td>
                                                             <td class="text-end">
                                                                 <strong class="text-success">
-                                                                    {{ number_format($earning['amount'] ?? 0, 2, ',', ' ') }} €
+                                                                    {{ number_format($earning['amount'] ?? 0, 2, ',', ' ') }} {{ $earning['currency'] ?? $currency }}
                                                                 </strong>
                                                             </td>
                                                         </tr>
@@ -134,7 +138,7 @@
                                                     <tr>
                                                         <th>Total Gains</th>
                                                         <th class="text-end">
-                                                            {{ number_format($salarySlip['gross_pay'] ?? 0, 2, ',', ' ') }} €
+                                                            {{ number_format($salarySlip['gross_pay'] ?? 0, 2, ',', ' ') }} {{ $currency }}
                                                         </th>
                                                     </tr>
                                                 </tfoot>
@@ -172,7 +176,7 @@
                                                             <td>{{ $deduction['salary_component'] ?? 'N/A' }}</td>
                                                             <td class="text-end">
                                                                 <strong class="text-danger">
-                                                                    -{{ number_format($deduction['amount'] ?? 0, 2, ',', ' ') }} €
+                                                                    -{{ number_format($deduction['amount'] ?? 0, 2, ',', ' ') }} {{ $deduction['currency'] ?? $currency }}
                                                                 </strong>
                                                             </td>
                                                         </tr>
@@ -182,7 +186,7 @@
                                                     <tr>
                                                         <th>Total Déductions</th>
                                                         <th class="text-end">
-                                                            -{{ number_format($salarySlip['total_deduction'] ?? 0, 2, ',', ' ') }} €
+                                                            -{{ number_format($salarySlip['total_deduction'] ?? 0, 2, ',', ' ') }} {{ $currency }}
                                                         </th>
                                                     </tr>
                                                 </tfoot>
@@ -195,6 +199,10 @@
                             </div>
                         </div>
                     </div>
+
+                    @php
+                        $currency = $salarySlip['currency'] ?? '';
+                    @endphp
 
                     <!-- Résumé final -->
                     <div class="row mt-4">
@@ -211,7 +219,7 @@
                                         <div class="col-md-4">
                                             <div class="border-end">
                                                 <h4 class="text-success mb-1">
-                                                    {{ number_format($salarySlip['gross_pay'] ?? 0, 2, ',', ' ') }} €
+                                                    {{ number_format($salarySlip['gross_pay'] ?? 0, 2, ',', ' ') }} {{ $currency }}
                                                 </h4>
                                                 <p class="text-muted mb-0">Salaire Brut</p>
                                             </div>
@@ -219,14 +227,14 @@
                                         <div class="col-md-4">
                                             <div class="border-end">
                                                 <h4 class="text-warning mb-1">
-                                                    -{{ number_format($salarySlip['total_deduction'] ?? 0, 2, ',', ' ') }} €
+                                                    -{{ number_format($salarySlip['total_deduction'] ?? 0, 2, ',', ' ') }} {{ $currency }}
                                                 </h4>
                                                 <p class="text-muted mb-0">Total Déductions</p>
                                             </div>
                                         </div>
                                         <div class="col-md-4">
                                             <h4 class="text-primary mb-1">
-                                                <strong>{{ number_format($salarySlip['net_pay'] ?? 0, 2, ',', ' ') }} €</strong>
+                                                <strong>{{ number_format($salarySlip['net_pay'] ?? 0, 2, ',', ' ') }} {{ $currency }}</strong>
                                             </h4>
                                             <p class="text-muted mb-0"><strong>Salaire Net</strong></p>
                                         </div>
@@ -235,6 +243,7 @@
                             </div>
                         </div>
                     </div>
+
 
                     <!-- Informations supplémentaires -->
                     @if(isset($salarySlip['letter_head']) || isset($salarySlip['remarks']))

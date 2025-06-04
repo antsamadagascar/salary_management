@@ -114,7 +114,8 @@ class StatsSalaryController extends Controller
                     'Total Déductions',
                     'Salaire Net',
                     'Détail Gains',
-                    'Détail Déductions'
+                    'Détail Déductions',
+                    'Currency'
                 ]);
 
                 // Données
