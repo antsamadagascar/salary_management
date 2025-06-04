@@ -88,34 +88,21 @@ class PayrollService
      * Récupére une fiche de paie spécifique
      */
     public function getSalarySlip(string $salarySlipId): ?array
-    {
-        try {
-            $salarySlip = $this->erpApiService->getResourceByName('Salary Slip', $salarySlipId);
-            
-            if ($salarySlip) {
-                // Récupére les détails des gains et déductions
-                $salarySlip['earnings'] = $this->erpApiService->getResource('Salary Detail', [
-                    'filters' => [
-                        ['parent', '=', $salarySlipId],
-                        ['parentfield', '=', 'earnings']
-                    ]
-                ]);
+{
+    try {
+        $salarySlip = $this->erpApiService->getResourceByName('Salary Slip', $salarySlipId, [
+            'params' => ['include_child_documents' => 'true']
+        ]);
 
-                $salarySlip['deductions'] = $this->erpApiService->getResource('Salary Detail', [
-                    'filters' => [
-                        ['parent', '=', $salarySlipId],
-                        ['parentfield', '=', 'deductions']
-                    ]
-                ]);
-
-                $salarySlip['employee_details'] = $this->getEmployee($salarySlip['employee']);
-            }
-
-            return $salarySlip;
-        } catch (Exception $e) {
-            return null;
+        if ($salarySlip) {
+            $salarySlip['employee_details'] = $this->getEmployee($salarySlip['employee']);
         }
+
+        return $salarySlip;
+    } catch (Exception $e) {
+        return null;
     }
+}
 
     /**
      * Récupére les fiches de paie pour un mois donné

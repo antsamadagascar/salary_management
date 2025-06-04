@@ -207,15 +207,10 @@
                                                                 </td>
                                                                 <td class="text-center">
                                                                     <div class="btn-group btn-group-sm">
-                                                                        <a href="{{ route('payroll.salary-slip.show', $slip['name']) }}" 
-                                                                           class="btn btn-outline-primary btn-sm" 
-                                                                           title="Voir détails">
+                                                                        <a href="{{ route('payroll.salary-slip.show', $slip['name']) }}"
+                                                                        class="btn btn-outline-primary btn-sm"
+                                                                        title="Voir détails">
                                                                             <i class="fas fa-eye"></i>
-                                                                        </a>
-                                                                        <a href="{{ route('payroll.salary-slip.pdf', $slip['name']) }}" 
-                                                                           class="btn btn-outline-danger btn-sm" 
-                                                                           title="Export PDF">
-                                                                            <i class="fas fa-file-pdf"></i>
                                                                         </a>
                                                                     </div>
                                                                 </td>
