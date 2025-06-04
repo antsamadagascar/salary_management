@@ -122,7 +122,7 @@ class PayrollService
                 'fields' => [
                     'name', 'employee', 'employee_name', 'posting_date',
                     'start_date', 'end_date', 'gross_pay', 'total_deduction',
-                    'net_pay', 'status'
+                    'net_pay', 'status','currency'
                 ]
             ]);
         } catch (Exception $e) {
