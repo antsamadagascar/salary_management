@@ -175,7 +175,29 @@ class FileValidator
                 }
             }
         }        
-
+        
+        if ($type === 'salary_structure') {
+            $index = 4; // colonne 'valeur'
+            $fieldName = 'valeur';
+            $value = trim($row[$index] ?? '');
+        
+            if ($value === '') {
+                $errors[] = $this->getMessage('required_field', [
+                    'line' => $lineNumber,
+                    'field' => $fieldName
+                ]);
+            } else {
+                if (is_numeric($value)) {
+                    if ($value < 0) {
+                        $errors[] = $this->getMessage('negative_not_allowed', [
+                            'line' => $lineNumber,
+                            'field' => $fieldName
+                        ]);
+                    }
+                }
+            }
+        }
+        
         return $errors;
     }
 

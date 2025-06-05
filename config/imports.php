@@ -15,13 +15,13 @@ return [
     'validation_rules' => [
         'employees' => [
             'required_fields' => [
-                0 => 'Ref',
-                1 => 'Nom',
-                2 => 'Prenom',
-                3 => 'genre',
-                4 => 'Date embauche',
-                5 => 'date naissance',
-                6 => 'company'
+                0 => 'Ref', //required in erpnext
+              //1 => 'Nom',// not required in erpnext
+                2 => 'Prenom',//required in erpnext
+                3 => 'genre',//required in erpnext
+                4 => 'Date embauche',//required in erpnext
+                5 => 'date naissance',//required in erpnext
+                6 => 'company'//required in erpnext
             ],
             'numeric_fields' => [
                 0 => 'Ref'
@@ -37,26 +37,26 @@ return [
 
         'salary_structure' => [
             'required_fields' => [
-                0 => 'salary structure',
-                1 => 'name',
-                2 => 'Abbr',
-                3 => 'type',
-                4 => 'valeur',
-                5 => 'company'
+                0 => 'salary structure', //required in erpnext
+                1 => 'name', // required in erpnext
+                2 => 'Abbr', //required in erpnext
+                3 => 'type', //required in erpnext
+             // 4 => 'valeur', //required in erpnext
+                5 => 'company' //required in erpnext
             ],
-            'numeric_fieds' => [
-                4 => 'valeur'
-            ],
+            // 'numeric_fields' => [
+            //     4 => 'valeur'  // -> possible string (formula) or value :5000 ohatra
+            // ],
             'enum_fields' => [
                 3 => ['field' => 'type', 'values' => ['earning', 'deduction']]
             ]
         ],
         'payroll' => [
             'required_fields' => [
-                0 => 'Mois',
-                1 => 'Ref Employe',
-                2 => 'Salaire Base',
-                3 => 'Salaire'
+                0 => 'Mois', //require in erpnext
+                1 => 'Ref Employe', // required in erpnext
+             //   2 => 'Salaire Base', // required in erpenxt
+                3 => 'Salaire' // required in erpenxt
             ],
             'numeric_fields' => [
                 1 => 'Ref Employe',
