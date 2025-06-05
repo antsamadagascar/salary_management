@@ -1,7 +1,15 @@
 salary structure,name,Abbr,type,valeur,company
-gasy1,Salaire Base,SB,earning,base,My Company
-gasy1,Indemnité,IND,earning,SB * 0.3,My Company
-gasy1,Taxe sociale,TS,deduction,(SB + IND) * 0.2,My Company
-gasy2,Salaire Base,SB,earning,base,My Company
-gasy2,Bonus mensuel,BON,earning,SB * 0.15,My Company
-gasy2,Cotisation retraite,RET,deduction,(SB + BON) * 0.1,My Company
+junior,Salaire Base,SB,earning,base,My Company
+junior,Transport,TRANSP,earning,75000,My Company
+junior,Cotisation CNAPS,CNAPS,deduction,(SB + TRANSP) * 0.01,My Company
+senior,Salaire Base,SB,earning,base,My Company
+senior,Prime ancienneté,ANCIEN,earning,SB * 0.2,My Company
+senior,Transport,TRANSP,earning,100000,My Company
+senior,Cotisation CNAPS,CNAPS,deduction,(SB + ANCIEN + TRANSP) * 0.01,My Company
+senior,IRSA,IRSA,deduction,(SB + ANCIEN + TRANSP) * 0.05,My Company
+manager,Salaire Base,SB,earning,base,My Company
+manager,Prime responsabilité,RESP,earning,SB * 0.35,My Company
+manager,Prime ancienneté,ANCIEN,earning,SB * 0.15,My Company
+manager,Transport,TRANSP,earning,150000,My Company
+manager,Cotisation CNAPS,CNAPS,deduction,(SB + RESP + ANCIEN + TRANSP) * 0.01,My Company
+manager,IRSA,IRSA,deduction,(SB + RESP + ANCIEN + TRANSP) * 0.08,My Company

@@ -36,17 +36,18 @@ class ImportController extends Controller
 
     public function processImport(Request $request)
     {
-        // First validate file uploads
         $fileValidator = $this->validateFiles($request);
         if ($fileValidator->fails()) {
             return redirect()->back()
                 ->withErrors($fileValidator)
                 ->withInput()
                 ->with('error', 'Erreurs de validation des fichiers');
-        }
+    }
+        // Charge les données des employés 
+        $employeesData = $this->fileValidator->loadEmployeesData($request->file('employees_file'));
+        $validationContext = ['employees_data' => $employeesData];
 
-        // Then validate file structure and format (generic validation)
-        $structureValidationResult = $this->validateFileStructures($request);
+        $structureValidationResult = $this->validateFileStructures($request, $validationContext);
         if (!$structureValidationResult['valid']) {
             return redirect()->back()
                 ->with('error', 'Validation de structure échouée: ' . $structureValidationResult['message'])
@@ -55,8 +56,33 @@ class ImportController extends Controller
                 ->withInput();
         }
 
-        // si toutes le structure des 3 fichiers est valider on passer a l'insertion
         return $this->handleImportProcess($request);
+    }
+
+    private function validateFileStructures(Request $request, array $context = []): array
+    {
+        $validationResults = [
+            'valid' => true,
+            'message' => '',
+            'errors' => []
+        ];
+
+        foreach ($this->fileValidator->getFileTypes() as $type) {
+            $file = $request->file("{$type}_file");
+            $fileErrors = $this->fileValidator->validateFileStructure($type, $file, $context);
+
+            if (!empty($fileErrors)) {
+                $validationResults['valid'] = false;
+                $validationResults['errors'][$type] = $fileErrors;
+            }
+        }
+
+        if (!$validationResults['valid']) {
+            $errorCount = array_sum(array_map('count', $validationResults['errors']));
+            $validationResults['message'] = "Validation échouée avec {$errorCount} erreur(s)";
+        }
+
+        return $validationResults;
     }
 
     private function validateFiles(Request $request)
@@ -67,37 +93,7 @@ class ImportController extends Controller
         return Validator::make($request->all(), $rules, $messages);
     }
 
-    private function validateFileStructures(Request $request)
-    {
-        Log::info('Début de la validation de structure des fichiers');
-        
-        $validationResults = [
-            'valid' => true,
-            'message' => '',
-            'errors' => []
-        ];
-
-        foreach ($this->fileValidator->getFileTypes() as $type) {
-            $file = $request->file("{$type}_file");
-            $fileErrors = $this->fileValidator->validateFileStructure($type, $file);
-
-            if (!empty($fileErrors)) {
-                $validationResults['valid'] = false;
-                $validationResults['errors'][$type] = $fileErrors;
-            }
-        }
-
-        if (!$validationResults['valid']) {
-            $errorCount = array_sum(array_map('count', $validationResults['errors']));
-            $validationResults['message'] = "Validation échouée avec {$errorCount} erreur(s). Tous les fichiers doivent être valides avant l'import.";
-            Log::error('Validation des fichiers échouée', $validationResults['errors']);
-        } else {
-            Log::info('Tous les fichiers ont passé la validation de structure');
-        }
-
-        return $validationResults;
-    }
-
+    
     private function handleImportProcess(Request $request)
     {
         Log::info('Début du processus d\'import - tous les fichiers validés');

@@ -78,6 +78,7 @@ class SalaryStructureServiceImport
                 'depends_on_payment_days' => 0,
                 'is_tax_applicable' => trim($componentData['type']) === 'earning' ? 1 : 0,
                 'company' => trim($componentData['company']), 
+                'currency' => 'MGA'
             ];
 
             return $this->apiService->createResource('Salary Component', $salaryComponentData);
@@ -96,20 +97,29 @@ class SalaryStructureServiceImport
         $companyName = trim($firstComponent['company']);
 
         foreach ($components as $component) {
+            $valeur = trim($component['valeur']);
+        
+            $isFormula = !is_numeric($valeur) ? 1 : 0;
+        
             $componentData = [
                 'salary_component' => trim($component['name']),
                 'abbr' => trim($component['Abbr']),
-                'amount_based_on_formula' => 1,
-                'formula' => $this->parseFormula(trim($component['valeur'])),
+                'amount_based_on_formula' => $isFormula,
             ];
-            
+        
+            if ($isFormula) {
+                $componentData['formula'] = $this->parseFormula($valeur);
+            } else {
+                $componentData['amount'] = (float)$valeur;
+            }
+        
             if (trim($component['type']) === 'earning') {
                 $earnings[] = $componentData;
             } else {
                 $deductions[] = $componentData;
             }
         }
-
+        
         return [
             'name' => $structureName,
             'company' => $companyName, 
@@ -117,6 +127,7 @@ class SalaryStructureServiceImport
             'deductions' => $deductions,
             'docstatus' => 1,
             'is_active' => 'Yes',
+            'currency'=> 'MGA'
         ];
     }
 
