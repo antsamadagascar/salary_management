@@ -1,8 +1,4 @@
 <?php
-//fichier1 :employees
-//fichier2:salary structure
-//fichier3:payroll
-
 return [
     'file_types' => ['employees', 'salary_structure', 'payroll'],
     
@@ -15,13 +11,13 @@ return [
     'validation_rules' => [
         'employees' => [
             'required_fields' => [
-                0 => 'Ref', //required in erpnext
-              //1 => 'Nom',// not required in erpnext
-                2 => 'Prenom',//required in erpnext
-                3 => 'genre',//required in erpnext
-                4 => 'Date embauche',//required in erpnext
-                5 => 'date naissance',//required in erpnext
-                6 => 'company'//required in erpnext
+                0 => 'Ref',
+              //  1 => 'name',
+                2 => 'Prenom',
+                3 => 'genre',
+                4 => 'Date embauche',
+                5 => 'date naissance',
+                6 => 'company'
             ],
             'numeric_fields' => [
                 0 => 'Ref'
@@ -47,15 +43,17 @@ return [
             // 'numeric_fields' => [
             //     4 => 'valeur'  // -> possible string (formula) or value :5000 ohatra
             // ],
+
             'enum_fields' => [
                 3 => ['field' => 'type', 'values' => ['earning', 'deduction']]
             ]
         ],
+
         'payroll' => [
             'required_fields' => [
                 0 => 'Mois', //require in erpnext
                 1 => 'Ref Employe', // required in erpnext
-             //   2 => 'Salaire Base', // required in erpenxt
+             //  2 => 'Salaire Base', // required in erpenxt
                 3 => 'Salaire' // required in erpenxt
             ],
             'numeric_fields' => [
@@ -64,8 +62,12 @@ return [
             ],
             'date_fields' => [
                 0 => ['field' => 'Mois', 'format' => 'd/m/Y']
-             ]
-
+            ],
+            'date_consistency' => [
+                'employee_ref_field' => 1,
+                'salary_date_field' => 0,
+                'hire_date_field' => 4
+            ]
         ]
     ],
 
@@ -80,6 +82,7 @@ return [
         'invalid_date' => 'Ligne :line: Format de :field invalide (attendu: :format)',
         'invalid_enum' => 'Ligne :line: :field doit être :values',
         'invalid_numeric' => 'Ligne :line: :field doit être numérique',
-        'negative_not_allowed' => "Ligne :line - Le champ « :field » ne peut pas être négatif."
+        'negative_not_allowed' => 'Ligne :line - Le champ « :field » ne peut pas être négatif.',
+        //'date_before_hire' => 'Ligne :line: La date de salaire (:salary_date) est antérieure à la date d\'embauche (:hire_date)'
     ]
 ];
