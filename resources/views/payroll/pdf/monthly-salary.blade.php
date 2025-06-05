@@ -119,9 +119,7 @@
     <div class="header">
         <h1>BULLETIN DE SALAIRE MENSUEL</h1>
         <div class="company-info">
-            <strong>Votre Entreprise</strong><br>
-            Adresse de l'entreprise<br>
-            Téléphone - Email
+            <strong>{{ $employee['company'] }}</strong><br>
         </div>
     </div>
 
@@ -158,41 +156,55 @@
                     <th>Salaire Brut</th>
                     <th>Déductions</th>
                     <th>Salaire Net</th>
+                    <th>Devise</th>
                     <th>Statut</th>
                 </tr>
             </thead>
             <tbody>
+            @php
+                $totalGross = 0;
+                $totalDeductions = 0;
+                $totalNet = 0;
+                $currency = null;
+            @endphp
+
+            @foreach($salarySlips as $slip)
                 @php
-                    $totalGross = 0;
-                    $totalDeductions = 0;
-                    $totalNet = 0;
+                    $totalGross += $slip['gross_pay'] ?? 0;
+                    $totalDeductions += $slip['total_deduction'] ?? 0;
+                    $totalNet += $slip['net_pay'] ?? 0;
+                    if (!$currency && isset($slip['currency'])) {
+                        $currency = $slip['currency'];
+                    }
                 @endphp
-                
-                @foreach($salarySlips as $slip)
-                    @php
-                        $totalGross += $slip['gross_pay'] ?? 0;
-                        $totalDeductions += $slip['total_deduction'] ?? 0;
-                        $totalNet += $slip['net_pay'] ?? 0;
-                    @endphp
-                    <tr>
-                        <td>{{ \Carbon\Carbon::parse($slip['posting_date'])->format('d/m/Y') }}</td>
-                        <td>
-                            {{ \Carbon\Carbon::parse($slip['start_date'])->format('d/m') }} - 
-                            {{ \Carbon\Carbon::parse($slip['end_date'])->format('d/m/Y') }}
-                        </td>
-                        <td class="amount positive">{{ number_format($slip['gross_pay'] ?? 0, 2, ',', ' ') }} €</td>
-                        <td class="amount negative">{{ number_format($slip['total_deduction'] ?? 0, 2, ',', ' ') }} €</td>
-                        <td class="amount">{{ number_format($slip['net_pay'] ?? 0, 2, ',', ' ') }} €</td>
-                        <td style="text-align: center;">{{ $slip['status'] ?? 'N/A' }}</td>
-                    </tr>
-                @endforeach
+                <tr>
+                    <td>{{ \Carbon\Carbon::parse($slip['posting_date'])->format('d/m/Y') }}</td>
+                    <td>{{ \Carbon\Carbon::parse($slip['start_date'])->format('d/m') }} - {{ \Carbon\Carbon::parse($slip['end_date'])->format('d/m/Y') }}</td>
+                    <td class="amount positive">{{ number_format($slip['gross_pay'] ?? 0, 2, ',', ' ') }}</td>
+                    <td class="amount negative">{{ number_format($slip['total_deduction'] ?? 0, 2, ',', ' ') }}</td>
+                    <td class="amount">{{ number_format($slip['net_pay'] ?? 0, 2, ',', ' ') }}</td> 
+                    <td style="text-align:center;">{{ $slip['currency'] ?? 'N/A' }}</td>
+                    <td style="text-align: center;">
+                        @if(($slip['status'] ?? '') === 'Submitted')
+                            Traitée
+                        @elseif(($slip['status'] ?? '') === 'Draft')
+                            Brouillon
+                        @elseif(($slip['status'] ?? '') === 'Cancelled')
+                            Annulée
+                        @else
+                            {{ $slip['status'] ?? 'N/A' }}
+                        @endif
+                    </td>
+                </tr>
+            @endforeach
+
             </tbody>
             <tfoot>
                 <tr class="total-row">
                     <td colspan="2"><strong>TOTAUX</strong></td>
-                    <td class="amount positive"><strong>{{ number_format($totalGross, 2, ',', ' ') }} €</strong></td>
-                    <td class="amount negative"><strong>{{ number_format($totalDeductions, 2, ',', ' ') }} €</strong></td>
-                    <td class="amount"><strong>{{ number_format($totalNet, 2, ',', ' ') }} €</strong></td>
+                    <td class="amount positive"><strong>{{ number_format($totalGross, 2, ',', ' ') }} </strong></td>
+                    <td class="amount negative"><strong>{{ number_format($totalDeductions, 2, ',', ' ') }} </strong></td>
+                    <td class="amount"><strong>{{ number_format($totalNet, 2, ',', ' ') }} </strong></td>
                     <td></td>
                 </tr>
             </tfoot>
@@ -204,11 +216,11 @@
             <table class="summary-table">
                 <tr>
                     <td><strong>Total Salaire Brut:</strong></td>
-                    <td class="amount positive">{{ number_format($totalGross, 2, ',', ' ') }} €</td>
+                    <td class="amount positive">{{ number_format($totalGross, 2, ',', ' ') }} </td>
                 </tr>
                 <tr>
                     <td><strong>Total Déductions:</strong></td>
-                    <td class="amount negative">{{ number_format($totalDeductions, 2, ',', ' ') }} €</td>
+                    <td class="amount negative">{{ number_format($totalDeductions, 2, ',', ' ') }} </td>
                 </tr>
                 <tr>
                     <td><strong>Nombre de fiches:</strong></td>
@@ -217,7 +229,7 @@
             </table>
             
             <div class="summary-total">
-                SALAIRE NET TOTAL: {{ number_format($totalNet, 2, ',', ' ') }} €
+                SALAIRE NET TOTAL: {{ number_format($totalNet, 2, ',', ' ') }} {{ $currency ?? '' }}
             </div>
         </div>
     @else

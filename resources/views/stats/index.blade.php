@@ -120,11 +120,12 @@
                                 <tr>
                                     <th>ID Employé</th>
                                     <th>Nom</th>
-                                    <th>Département</th>
-                                    <th>Poste</th>
+                                    <!-- <th>Département</th>
+                                    <th>Poste</th> -->
                                     <th>Salaire Brut</th>
                                     <th>Déductions</th>
                                     <th>Salaire Net</th>
+                                    <th>Devise</th>
                                     <th>Actions</th>
                                 </tr>
                             </thead>
@@ -274,8 +275,7 @@ function updatePayrollTable(payrollData) {
             <tr>
                 <td>${employee.employee_id}</td>
                 <td><strong>${employee.employee_name}</strong></td>
-                <td>${employee.department}</td>
-                <td>${employee.designation}</td>
+
                 <td class="text-right">
                     <span class="badge badge-success text-dark">
                         ${parseFloat(employee.gross_pay).toLocaleString('fr-FR', {minimumFractionDigits: 2})} 
@@ -291,6 +291,7 @@ function updatePayrollTable(payrollData) {
                         ${parseFloat(employee.net_pay).toLocaleString('fr-FR', {minimumFractionDigits: 2})} 
                     </span>
                 </td>
+                <td>${employee.currency}</td>
                 <td>
                     <button type="button" 
                             class="btn btn-info btn-sm" 
@@ -298,6 +299,7 @@ function updatePayrollTable(payrollData) {
                         <i class="fas fa-eye"></i> Détails
                     </button>
                 </td>
+
             </tr>
         `;
         tbody.innerHTML += row;
