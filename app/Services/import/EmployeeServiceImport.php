@@ -11,7 +11,7 @@ use Carbon\Carbon;
 
 class EmployeeServiceImport
 {
-    private const REQUIRED_FIELDS = ['Ref', 'Nom', 'Prenom', 'genre', 'Date embauche', 'date naissance', 'company'];
+   // private const REQUIRED_FIELDS = ['Ref', 'Nom', 'Prenom', 'genre', 'Date embauche', 'date naissance', 'company'];
 
     protected ErpApiService $apiService;
 
@@ -144,11 +144,11 @@ class EmployeeServiceImport
 
     private function validateEmployeeData(array $record, int $lineNumber): array
     {
-        foreach (self::REQUIRED_FIELDS as $field) {
-            if (empty(trim($record[$field] ?? ''))) {
-                return ['valid' => false, 'error' => "Ligne {$lineNumber}: Le champ '{$field}' est requis"];
-            }
-        }
+        // foreach (self::REQUIRED_FIELDS as $field) {
+        //     if (empty(trim($record[$field] ?? ''))) {
+        //         return ['valid' => false, 'error' => "Ligne {$lineNumber}: Le champ '{$field}' est requis"];
+        //     }
+        // }
 
         try {
             Carbon::createFromFormat('d/m/Y', trim($record['Date embauche']));

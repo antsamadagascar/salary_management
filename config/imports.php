@@ -1,8 +1,4 @@
 <?php
-//fichier1 :employees
-//fichier2:salary structure
-//fichier3:payroll
-
 return [
     'file_types' => ['employees', 'salary_structure', 'payroll'],
     
@@ -15,13 +11,12 @@ return [
     'validation_rules' => [
         'employees' => [
             'required_fields' => [
-                0 => 'Ref',
-                1 => 'Nom',
-                2 => 'Prenom',
-                3 => 'genre',
-                4 => 'Date embauche',
-                5 => 'date naissance',
-                6 => 'company'
+                0 => 'Ref', 
+                2 => 'Prenom', 
+                3 => 'genre', 
+                4 => 'Date embauche', 
+                5 => 'date naissance', 
+                6 => 'company' 
             ],
             'numeric_fields' => [
                 0 => 'Ref'
@@ -37,26 +32,24 @@ return [
 
         'salary_structure' => [
             'required_fields' => [
-                0 => 'salary structure',
+                0 => 'salary structure', 
                 1 => 'name',
-                2 => 'Abbr',
-                3 => 'type',
-                4 => 'valeur',
-                5 => 'company'
-            ],
-            'numeric_fieds' => [
-                4 => 'valeur'
+                2 => 'Abbr', 
+                3 => 'type', 
+                4 => 'valeur', 
+                5 => 'company' 
             ],
             'enum_fields' => [
-                3 => ['field' => 'type', 'values' => ['earning', 'deduction']]
+                3 => ['field' => 'type', 'values' => ['earning','Earning','deduction','Deduction']]
             ]
         ],
+
         'payroll' => [
             'required_fields' => [
-                0 => 'Mois',
+                0 => 'Mois', 
                 1 => 'Ref Employe',
-                2 => 'Salaire Base',
-                3 => 'Salaire'
+             //  2 => 'Salaire Base', // peut etre vide (par defaut value=0 par erpnext)
+                3 => 'Salaire' 
             ],
             'numeric_fields' => [
                 1 => 'Ref Employe',
@@ -64,8 +57,12 @@ return [
             ],
             'date_fields' => [
                 0 => ['field' => 'Mois', 'format' => 'd/m/Y']
-             ]
-
+            ],
+            'date_consistency' => [
+                'employee_ref_field' => 1,
+                'salary_date_field' => 0,
+                'hire_date_field' => 4
+            ]
         ]
     ],
 
@@ -80,6 +77,7 @@ return [
         'invalid_date' => 'Ligne :line: Format de :field invalide (attendu: :format)',
         'invalid_enum' => 'Ligne :line: :field doit être :values',
         'invalid_numeric' => 'Ligne :line: :field doit être numérique',
-        'negative_not_allowed' => "Ligne :line - Le champ « :field » ne peut pas être négatif."
+        'negative_not_allowed' => 'Ligne :line - Le champ « :field » ne peut pas être négatif.',
+        'date_before_hire' => 'Ligne :line: La date de salaire (:salary_date) est antérieure à la date d\'embauche (:hire_date)'
     ]
 ];

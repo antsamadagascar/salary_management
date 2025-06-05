@@ -3,6 +3,7 @@
 namespace App\Utils;
 
 use Illuminate\Support\Facades\Log;
+use Illuminate\Http\UploadedFile;
 
 class FileValidator
 {
@@ -39,41 +40,37 @@ class FileValidator
         return $message;
     }
 
-    public function validateFileStructure(string $type, $file): array
+    public function validateFileStructure(string $type, UploadedFile $file, ?array $context = null): array
     {
         Log::info("Validation de structure pour {$type}");
         
         $errors = [];
+        $employeesData = $context['employees_data'] ?? [];
 
         try {
-            // Read CSV file
             $handle = fopen($file->getRealPath(), 'r');
             if (!$handle) {
                 return [$this->getMessage('read_error', ['type' => $type])];
             }
 
-            // Get headers (first line)
             $headers = fgetcsv($handle, 0, ',');
             if (!$headers) {
                 fclose($handle);
                 return [$this->getMessage('empty_file', ['type' => $type])];
             }
 
-            // Clean headers and validate structure
             $headers = array_map('trim', $headers);
             $structureErrors = $this->validateHeaders($type, $headers);
             $errors = array_merge($errors, $structureErrors);
 
-            // Validate data rows
             $lineNumber = 2;
             while (($row = fgetcsv($handle, 0, ',')) !== false) {
-                $rowErrors = $this->validateDataRow($type, $row, $lineNumber);
+                $rowErrors = $this->validateDataRow($type, $row, $lineNumber, $employeesData);
                 $errors = array_merge($errors, $rowErrors);
                 $lineNumber++;
             }
 
             fclose($handle);
-
         } catch (\Exception $e) {
             $errors[] = "Erreur lors de la lecture du fichier {$type}: " . $e->getMessage();
             Log::error("Erreur validation fichier {$type}", [
@@ -90,7 +87,6 @@ class FileValidator
         $errors = [];
         $expectedHeaders = $this->getHeaders($type);
 
-        // Check missing headers
         $missingHeaders = array_diff($expectedHeaders, $headers);
         if (!empty($missingHeaders)) {
             $errors[] = $this->getMessage('missing_headers', [
@@ -99,7 +95,6 @@ class FileValidator
             ]);
         }
 
-        // Log extra headers as warning
         $extraHeaders = array_diff($headers, $expectedHeaders);
         if (!empty($extraHeaders)) {
             Log::warning($this->getMessage('extra_headers', [
@@ -111,12 +106,11 @@ class FileValidator
         return $errors;
     }
 
-    public function validateDataRow(string $type, array $row, int $lineNumber): array
+    public function validateDataRow(string $type, array $row, int $lineNumber, array $employeesData = []): array
     {
         $errors = [];
         $rules = $this->getValidationRules($type);
 
-        // Validate required fields
         if (isset($rules['required_fields'])) {
             foreach ($rules['required_fields'] as $index => $fieldName) {
                 if (empty(trim($row[$index] ?? ''))) {
@@ -128,7 +122,6 @@ class FileValidator
             }
         }
 
-        // Validate date fields
         if (isset($rules['date_fields'])) {
             foreach ($rules['date_fields'] as $index => $dateConfig) {
                 $value = trim($row[$index] ?? '');
@@ -142,7 +135,6 @@ class FileValidator
             }
         }
 
-        // Validate enum fields 
         if (isset($rules['enum_fields'])) {
             foreach ($rules['enum_fields'] as $index => $enumConfig) {
                 $value = trim($row[$index] ?? '');
@@ -156,7 +148,6 @@ class FileValidator
             }
         }
 
-        // Validate numeric fields (return error if value is not)
         if (isset($rules['numeric_fields'])) {
             foreach ($rules['numeric_fields'] as $index => $fieldName) {
                 $value = trim($row[$index] ?? '');
@@ -174,15 +165,81 @@ class FileValidator
                     }
                 }
             }
-        }        
+        }
+
+        if ($type === 'salary_structure') {
+            $index = 4; // colonne 'valeur'
+            $fieldName = 'valeur';
+            $value = trim($row[$index] ?? '');
+        
+            if ($value === '') {
+                $errors[] = $this->getMessage('required_field', [
+                    'line' => $lineNumber,
+                    'field' => $fieldName
+                ]);
+            } else {
+                if (is_numeric($value)) {
+                    if ($value < 0) {
+                        $errors[] = $this->getMessage('negative_not_allowed', [
+                            'line' => $lineNumber,
+                            'field' => $fieldName
+                        ]);
+                    }
+                }
+            }
+        }
+        
+        
+        if ($type === 'payroll' && isset($rules['date_consistency'])) {
+            $employeeRef = trim($row[$rules['date_consistency']['employee_ref_field']] ?? '');
+            $salaryDate = trim($row[$rules['date_consistency']['salary_date_field']] ?? '');
+
+            if (isset($employeesData[$employeeRef])) {
+                $hireDate = $employeesData[$employeeRef]['Date embauche'];
+                
+                if ($this->isDateBefore($salaryDate, $hireDate, 'd/m/Y')) {
+                    $errors[] = $this->getMessage('date_before_hire', [
+                        'line' => $lineNumber,
+                        'salary_date' => $salaryDate,
+                        'hire_date' => $hireDate
+                    ]);
+                }
+            }
+        }
 
         return $errors;
     }
 
-    private function isValidDate(string $date, string $format = 'Y-m-d'): bool
+    private function isValidDate(string $date, string $format = 'd/m/Y'): bool
     {
         $d = \DateTime::createFromFormat($format, $date);
         return $d && $d->format($format) === $date;
+    }
+
+    private function isDateBefore(string $date1, string $date2, string $format): bool
+    {
+        $d1 = \DateTime::createFromFormat($format, $date1);
+        $d2 = \DateTime::createFromFormat($format, $date2);
+        
+        return $d1 && $d2 && $d1 < $d2;
+    }
+
+    public function loadEmployeesData(UploadedFile $file): array
+    {
+        $employees = [];
+        $handle = fopen($file->getRealPath(), 'r');
+        
+        fgetcsv($handle, 0, ','); // Skip header
+        
+        while (($row = fgetcsv($handle, 0, ',')) !== false) {
+            $ref = trim($row[0]);
+            $employees[$ref] = [
+                'Date embauche' => trim($row[4])
+            ];
+        }
+        
+        fclose($handle);
+        return $employees;
     }
 
     public function generateFileValidationRules(): array
@@ -199,4 +256,4 @@ class FileValidator
             "{$type}_file.mimes" => $this->getMessage('file_mimes', ['type' => $type]),
         ])->toArray();
     }
-}
+} 
