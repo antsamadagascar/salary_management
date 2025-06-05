@@ -130,7 +130,7 @@ class EmployeeServiceImport
 
             $companyData = [
                 'company_name' => $companyName,
-                'default_currency' => 'USD', //default currency
+                'default_currency' => 'MGA', //default currency
                 'country' => 'Madagascar', //default country
                 'default_holiday_list' => 'Global Holiday List 2025' //hoilday list default
             ];
