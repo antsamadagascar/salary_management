@@ -11,13 +11,12 @@ return [
     'validation_rules' => [
         'employees' => [
             'required_fields' => [
-                0 => 'Ref',
-              //  1 => 'name',
-                2 => 'Prenom',
-                3 => 'genre',
-                4 => 'Date embauche',
-                5 => 'date naissance',
-                6 => 'company'
+                0 => 'Ref', 
+                2 => 'Prenom', 
+                3 => 'genre', 
+                4 => 'Date embauche', 
+                5 => 'date naissance', 
+                6 => 'company' 
             ],
             'numeric_fields' => [
                 0 => 'Ref'
@@ -33,28 +32,24 @@ return [
 
         'salary_structure' => [
             'required_fields' => [
-                0 => 'salary structure', //required in erpnext
-                1 => 'name', // required in erpnext
-                2 => 'Abbr', //required in erpnext
-                3 => 'type', //required in erpnext
-             // 4 => 'valeur', //required in erpnext
-                5 => 'company' //required in erpnext
+                0 => 'salary structure', 
+                1 => 'name',
+                2 => 'Abbr', 
+                3 => 'type', 
+                4 => 'valeur', 
+                5 => 'company' 
             ],
-            // 'numeric_fields' => [
-            //     4 => 'valeur'  // -> possible string (formula) or value :5000 ohatra
-            // ],
-
             'enum_fields' => [
-                3 => ['field' => 'type', 'values' => ['earning', 'deduction']]
+                3 => ['field' => 'type', 'values' => ['earning','Earning','deduction','Deduction']]
             ]
         ],
 
         'payroll' => [
             'required_fields' => [
-                0 => 'Mois', //require in erpnext
-                1 => 'Ref Employe', // required in erpnext
-             //  2 => 'Salaire Base', // required in erpenxt
-                3 => 'Salaire' // required in erpenxt
+                0 => 'Mois', 
+                1 => 'Ref Employe',
+             //  2 => 'Salaire Base', // peut etre vide (par defaut value=0 par erpnext)
+                3 => 'Salaire' 
             ],
             'numeric_fields' => [
                 1 => 'Ref Employe',
@@ -83,6 +78,6 @@ return [
         'invalid_enum' => 'Ligne :line: :field doit être :values',
         'invalid_numeric' => 'Ligne :line: :field doit être numérique',
         'negative_not_allowed' => 'Ligne :line - Le champ « :field » ne peut pas être négatif.',
-        //'date_before_hire' => 'Ligne :line: La date de salaire (:salary_date) est antérieure à la date d\'embauche (:hire_date)'
+        'date_before_hire' => 'Ligne :line: La date de salaire (:salary_date) est antérieure à la date d\'embauche (:hire_date)'
     ]
 ];

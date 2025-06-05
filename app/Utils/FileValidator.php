@@ -167,6 +167,29 @@ class FileValidator
             }
         }
 
+        if ($type === 'salary_structure') {
+            $index = 4; // colonne 'valeur'
+            $fieldName = 'valeur';
+            $value = trim($row[$index] ?? '');
+        
+            if ($value === '') {
+                $errors[] = $this->getMessage('required_field', [
+                    'line' => $lineNumber,
+                    'field' => $fieldName
+                ]);
+            } else {
+                if (is_numeric($value)) {
+                    if ($value < 0) {
+                        $errors[] = $this->getMessage('negative_not_allowed', [
+                            'line' => $lineNumber,
+                            'field' => $fieldName
+                        ]);
+                    }
+                }
+            }
+        }
+        
+        
         if ($type === 'payroll' && isset($rules['date_consistency'])) {
             $employeeRef = trim($row[$rules['date_consistency']['employee_ref_field']] ?? '');
             $salaryDate = trim($row[$rules['date_consistency']['salary_date_field']] ?? '');
@@ -233,4 +256,4 @@ class FileValidator
             "{$type}_file.mimes" => $this->getMessage('file_mimes', ['type' => $type]),
         ])->toArray();
     }
-}
+} 
