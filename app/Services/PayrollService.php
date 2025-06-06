@@ -88,21 +88,21 @@ class PayrollService
      * Récupére une fiche de paie spécifique
      */
     public function getSalarySlip(string $salarySlipId): ?array
-{
-    try {
-        $salarySlip = $this->erpApiService->getResourceByName('Salary Slip', $salarySlipId, [
-            'params' => ['include_child_documents' => 'true']
-        ]);
+    {
+        try {
+            $salarySlip = $this->erpApiService->getResourceByName('Salary Slip', $salarySlipId, [
+                'params' => ['include_child_documents' => 'true']
+            ]);
 
-        if ($salarySlip) {
-            $salarySlip['employee_details'] = $this->getEmployee($salarySlip['employee']);
+            if ($salarySlip) {
+                $salarySlip['employee_details'] = $this->getEmployee($salarySlip['employee']);
+            }
+
+            return $salarySlip;
+        } catch (Exception $e) {
+            return null;
         }
-
-        return $salarySlip;
-    } catch (Exception $e) {
-        return null;
     }
-}
 
     /**
      * Récupére les fiches de paie pour un mois donné
@@ -122,7 +122,7 @@ class PayrollService
                 'fields' => [
                     'name', 'employee', 'employee_name', 'posting_date',
                     'start_date', 'end_date', 'gross_pay', 'total_deduction',
-                    'net_pay', 'status'
+                    'net_pay', 'status','currency'
                 ]
             ]);
         } catch (Exception $e) {
@@ -200,7 +200,8 @@ class PayrollService
                     'end_date',
                     'gross_pay',
                     'net_pay',
-                    'total_deduction'
+                    'total_deduction',
+                    'currency'
                 ]
             ]);
 
@@ -214,6 +215,7 @@ class PayrollService
                     'designation' => $payslip['designation'] ?? 'N/A',
                     'gross_pay' => $payslip['gross_pay'] ?? 0,
                     'total_deduction' => $payslip['total_deduction'] ?? 0,
+                    'currency' => $payslip['currency'] ?? MGA,
                     'net_pay' => $payslip['net_pay'] ?? 0,
                     'earnings' => [],
                     'deductions' => []

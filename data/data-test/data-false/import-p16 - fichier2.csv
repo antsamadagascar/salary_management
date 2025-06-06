@@ -1,0 +1,24 @@
+salary structure,name,Abbr,type,valeur,company
+junior,Salaire Base,SB,earning,base,My Company
+junior,Transport,TRANSP,earning,75000,My Company
+junior,Cotisation CNAPS,CNAPS,deduction,(SB + TRANSP) * 0.01,My Company
+senior,Salaire Base,SB,earning,base,My Company
+senior,Prime ancienneté,ANCIEN,earning,SB * 0.2,My Company
+senior,Transport,TRANSP,earning,100000,My Company
+senior,Cotisation CNAPS,CNAPS,deduction,(SB + ANCIEN + TRANSP) * 0.01,My Company
+senior,IRSA,IRSA,deduction,(SB + ANCIEN + TRANSP) * 0.05,My Company
+manager,Salaire Base,SB,earning,base,My Company
+manager,Prime responsabilité,RESP,earning,SB * 0.35,My Company
+manager,Prime ancienneté,ANCIEN,earning,SB * 0.15,My Company
+manager,Transport,TRANSP,earning,150000,My Company
+manager,Cotisation CNAPS,CNAPS,deduction,(SB + RESP + ANCIEN + TRANSP) * 0.01,My Company
+manager,IRSA,IRSA,deduction,(SB + RESP + ANCIEN + TRANSP) * 0.08,My Company
+junior,Prime de performance,PERF,earning,50000,My Company
+junior,Assurance santé,ASSUR,deduction,20000,My Company
+senior,Prime de projet,PROJET,earning,SB * 0.1,My Company
+senior,Retenue absence,ABS,deduction,10000,My Company
+manager,Prime exceptionnelle,EXCEP,earning,200000,My Company
+manager,Contribution sociale,SOCIAL,deduction,(SB + RESP + ANCIEN + TRANSP) * 0.02,My Company
+intern,Salaire Base,SB,earning,base,My Company
+intern,Transport,TRANSP,earning,50000,My Company
+intern,Cotisation CNAPS,CNAPS,deduction,SB * 0.01,My Company
