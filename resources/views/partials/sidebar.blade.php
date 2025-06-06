@@ -15,7 +15,7 @@
                     <ul class="nav flex-column">
                         <!-- Dashboard Principal -->
                         <li class="nav-item">
-                            <a class="nav-link active" href="{{ route('dashboard') }}">
+                            <a class="nav-link active" href="{{ route('payroll.stats.index') }}">
                                 <i class="fas fa-tachometer-alt"></i> Dashboard
                             </a>
                         </li>

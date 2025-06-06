@@ -9,6 +9,7 @@ use App\Http\Controllers\PayrollController;
 
 use App\Http\Controllers\StatsSalaryController;
 use App\Http\Controllers\ResetDataController;
+use App\Http\Controllers\PayrollStatsController;
 
 Route::get('/', function () {
     return redirect()->route('login');
@@ -56,9 +57,23 @@ Route::middleware([\App\Http\Middleware\FrappeAuthMiddleware::class])->group(fun
 
         Route::get('/employee/{employeeId}/month/{month}/pdf', [PayrollController::class, 'exportMonthlyPdf'])->name('employee.monthly.pdf');
         Route::get('/export/excel', [PayrollController::class, 'exportEmployeesExcel'])->name('export.excel');
+
+         // Routes pour les statistiques 
+        Route::prefix('stats')->name('stats.')->group(function () {
+            Route::get('/', [PayrollStatsController::class, 'index'])->name('index');
+            Route::get('/month/{month}', [PayrollStatsController::class, 'showMonthDetails'])->name('month-details');
+            Route::get('/export', [PayrollStatsController::class, 'exportMonthlyStats'])->name('export');
+            Route::get('/export/month/{month}', [PayrollStatsController::class, 'exportMonthDetails'])->name('export-month');
+            Route::get('/graphs', [PayrollStatsController::class, 'graphsIndex'])->name('graphs');
+            Route::get('/chart-data', [PayrollStatsController::class, 'getChartData'])->name('chart-data');
+            
+            // Routes API pour AJAX
+            Route::get('/api/chart-data', [PayrollStatsController::class, 'getChartData'])->name('api.chart-data');
+            Route::get('/api/yearly-stats', [PayrollStatsController::class, 'getYearlyStats'])->name('api.yearly-stats');
+        });
+
     });
     
-
     Route::prefix('stats')->name('stats.')->group(function () {
         Route::get('/', [StatsSalaryController::class, 'index'])->name('index');
         Route::get('/data', [StatsSalaryController::class, 'getPayrollData'])->name('data');
