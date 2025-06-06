@@ -9,6 +9,7 @@ use App\Http\Controllers\PayrollController;
 
 use App\Http\Controllers\StatsSalaryController;
 use App\Http\Controllers\ResetDataController;
+use App\Http\Controllers\PayrollStatsController;
 
 Route::get('/', function () {
     return redirect()->route('login');
@@ -29,6 +30,7 @@ Route::middleware([\App\Http\Middleware\FrappeAuthMiddleware::class])->group(fun
         Route::post('/preview', [App\Http\Controllers\ImportController::class, 'previewFiles'])->name('preview');
     });
 
+    //Routes pour les fonctionnalites listes employes avec filtrages
     Route::prefix('employees')->name('employees.')->group(function () {
         Route::get('/', [App\Http\Controllers\EmployeeController::class, 'index'])->name('index');
         Route::get('/search', [App\Http\Controllers\EmployeeController::class, 'search'])->name('search');
@@ -41,46 +43,43 @@ Route::middleware([\App\Http\Middleware\FrappeAuthMiddleware::class])->group(fun
     });
     
     Route::prefix('payroll')->name('payroll.')->group(function () {
-        // Liste des employés
         Route::get('/', [PayrollController::class, 'index'])->name('index');
-        
-        // Recherche d'employés
         Route::get('/search', [PayrollController::class, 'search'])->name('search');
-        
-        // Fiche employé avec salaires par mois
         Route::get('/employee/{employeeId}', [PayrollController::class, 'show'])->name('employee.show');
         
         Route::get('/salary-slip/{salarySlipId}', [PayrollController::class, 'showSalarySlip'])
             ->name('salary-slip.show')
             ->where('salarySlipId', '.*');
-
+        
         Route::get('/employee/{employeeId}/month/{month}/pdf', [PayrollController::class, 'exportMonthlyPdf'])->name('employee.monthly.pdf');
         Route::get('/export/excel', [PayrollController::class, 'exportEmployeesExcel'])->name('export.excel');
+
+         // Routes pour les statistiques 
+        Route::prefix('stats')->name('stats.')->group(function () {
+            Route::get('/', [PayrollStatsController::class, 'index'])->name('index');
+            Route::get('/month/{month}', [PayrollStatsController::class, 'showMonthDetails'])->name('month-details');
+            Route::get('/export', [PayrollStatsController::class, 'exportMonthlyStats'])->name('export');
+            Route::get('/export/month/{month}', [PayrollStatsController::class, 'exportMonthDetails'])->name('export-month');
+            Route::get('/graphs', [PayrollStatsController::class, 'graphsIndex'])->name('graphs');
+            Route::get('/chart-data', [PayrollStatsController::class, 'getChartData'])->name('chart-data');
+            Route::get('/api/chart-data', [PayrollStatsController::class, 'getChartData'])->name('api.chart-data');
+            Route::get('/api/yearly-stats', [PayrollStatsController::class, 'getYearlyStats'])->name('api.yearly-stats');
+        });
+
     });
     
-
     Route::prefix('stats')->name('stats.')->group(function () {
         Route::get('/', [StatsSalaryController::class, 'index'])->name('index');
         Route::get('/data', [StatsSalaryController::class, 'getPayrollData'])->name('data');
         Route::get('/export', [StatsSalaryController::class, 'exportCsv'])->name('export');
     });
 
-    Route::get('reset-data', [ResetDataController::class, 'showConfirmation'])
-        ->name('reset-data.show');
+    Route::prefix('reset-data')->name('reset-data.')->group(function () {
+        Route::get('/', [ResetDataController::class, 'showConfirmation'])->name('show');
+        Route::get('/check', [ResetDataController::class, 'checkData'])->name('check');
+        Route::post('/all', [ResetDataController::class, 'resetAllData'])->name('all');
+        Route::post('/table/{table}', [ResetDataController::class, 'resetSpecificTable'])->name('table');
+        Route::post('/confirm', [ResetDataController::class, 'confirmReset'])->name('confirm');
+    });
     
-    // Vérifier les données existantes
-    Route::get('reset-data/check', [ResetDataController::class, 'checkData'])
-        ->name('reset-data.check');
-    
-    // Réinitialiser toutes les données
-    Route::post('reset-data/all', [ResetDataController::class, 'resetAllData'])
-        ->name('reset-data.all');
-    
-    // Réinitialiser une table spécifique
-    Route::post('reset-data/table/{table}', [ResetDataController::class, 'resetSpecificTable'])
-        ->name('reset-data.table');
-    
-    // API de confirmation avec double vérification
-    Route::post('reset-data/confirm', [ResetDataController::class, 'confirmReset'])
-        ->name('reset-data.confirm');
 });
