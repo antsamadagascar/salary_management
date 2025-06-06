@@ -54,7 +54,7 @@ class PayrollController extends Controller
 
             $salariesByMonth = $this->payrollService->getEmployeeSalariesByMonth($employeeId);
             $stats = $this->payrollService->getPayrollStats($employeeId);
-
+            
             return view('payroll.show', compact('employee', 'salariesByMonth', 'stats'));
         } catch (\Exception $e) {
             return redirect()->route('payroll.index')->withError('Erreur lors du chargement de la fiche employé: ' . $e->getMessage());
@@ -86,7 +86,7 @@ class PayrollController extends Controller
     }
 
     /**
-     * Exporter les salaires d'un employé pour un mois en PDF
+     * Export pdf  salaires d'un employé pour un mois
      */
     public function exportMonthlyPdf(string $employeeId, string $month): Response|RedirectResponse
     {
@@ -94,6 +94,7 @@ class PayrollController extends Controller
             $employee = $this->employeeService->getEmployeeByName($employeeId);
             $salarySlips = $this->payrollService->getSalarySlipsForMonth($employeeId, $month);
             
+
             if (!$employee) {
                 return redirect()->route('payroll.index')->withError('Employé non trouvé');
             }
@@ -111,6 +112,7 @@ class PayrollController extends Controller
                 ],
                 $filename
             );
+            
         } catch (\Exception $e) {
             \Log::error("Erreur lors de l'export PDF mensuel pour l'employé {$employeeId} mois {$month}: " . $e->getMessage());
             return redirect()->route('payroll.index')->withError('Erreur lors de l\'export PDF: ' . $e->getMessage());
