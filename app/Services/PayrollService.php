@@ -112,8 +112,7 @@ class PayrollService
         try {
             $startDate = Carbon::createFromFormat('Y-m', $month)->startOfMonth()->format('Y-m-d');
             $endDate = Carbon::createFromFormat('Y-m', $month)->endOfMonth()->format('Y-m-d');
-
-            return $this->erpApiService->getResource('Salary Slip', [
+            $salarySlips = $this->erpApiService->getResource('Salary Slip', [
                 'filters' => [
                     ['employee', '=', $employeeId],
                     ['posting_date', '>=', $startDate],
@@ -122,9 +121,22 @@ class PayrollService
                 'fields' => [
                     'name', 'employee', 'employee_name', 'posting_date',
                     'start_date', 'end_date', 'gross_pay', 'total_deduction',
-                    'net_pay', 'status','currency'
+                    'net_pay', 'status', 'currency'
                 ]
             ]);
+    
+            $detailedSalarySlips = [];
+            foreach ($salarySlips as $slip) {
+                $detailedSlip = $this->getSalarySlip($slip['name']);
+                if ($detailedSlip) {
+                    $detailedSalarySlips[] = $detailedSlip;
+                } else {
+                    $detailedSalarySlips[] = $slip;
+                }
+            }
+    
+            return $detailedSalarySlips;
+            
         } catch (Exception $e) {
             throw new Exception("Erreur lors de la récupération des fiches de paie: " . $e->getMessage());
         }
