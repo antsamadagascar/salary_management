@@ -62,7 +62,7 @@ class AuthController extends Controller
                     Session::put('frappe_sid', $sidCookie->getValue());
                     Session::put('user_full_name', $data['full_name'] ?? $request->usr);
                     
-                    return redirect()->route('dashboard')->with('success', 'Connexion réussie');
+                    return redirect()->route('payroll.stats.index')->with('success', 'Connexion réussie');
                 }
                 
                 return back()->withErrors(['message' => 'Erreur dans la récupération du cookie d\'authentification']);
