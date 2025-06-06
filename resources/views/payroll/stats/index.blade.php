@@ -86,14 +86,39 @@
     @endif
 
   <!-- Graphiques -->
-  <div id="charts-section" class="row mb-4">
-    <div class="col-12">
+  <!-- Graphiques -->
+<div id="charts-section" class="row mb-4">
+    <!-- Graphique principal - Évolution totale -->
+    <div class="col-12 mb-4">
         <div class="card">
             <div class="card-header">
-                <h5 class="card-title mb-0">Évolution des Salaires et Composants {{ $year }}</h5>
+                <h5 class="card-title mb-0">Évolution Totale des Salaires {{ $year }}</h5>
             </div>
             <div class="card-body">
-                <canvas id="combinedChart" height="400"></canvas>
+                <canvas id="totalSalariesChart" height="300"></canvas>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Graphiques séparés -->
+    <div class="col-lg-6 mb-3">
+        <div class="card">
+            <div class="card-header">
+                <h6 class="card-title mb-0">Composants de Gains</h6>
+            </div>
+            <div class="card-body">
+                <canvas id="earningsChart" height="250"></canvas>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-lg-6 mb-3">
+        <div class="card">
+            <div class="card-header">
+                <h6 class="card-title mb-0">Composants de Déductions</h6>
+            </div>
+            <div class="card-body">
+                <canvas id="deductionsChart" height="250"></canvas>
             </div>
         </div>
     </div>
@@ -342,68 +367,42 @@ document.addEventListener('DOMContentLoaded', function() {
     const chartData = @json($chartData ?? []);
     console.log('chartData:', chartData);
 
-    if (document.getElementById('combinedChart')) {
-        const ctx = document.getElementById('combinedChart').getContext('2d');
-        const datasets = [
-            {
-                label: 'Salaire Brut',
-                data: chartData.gross_pay || [],
-                borderColor: '#4BC0C0',
-                backgroundColor: '#4BC0C033',
-                tension: 0.1,
-                fill: true
-            },
-            {
-                label: 'Salaire Net',
-                data: chartData.net_pay || [],
-                borderColor: '#36A2EB',
-                backgroundColor: '#36A2EB33',
-                tension: 0.1,
-                fill: true
-            },
-            {
-                label: 'Total Déductions',
-                data: chartData.deductions || [],
-                borderColor: '#FF6384',
-                backgroundColor: '#FF638433',
-                tension: 0.1,
-                fill: true
-            }
-        ];
-
-        // Ajoute du composants de gains
-        if (chartData.earnings_components) {
-            Object.keys(chartData.earnings_components).forEach((component, index) => {
-                datasets.push({
-                    label: component,
-                    data: chartData.earnings_components[component] || [],
-                    borderColor: ['#FFCE56', '#9966FF', '#4BC0C0', '#36A2EB'][index % 4],
-                    backgroundColor: ['#FFCE5633', '#9966FF33', '#4BC0C033', '#36A2EB33'][index % 4],
-                    tension: 0.1,
-                    fill: true
-                });
-            });
-        }
-
-        // Ajoute du composants de déductions
-        if (chartData.deductions_components) {
-            Object.keys(chartData.deductions_components).forEach((component, index) => {
-                datasets.push({
-                    label: component,
-                    data: chartData.deductions_components[component] || [],
-                    borderColor: ['#FF6384', '#C9CBCF'][index % 2],
-                    backgroundColor: ['#FF638433', '#C9CBCF33'][index % 2],
-                    tension: 0.1,
-                    fill: true
-                });
-            });
-        }
-
-        new Chart(ctx, {
+    // Graphique principal - Totaux
+    if (document.getElementById('totalSalariesChart')) {
+        const ctx1 = document.getElementById('totalSalariesChart').getContext('2d');
+        new Chart(ctx1, {
             type: 'line',
             data: {
                 labels: chartData.labels || [],
-                datasets: datasets
+                datasets: [
+                    {
+                        label: 'Salaire Brut Total',
+                        data: chartData.gross_pay || [],
+                        borderColor: '#28a745',
+                        backgroundColor: '#28a74520',
+                        borderWidth: 3,
+                        tension: 0.1,
+                        fill: true
+                    },
+                    {
+                        label: 'Salaire Net Total',
+                        data: chartData.net_pay || [],
+                        borderColor: '#007bff',
+                        backgroundColor: '#007bff20',
+                        borderWidth: 3,
+                        tension: 0.1,
+                        fill: true
+                    },
+                    {
+                        label: 'Total Déductions',
+                        data: chartData.deductions || [],
+                        borderColor: '#dc3545',
+                        backgroundColor: '#dc354520',
+                        borderWidth: 3,
+                        tension: 0.1,
+                        fill: true
+                    }
+                ]
             },
             options: {
                 responsive: true,
@@ -420,7 +419,11 @@ document.addEventListener('DOMContentLoaded', function() {
                 },
                 plugins: {
                     legend: {
-                        position: 'bottom'
+                        position: 'top',
+                        labels: {
+                            usePointStyle: true,
+                            padding: 20
+                        }
                     },
                     tooltip: {
                         callbacks: {
@@ -433,10 +436,110 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
             }
         });
-    } else {
-        console.error('Canvas #combinedChart non trouvé');
     }
+
+    // Graphique des gains
+    if (document.getElementById('earningsChart') && chartData.earnings_components) {
+        const ctx2 = document.getElementById('earningsChart').getContext('2d');
+        const earningsDatasets = [];
+        const colors = ['#ffc107', '#6f42c1', '#20c997', '#fd7e14', '#e83e8c'];
+        
+        Object.keys(chartData.earnings_components).forEach((component, index) => {
+            earningsDatasets.push({
+                label: component,
+                data: chartData.earnings_components[component] || [],
+                borderColor: colors[index % colors.length],
+                backgroundColor: colors[index % colors.length] + '20',
+                borderWidth: 2,
+                tension: 0.1,
+                fill: false
+            });
+        });
+
+        new Chart(ctx2, {
+            type: 'line',
+            data: {
+                labels: chartData.labels || [],
+                datasets: earningsDatasets
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        ticks: {
+                            callback: function(value) {
+                                return new Intl.NumberFormat('fr-FR').format(value);
+                            }
+                        }
+                    }
+                },
+                plugins: {
+                    legend: {
+                        position: 'bottom',
+                        labels: {
+                            usePointStyle: true,
+                            padding: 15
+                        }
+                    }
+                }
+            }
+        });
+    }
+
+    // Graphique des déductions
+    if (document.getElementById('deductionsChart') && chartData.deductions_components) {
+        const ctx3 = document.getElementById('deductionsChart').getContext('2d');
+        const deductionsDatasets = [];
+        const deductionColors = ['#dc3545', '#6c757d', '#17a2b8', '#343a40'];
+        
+        Object.keys(chartData.deductions_components).forEach((component, index) => {
+            deductionsDatasets.push({
+                label: component,
+                data: chartData.deductions_components[component] || [],
+                borderColor: deductionColors[index % deductionColors.length],
+                backgroundColor: deductionColors[index % deductionColors.length] + '20',
+                borderWidth: 2,
+                tension: 0.1,
+                fill: false
+            });
+        });
+
+        new Chart(ctx3, {
+            type: 'line',
+            data: {
+                labels: chartData.labels || [],
+                datasets: deductionsDatasets
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        ticks: {
+                            callback: function(value) {
+                                return new Intl.NumberFormat('fr-FR').format(value);
+                            }
+                        }
+                    }
+                },
+                plugins: {
+                    legend: {
+                        position: 'bottom',
+                        labels: {
+                            usePointStyle: true,
+                            padding: 15
+                        }
+                    }
+                }
+            }
+        });
+}
+
 });
+
 </script>
 @endsection
 
