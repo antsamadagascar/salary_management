@@ -132,7 +132,7 @@ class EmployeeServiceImport
                 'company_name' => $companyName,
                 'default_currency' => 'MGA', //default currency
                 'country' => 'Madagascar', //default country
-                'default_holiday_list' => 'Global Holiday List 2025' //hoilday list default
+                'default_holiday_list' => 'Global Holiday List' //hoilday list default
             ];
 
             return $this->apiService->createResource('Company', $companyData);
