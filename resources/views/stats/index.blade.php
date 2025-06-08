@@ -34,10 +34,10 @@
                                 <label for="monthFilter">
                                     <i class="fas fa-calendar"></i> Filtrer par mois :
                                 </label>
-                                <select id="monthFilter" class="form-control" onchange="filterByMonth()">
+                                <select id="monthFilter" class="form-control" onchange="if(this.value) filterByMonth()">
+                                    <option value="">Veuillez sélectionner un mois</option>
                                     @forelse($availableMonths as $month)
-                                        <option value="{{ $month['value'] }}" 
-                                                {{ $currentMonth == $month['value'] ? 'selected' : '' }}>
+                                        <option value="{{ $month['value'] }}">
                                             {{ $month['label'] }}
                                         </option>
                                     @empty
@@ -46,6 +46,7 @@
                                         </option>
                                     @endforelse
                                 </select>
+
                             </div>
                         </div>
                     </div>
@@ -105,7 +106,59 @@
                             </div>
                         </div>
                     </div>
-
+                    <!-- Totaux par composants -->
+                    <div class="row mb-4">
+                        <div class="col-md-6">
+                            <div class="card">
+                                <div class="card-header bg-success">
+                                    <h5 class="card-title mb-0">
+                                        <i class="fas fa-plus-circle"></i> Répartition des Gains
+                                    </h5>
+                                </div>
+                                <div class="card-body">
+                                    <div id="earningsBreakdown">
+                                        @if(!empty($totals['earnings_breakdown']))
+                                            @foreach($totals['earnings_breakdown'] as $component => $amount)
+                                                <div class="d-flex justify-content-between mb-2">
+                                                    <span>{{ $component }}</span>
+                                                    <span class="badge badge-success">
+                                                        {{ number_format($amount, 2) }} 
+                                                    </span>
+                                                </div>
+                                            @endforeach
+                                        @else
+                                            <p class="text-muted">Aucun composant de gain</p>
+                                        @endif
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="card">
+                                <div class="card-header bg-warning">
+                                    <h5 class="card-title mb-0">
+                                        <i class="fas fa-minus-circle"></i> Répartition des Déductions
+                                    </h5>
+                                </div>
+                                <div class="card-body">
+                                    <div id="deductionsBreakdown">
+                                        @if(!empty($totals['deductions_breakdown']))
+                                            @foreach($totals['deductions_breakdown'] as $component => $amount)
+                                                <div class="d-flex justify-content-between mb-2">
+                                                    <span>{{ $component }}</span>
+                                                    <span class="badge badge-warning">
+                                                        {{ number_format($amount, 2) }} 
+                                                    </span>
+                                                </div>
+                                            @endforeach
+                                        @else
+                                            <p class="text-muted">Aucune déduction</p>
+                                        @endif
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                     <!-- Loading spinner -->
                     <div id="loadingSpinner" class="text-center" style="display: none;">
                         <div class="spinner-border" role="status">
@@ -222,11 +275,11 @@ function filterByMonth() {
     const loadingSpinner = document.getElementById('loadingSpinner');
     const payrollTable = document.getElementById('payrollTable');
     
-    // Afficher le spinner
+    // Affiche le spinner
     loadingSpinner.style.display = 'block';
     payrollTable.style.display = 'none';
     
-    // Faire la requête AJAX
+    //  requête AJAX
     fetch(`{{ route('stats.data') }}?month=${selectedMonth}`, {
         method: 'GET',
         headers: {
@@ -239,6 +292,7 @@ function filterByMonth() {
         if (data.success) {
             updatePayrollTable(data.data);
             updateTotals(data.totals);
+            updateBreakdowns(data.totals);
         } else {
             alert('Erreur lors du chargement des données: ' + data.message);
         }
@@ -248,7 +302,7 @@ function filterByMonth() {
         alert('Erreur lors du chargement des données');
     })
     .finally(() => {
-        // Masquer le spinner
+        // Masque le spinner
         loadingSpinner.style.display = 'none';
         payrollTable.style.display = 'block';
     });
@@ -319,7 +373,7 @@ function updateTotals(totals) {
 function showEmployeeDetails(employeeId, employeeData) {
     document.getElementById('modalEmployeeName').textContent = employeeData.employee_name;
     
-    // Afficher les gains
+    // Affiche les gains
     const earningsDiv = document.getElementById('earningsDetails');
     earningsDiv.innerHTML = '';
     if (employeeData.earnings && employeeData.earnings.length > 0) {
@@ -337,7 +391,7 @@ function showEmployeeDetails(employeeId, employeeData) {
         earningsDiv.innerHTML = '<p class="text-muted">Aucun élément de gain</p>';
     }
     
-    // Afficher les déductions
+    // Affiche les déductions
     const deductionsDiv = document.getElementById('deductionsDetails');
     deductionsDiv.innerHTML = '';
     if (employeeData.deductions && employeeData.deductions.length > 0) {
@@ -356,6 +410,46 @@ function showEmployeeDetails(employeeId, employeeData) {
     }
     
     $('#employeeDetailsModal').modal('show');
+}
+
+function updateBreakdowns(totals) {
+    // Mise à jour des gains
+    const earningsDiv = document.getElementById('earningsBreakdown');
+    earningsDiv.innerHTML = '';
+    
+    if (totals.earnings_breakdown && Object.keys(totals.earnings_breakdown).length > 0) {
+        Object.entries(totals.earnings_breakdown).forEach(([component, amount]) => {
+            earningsDiv.innerHTML += `
+                <div class="d-flex justify-content-between mb-2">
+                    <span>${component}</span>
+                    <span class="info-box-number">
+                        ${parseFloat(amount).toLocaleString('fr-FR', {minimumFractionDigits: 2})} 
+                    </span>
+                </div>
+            `;
+        });
+    } else {
+        earningsDiv.innerHTML = '<p class="text-muted">Aucun composant de gain</p>';
+    }
+    
+    // Mise à jour des déductions
+    const deductionsDiv = document.getElementById('deductionsBreakdown');
+    deductionsDiv.innerHTML = '';
+    
+    if (totals.deductions_breakdown && Object.keys(totals.deductions_breakdown).length > 0) {
+        Object.entries(totals.deductions_breakdown).forEach(([component, amount]) => {
+            deductionsDiv.innerHTML += `
+                <div class="d-flex justify-content-between mb-2">
+                    <span>${component}</span>
+                    <span class="info-box-number">
+                        ${parseFloat(amount).toLocaleString('fr-FR', {minimumFractionDigits: 2})} 
+                    </span>
+                </div>
+            `;
+        });
+    } else {
+        deductionsDiv.innerHTML = '<p class="text-muted">Aucune déduction</p>';
+    }
 }
 
 function exportCsv() {
@@ -404,7 +498,12 @@ function exportCsv() {
     color:black;
     font-weight: 700;
 }
-
+.info-box-number {
+    display: block;
+    margin-top: .25rem;
+    color:black;
+    font-weight: 700;
+}
 .table th {
     vertical-align: middle;
 }
