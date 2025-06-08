@@ -58,7 +58,7 @@ class PayrollService
                     'net_pay', 'status'
                 ],
                 'order_by' => 'posting_date desc',
-                'limit_page_length' => 100
+                'limit_page_length' => 1000
             ]);
 
             // Grouper par mois
