@@ -362,7 +362,7 @@ class PayrollService
                 ],
                 'fields' => ['start_date', 'end_date'],
                 'order_by' => 'start_date desc',
-                'limit' => 500 // Limite pour éviter trop de données
+                'limit' => 1000 // Limite pour éviter trop de données
             ]);
 
             $months = [];
