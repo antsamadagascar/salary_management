@@ -12,11 +12,11 @@
                         <i class="fas fa-money-check-alt"></i>
                         Tableau de Paie
                     </h3>
-                    <div class="card-tools">
+                    <!-- <div class="card-tools">
                         <button type="button" class="btn btn-success btn-sm" onclick="exportCsv()">
                             <i class="fas fa-download"></i> Exporter CSV
                         </button>
-                    </div>
+                    </div> -->
                 </div>
 
                 <div class="card-body">
@@ -270,16 +270,103 @@
 
 @section('scripts')
 <script>
+// Fonction pour initialiser l'état vide
+function initializeEmptyState() {
+    const selectedMonth = document.getElementById('monthFilter').value;
+    
+    if (!selectedMonth || selectedMonth === '' || selectedMonth === 'default') {
+        // Vide le contenu au lieu de masquer
+        clearAllData();
+        showSelectionPrompt();
+    } else {
+        hideSelectionPrompt();
+    }
+}
+
+// Fonction pour vider toutes les données
+function clearAllData() {
+    // Vide le tableau
+    const tbody = document.getElementById('payrollTableBody');
+    if (tbody) {
+        tbody.innerHTML = `
+            <tr>
+                <td colspan="8" class="text-center text-muted">
+                    <i class="fas fa-info-circle"></i>
+                    Sélectionnez un mois pour afficher les données
+                </td>
+            </tr>
+        `;
+    }
+    
+    // Remet les totaux à zéro
+    const totalEmployees = document.getElementById('totalEmployees');
+    const totalGrossPay = document.getElementById('totalGrossPay');
+    const totalDeductions = document.getElementById('totalDeductions');
+    const totalNetPay = document.getElementById('totalNetPay');
+    
+    if (totalEmployees) totalEmployees.textContent = '0';
+    if (totalGrossPay) totalGrossPay.textContent = '0,00 ';
+    if (totalDeductions) totalDeductions.textContent = '0,00 ';
+    if (totalNetPay) totalNetPay.textContent = '0,00 ';
+    
+    // Vide les breakdowns
+    const earningsDiv = document.getElementById('earningsBreakdown');
+    if (earningsDiv) {
+        earningsDiv.innerHTML = '<p class="text-muted">Sélectionnez un mois pour voir les composants</p>';
+    }
+    
+    const deductionsDiv = document.getElementById('deductionsBreakdown');
+    if (deductionsDiv) {
+        deductionsDiv.innerHTML = '<p class="text-muted">Sélectionnez un mois pour voir les déductions</p>';
+    }
+}
+
+// Affiche un message d'invite pour sélectionner un mois
+function showSelectionPrompt() {
+    let promptDiv = document.getElementById('selectionPrompt');
+    if (!promptDiv) {
+        promptDiv = document.createElement('div');
+        promptDiv.id = 'selectionPrompt';
+        promptDiv.className = 'alert alert-info text-center';
+        promptDiv.innerHTML = `
+            <i class="fas fa-info-circle"></i>
+            <strong>Veuillez sélectionner un mois</strong> pour afficher les données de paie.
+        `;
+        
+        // Insère le message avant le tableau
+        const payrollTable = document.getElementById('payrollTable');
+        if (payrollTable) {
+            payrollTable.parentNode.insertBefore(promptDiv, payrollTable);
+        }
+    }
+    promptDiv.style.display = 'block';
+}
+
+// Masque le message d'invite
+function hideSelectionPrompt() {
+    const promptDiv = document.getElementById('selectionPrompt');
+    if (promptDiv) {
+        promptDiv.style.display = 'none';
+    }
+}
+
 function filterByMonth() {
     const selectedMonth = document.getElementById('monthFilter').value;
+    
+    // Vérifie si un mois valide est sélectionné
+    if (!selectedMonth || selectedMonth === '' || selectedMonth === 'default') {
+        initializeEmptyState();
+        return;
+    }
+    
     const loadingSpinner = document.getElementById('loadingSpinner');
     const payrollTable = document.getElementById('payrollTable');
     
     // Affiche le spinner
-    loadingSpinner.style.display = 'block';
-    payrollTable.style.display = 'none';
+    if (loadingSpinner) loadingSpinner.style.display = 'block';
+    if (payrollTable) payrollTable.style.display = 'none';
     
-    //  requête AJAX
+    // Requête AJAX
     fetch(`{{ route('stats.data') }}?month=${selectedMonth}`, {
         method: 'GET',
         headers: {
@@ -293,6 +380,7 @@ function filterByMonth() {
             updatePayrollTable(data.data);
             updateTotals(data.totals);
             updateBreakdowns(data.totals);
+            hideSelectionPrompt(); // Masque le message d'invite après chargement
         } else {
             alert('Erreur lors du chargement des données: ' + data.message);
         }
@@ -303,13 +391,15 @@ function filterByMonth() {
     })
     .finally(() => {
         // Masque le spinner
-        loadingSpinner.style.display = 'none';
-        payrollTable.style.display = 'block';
+        if (loadingSpinner) loadingSpinner.style.display = 'none';
+        if (payrollTable) payrollTable.style.display = 'block';
     });
 }
 
 function updatePayrollTable(payrollData) {
     const tbody = document.getElementById('payrollTableBody');
+    if (!tbody) return;
+    
     tbody.innerHTML = '';
     
     if (payrollData.length === 0) {
@@ -329,7 +419,6 @@ function updatePayrollTable(payrollData) {
             <tr>
                 <td>${employee.employee_id}</td>
                 <td><strong>${employee.employee_name}</strong></td>
-
                 <td class="text-right">
                     <span class="badge badge-success text-dark">
                         ${parseFloat(employee.gross_pay).toLocaleString('fr-FR', {minimumFractionDigits: 2})} 
@@ -353,7 +442,6 @@ function updatePayrollTable(payrollData) {
                         <i class="fas fa-eye"></i> Détails
                     </button>
                 </td>
-
             </tr>
         `;
         tbody.innerHTML += row;
@@ -361,101 +449,133 @@ function updatePayrollTable(payrollData) {
 }
 
 function updateTotals(totals) {
-    document.getElementById('totalEmployees').textContent = totals.total_employees;
-    document.getElementById('totalGrossPay').textContent = 
+    const totalEmployees = document.getElementById('totalEmployees');
+    const totalGrossPay = document.getElementById('totalGrossPay');
+    const totalDeductions = document.getElementById('totalDeductions');
+    const totalNetPay = document.getElementById('totalNetPay');
+    
+    if (totalEmployees) totalEmployees.textContent = totals.total_employees;
+    if (totalGrossPay) totalGrossPay.textContent = 
         parseFloat(totals.total_gross_pay).toLocaleString('fr-FR', {minimumFractionDigits: 2}) + ' ';
-    document.getElementById('totalDeductions').textContent = 
+    if (totalDeductions) totalDeductions.textContent = 
         parseFloat(totals.total_deductions).toLocaleString('fr-FR', {minimumFractionDigits: 2}) + ' ';
-    document.getElementById('totalNetPay').textContent = 
+    if (totalNetPay) totalNetPay.textContent = 
         parseFloat(totals.total_net_pay).toLocaleString('fr-FR', {minimumFractionDigits: 2}) + ' ';
 }
 
 function showEmployeeDetails(employeeId, employeeData) {
-    document.getElementById('modalEmployeeName').textContent = employeeData.employee_name;
+    const modalEmployeeName = document.getElementById('modalEmployeeName');
+    if (modalEmployeeName) modalEmployeeName.textContent = employeeData.employee_name;
     
     // Affiche les gains
     const earningsDiv = document.getElementById('earningsDetails');
-    earningsDiv.innerHTML = '';
-    if (employeeData.earnings && employeeData.earnings.length > 0) {
-        employeeData.earnings.forEach(earning => {
-            earningsDiv.innerHTML += `
-                <div class="d-flex justify-content-between mb-2">
-                    <span>${earning.component}</span>
-                    <span class="badge badge-success text-dark">
-                        ${parseFloat(earning.amount).toLocaleString('fr-FR', {minimumFractionDigits: 2})} 
-                    </span>
-                </div>
-            `;
-        });
-    } else {
-        earningsDiv.innerHTML = '<p class="text-muted">Aucun élément de gain</p>';
+    if (earningsDiv) {
+        earningsDiv.innerHTML = '';
+        if (employeeData.earnings && employeeData.earnings.length > 0) {
+            employeeData.earnings.forEach(earning => {
+                earningsDiv.innerHTML += `
+                    <div class="d-flex justify-content-between mb-2">
+                        <span>${earning.component}</span>
+                        <span class="badge badge-success text-dark">
+                            ${parseFloat(earning.amount).toLocaleString('fr-FR', {minimumFractionDigits: 2})} 
+                        </span>
+                    </div>
+                `;
+            });
+        } else {
+            earningsDiv.innerHTML = '<p class="text-muted">Aucun élément de gain</p>';
+        }
     }
     
     // Affiche les déductions
     const deductionsDiv = document.getElementById('deductionsDetails');
-    deductionsDiv.innerHTML = '';
-    if (employeeData.deductions && employeeData.deductions.length > 0) {
-        employeeData.deductions.forEach(deduction => {
-            deductionsDiv.innerHTML += `
-                <div class="d-flex justify-content-between mb-2">
-                    <span>${deduction.component}</span>
-                    <span class="badge badge-warning text-dark">
-                        ${parseFloat(deduction.amount).toLocaleString('fr-FR', {minimumFractionDigits: 2})} 
-                    </span>
-                </div>
-            `;
-        });
-    } else {
-        deductionsDiv.innerHTML = '<p class="text-muted">Aucune déduction</p>';
+    if (deductionsDiv) {
+        deductionsDiv.innerHTML = '';
+        if (employeeData.deductions && employeeData.deductions.length > 0) {
+            employeeData.deductions.forEach(deduction => {
+                deductionsDiv.innerHTML += `
+                    <div class="d-flex justify-content-between mb-2">
+                        <span>${deduction.component}</span>
+                        <span class="badge badge-warning text-dark">
+                            ${parseFloat(deduction.amount).toLocaleString('fr-FR', {minimumFractionDigits: 2})} 
+                        </span>
+                    </div>
+                `;
+            });
+        } else {
+            deductionsDiv.innerHTML = '<p class="text-muted">Aucune déduction</p>';
+        }
     }
     
-    $('#employeeDetailsModal').modal('show');
+    // Affiche le modal si jQuery est disponible
+    if (typeof $ !== 'undefined') {
+        $('#employeeDetailsModal').modal('show');
+    }
 }
 
 function updateBreakdowns(totals) {
     // Mise à jour des gains
     const earningsDiv = document.getElementById('earningsBreakdown');
-    earningsDiv.innerHTML = '';
-    
-    if (totals.earnings_breakdown && Object.keys(totals.earnings_breakdown).length > 0) {
-        Object.entries(totals.earnings_breakdown).forEach(([component, amount]) => {
-            earningsDiv.innerHTML += `
-                <div class="d-flex justify-content-between mb-2">
-                    <span>${component}</span>
-                    <span class="info-box-number">
-                        ${parseFloat(amount).toLocaleString('fr-FR', {minimumFractionDigits: 2})} 
-                    </span>
-                </div>
-            `;
-        });
-    } else {
-        earningsDiv.innerHTML = '<p class="text-muted">Aucun composant de gain</p>';
+    if (earningsDiv) {
+        earningsDiv.innerHTML = '';
+        
+        if (totals.earnings_breakdown && Object.keys(totals.earnings_breakdown).length > 0) {
+            Object.entries(totals.earnings_breakdown).forEach(([component, amount]) => {
+                earningsDiv.innerHTML += `
+                    <div class="d-flex justify-content-between mb-2">
+                        <span>${component}</span>
+                        <span class="info-box-number">
+                            ${parseFloat(amount).toLocaleString('fr-FR', {minimumFractionDigits: 2})} 
+                        </span>
+                    </div>
+                `;
+            });
+        } else {
+            earningsDiv.innerHTML = '<p class="text-muted">Aucun composant de gain</p>';
+        }
     }
     
     // Mise à jour des déductions
     const deductionsDiv = document.getElementById('deductionsBreakdown');
-    deductionsDiv.innerHTML = '';
-    
-    if (totals.deductions_breakdown && Object.keys(totals.deductions_breakdown).length > 0) {
-        Object.entries(totals.deductions_breakdown).forEach(([component, amount]) => {
-            deductionsDiv.innerHTML += `
-                <div class="d-flex justify-content-between mb-2">
-                    <span>${component}</span>
-                    <span class="info-box-number">
-                        ${parseFloat(amount).toLocaleString('fr-FR', {minimumFractionDigits: 2})} 
-                    </span>
-                </div>
-            `;
-        });
-    } else {
-        deductionsDiv.innerHTML = '<p class="text-muted">Aucune déduction</p>';
+    if (deductionsDiv) {
+        deductionsDiv.innerHTML = '';
+        
+        if (totals.deductions_breakdown && Object.keys(totals.deductions_breakdown).length > 0) {
+            Object.entries(totals.deductions_breakdown).forEach(([component, amount]) => {
+                deductionsDiv.innerHTML += `
+                    <div class="d-flex justify-content-between mb-2">
+                        <span>${component}</span>
+                        <span class="info-box-number">
+                            ${parseFloat(amount).toLocaleString('fr-FR', {minimumFractionDigits: 2})} 
+                        </span>
+                    </div>
+                `;
+            });
+        } else {
+            deductionsDiv.innerHTML = '<p class="text-muted">Aucune déduction</p>';
+        }
     }
 }
 
 function exportCsv() {
     const selectedMonth = document.getElementById('monthFilter').value;
+    if (!selectedMonth || selectedMonth === '' || selectedMonth === 'default') {
+        alert('Veuillez sélectionner un mois avant d\'exporter');
+        return;
+    }
     window.location.href = `{{ route('stats.export') }}?month=${selectedMonth}`;
 }
+
+// Initialisation au chargement de la page
+document.addEventListener('DOMContentLoaded', function() {
+    // Initialise l'état vide au chargement
+    initializeEmptyState();
+    // Ajoute un listener sur le changement de sélection
+    const monthFilter = document.getElementById('monthFilter');
+    if (monthFilter) {
+        monthFilter.addEventListener('change', filterByMonth);
+    }
+});
 </script>
 @endsection
 @section('styles')
