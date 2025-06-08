@@ -99,6 +99,7 @@ class PayrollStatsService
             'total_gross_pay' => 0,
             'total_deductions' => 0,
             'total_net_pay' => 0,
+            'currency' => $payslips[0]['currency'] ?? 'MGA',
             'earnings_breakdown' => [],
             'deductions_breakdown' => [],
             'employees' => []
@@ -140,7 +141,8 @@ class PayrollStatsService
                 'total_deduction' => floatval($payslip['total_deduction'] ?? 0),
                 'net_pay' => floatval($payslip['net_pay'] ?? 0),
                 'earnings' => $components['earnings'],
-                'deductions' => $components['deductions']
+                'deductions' => $components['deductions'],
+                'currency' =>$payslip['currency']
             ];
         }
 
@@ -330,7 +332,7 @@ class PayrollStatsService
                 ],
                 'fields' => [
                     'name', 'employee', 'employee_name', 'department',
-                    'designation', 'gross_pay', 'net_pay', 'total_deduction'
+                    'designation', 'gross_pay', 'net_pay', 'total_deduction','currency'
                 ]
             ]);
 
@@ -339,6 +341,7 @@ class PayrollStatsService
                 $components = $this->getPayrollComponents($payslip['name']);
                 
                 $details[] = [
+                    'currency' => $payslip['currency'],
                     'employee_id' => $payslip['employee'],
                     'employee_name' => $payslip['employee_name'],
                     'department' => $payslip['department'] ?? 'N/A',

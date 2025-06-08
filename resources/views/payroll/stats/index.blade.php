@@ -88,49 +88,26 @@
     @endif
 
   <!-- Graphiques -->
-  <!-- Graphiques -->
-<div id="charts-section" class="row mb-4">
-    <!-- Graphique principal - Évolution totale -->
-    <div class="col-12 mb-4">
-        <div class="card">
-            <div class="card-header">
-                <h5 class="card-title mb-0">Évolution Totale des Salaires {{ $year }}</h5>
-            </div>
-            <div class="card-body">
-                <canvas id="totalSalariesChart" height="300"></canvas>
-            </div>
-        </div>
-    </div>
-    
-    <!-- Graphiques séparés -->
-    <div class="col-lg-6 mb-3">
-        <div class="card">
-            <div class="card-header">
-                <h6 class="card-title mb-0">Composants de Gains</h6>
-            </div>
-            <div class="card-body">
-                <canvas id="earningsChart" height="250"></canvas>
+  <script src="{{ asset('js/chart.js') }}"></script> 
+    <div id="charts-section" class="row mb-4">
+        <div class="col-12 mb-4">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">Évolution Complète des Salaires {{ $year }}</h5>
+                    <small class="text-muted">Total des salaires et détail des composants</small>
+                </div>
+                <div class="card-body">
+                    <canvas id="unifiedSalariesChart" height="400"></canvas>
+                </div>
             </div>
         </div>
     </div>
-    
-    <div class="col-lg-6 mb-3">
-        <div class="card">
-            <div class="card-header">
-                <h6 class="card-title mb-0">Composants de Déductions</h6>
-            </div>
-            <div class="card-body">
-                <canvas id="deductionsChart" height="250"></canvas>
-            </div>
-        </div>
-    </div>
-</div>
-    
+
 </div>
 
     <!-- Statistiques globales -->
     <div class="row mb-4">
-        <div class="col-lg-3 col-md-6">
+        <!-- <div class="col-lg-3 col-md-6">
             <div class="card bg-primary text-white">
                 <div class="card-body">
                     <div class="d-flex justify-content-between align-items-center">
@@ -152,7 +129,7 @@
                     </div>
                 </div>
             </div>
-        </div>
+        </div> -->
         <div class="col-lg-3 col-md-6">
             <div class="card bg-success text-white">
                 <div class="card-body">
@@ -164,7 +141,7 @@
                                 @else
                                     0
                                 @endif
-                                <small>MGA</small>
+                                <small></small>
                             </h3>
                             <p class="mb-0">Total Brut</p>
                         </div>
@@ -188,7 +165,7 @@
                                 @else
                                     0
                                 @endif
-                                <small>MGA</small>
+                                <small></small>
                             </h3>
                             <p class="mb-0">Total Déductions</p>
                         </div>
@@ -212,7 +189,7 @@
                                 @else
                                     0
                                 @endif
-                                <small>MGA</small>
+                                <small></small>
                             </h3>
                             <p class="mb-0">Total Net</p>
                         </div>
@@ -244,6 +221,7 @@
                                     <th class="text-end">Total Brut</th>
                                     <th class="text-end">Total Déductions</th>
                                     <th class="text-end">Total Net</th>
+                                    <th class="text-center">Devise</th> 
                                     <th class="text-center">Actions</th>
                                 </tr>
                             </thead>
@@ -258,21 +236,24 @@
                                         </td>
                                         <td class="text-end">
                                             <span class="text-success fw-bold">
-                                                {{ number_format($stats['total_gross_pay'], 0, ',', ' ') }} MGA
+                                                {{ number_format($stats['total_gross_pay'], 0, ',', ' ') }} 
                                             </span>
                                         </td>
                                         <td class="text-end">
                                             <span class="text-danger fw-bold">
-                                                {{ number_format($stats['total_deductions'], 0, ',', ' ') }} MGA
+                                                {{ number_format($stats['total_deductions'], 0, ',', ' ') }} 
                                             </span>
                                         </td>
                                         <td class="text-end">
                                             <a href="{{ route('payroll.stats.month-details', $stats['month']) }}" 
                                                class="text-decoration-none">
                                                 <span class="text-info fw-bold">
-                                                    {{ number_format($stats['total_net_pay'], 0, ',', ' ') }} MGA
+                                                    {{ number_format($stats['total_net_pay'], 0, ',', ' ') }} 
                                                 </span>
                                             </a>
+                                        </td>
+                                        <td class="text-center">
+                                            <span class="badge bg-secondary">{{ $stats['currency'] ?? '' }}</span>
                                         </td>
                                         <td class="text-center">
                                         <div class="btn-group" role="group">
@@ -306,18 +287,16 @@
                                     <tr class="fw-bold">
                                         <td>TOTAL</td>
                                         <td class="text-center">
-                                            <span class="badge bg-dark">
-                                                {{ number_format(collect($monthlyStats)->sum('total_employees'), 0, ',', ' ') }}
-                                            </span>
+                                            -
                                         </td>
                                         <td class="text-end text-success">
-                                            {{ number_format(collect($monthlyStats)->sum('total_gross_pay'), 0, ',', ' ') }} MGA
+                                            {{ number_format(collect($monthlyStats)->sum('total_gross_pay'), 0, ',', ' ') }} 
                                         </td>
                                         <td class="text-end text-danger">
-                                            {{ number_format(collect($monthlyStats)->sum('total_deductions'), 0, ',', ' ') }} MGA
+                                            {{ number_format(collect($monthlyStats)->sum('total_deductions'), 0, ',', ' ') }} 
                                         </td>
                                         <td class="text-end text-info">
-                                            {{ number_format(collect($monthlyStats)->sum('total_net_pay'), 0, ',', ' ') }} MGA
+                                            {{ number_format(collect($monthlyStats)->sum('total_net_pay'), 0, ',', ' ') }} 
                                         </td>
                                         <td class="text-center">-</td>
                                     </tr>
@@ -353,7 +332,7 @@
 @endsection
 
 @section('scripts')
-<script src="{{ asset('js/chart.js') }}"></script> 
+
 <script>
 // Fonction pour basculer l'affichage des graphiques
 function toggleCharts() {
@@ -368,70 +347,155 @@ function toggleCharts() {
 document.addEventListener('DOMContentLoaded', function() {
     const chartData = @json($chartData ?? []);
     console.log('chartData:', chartData);
+    // Graphique unifié - Totaux ET composants
+    if (document.getElementById('unifiedSalariesChart')) {
+        const ctx = document.getElementById('unifiedSalariesChart').getContext('2d');
+        
+        // Préparation de tous les datasets
+        const datasets = [
+            // Totaux principaux (lignes plus épaisses)
+            {
+                label: ' Salaire Brut Total',
+                data: chartData.gross_pay || [],
+                borderColor: '#28a745',
+                backgroundColor: '#28a74530',
+                borderWidth: 4,
+                tension: 0.1,
+                fill: false,
+                pointRadius: 6,
+                pointHoverRadius: 8
+            },
+            {
+                label: 'Salaire Net Total',
+                data: chartData.net_pay || [],
+                borderColor: '#007bff',
+                backgroundColor: '#007bff30',
+                borderWidth: 4,
+                tension: 0.1,
+                fill: false,
+                pointRadius: 6,
+                pointHoverRadius: 8
+            },
+            {
+                label: 'Total Déductions',
+                data: chartData.deductions || [],
+                borderColor: '#dc3545',
+                backgroundColor: '#dc354530',
+                borderWidth: 4,
+                tension: 0.1,
+                fill: false,
+                pointRadius: 6,
+                pointHoverRadius: 8
+            }
+        ];
 
-    // Graphique principal - Totaux
-    if (document.getElementById('totalSalariesChart')) {
-        const ctx1 = document.getElementById('totalSalariesChart').getContext('2d');
-        new Chart(ctx1, {
+        // Ajoute des composants de gains (lignes plus fines)
+        if (chartData.earnings_components) {
+            const earningsColors = ['#ffc107', '#6f42c1', '#20c997', '#fd7e14', '#e83e8c'];
+            Object.keys(chartData.earnings_components).forEach((component, index) => {
+                datasets.push({
+                    label: '📈 ' + component,
+                    data: chartData.earnings_components[component] || [],
+                    borderColor: earningsColors[index % earningsColors.length],
+                    backgroundColor: earningsColors[index % earningsColors.length] + '20',
+                    borderWidth: 2,
+                    tension: 0.1,
+                    fill: false,
+                    borderDash: [5, 5],
+                    pointRadius: 4,
+                    pointHoverRadius: 6
+                });
+            });
+        }
+
+        // Ajoute des composants de déductions (lignes pointillées)
+        if (chartData.deductions_components) {
+            const deductionColors = ['#dc3545', '#6c757d', '#17a2b8', '#343a40'];
+            Object.keys(chartData.deductions_components).forEach((component, index) => {
+                datasets.push({
+                    label: '📉 ' + component,
+                    data: chartData.deductions_components[component] || [],
+                    borderColor: deductionColors[index % deductionColors.length],
+                    backgroundColor: deductionColors[index % deductionColors.length] + '20',
+                    borderWidth: 2,
+                    tension: 0.1,
+                    fill: false,
+                    borderDash: [10, 5],
+                    pointRadius: 3,
+                    pointHoverRadius: 5
+                });
+            });
+        }
+
+        new Chart(ctx, {
             type: 'line',
             data: {
                 labels: chartData.labels || [],
-                datasets: [
-                    {
-                        label: 'Salaire Brut Total',
-                        data: chartData.gross_pay || [],
-                        borderColor: '#28a745',
-                        backgroundColor: '#28a74520',
-                        borderWidth: 3,
-                        tension: 0.1,
-                        fill: true
-                    },
-                    {
-                        label: 'Salaire Net Total',
-                        data: chartData.net_pay || [],
-                        borderColor: '#007bff',
-                        backgroundColor: '#007bff20',
-                        borderWidth: 3,
-                        tension: 0.1,
-                        fill: true
-                    },
-                    {
-                        label: 'Total Déductions',
-                        data: chartData.deductions || [],
-                        borderColor: '#dc3545',
-                        backgroundColor: '#dc354520',
-                        borderWidth: 3,
-                        tension: 0.1,
-                        fill: true
-                    }
-                ]
+                datasets: datasets
             },
             options: {
                 responsive: true,
                 maintainAspectRatio: false,
+                interaction: {
+                    mode: 'nearest',
+                    axis: 'x',
+                    intersect: false
+                },
                 scales: {
                     y: {
                         beginAtZero: true,
                         ticks: {
                             callback: function(value) {
-                                return new Intl.NumberFormat('fr-FR').format(value) + ' MGA';
+                                return new Intl.NumberFormat('fr-FR').format(value) + ' ';
                             }
+                        },
+                        grid: {
+                            color: '#e9ecef'
+                        }
+                    },
+                    x: {
+                        grid: {
+                            color: '#e9ecef'
                         }
                     }
                 },
                 plugins: {
                     legend: {
-                        position: 'top',
+                        position: 'bottom',
                         labels: {
                             usePointStyle: true,
-                            padding: 20
+                            padding: 20,
+                            font: {
+                                size: 12
+                            },
+                            generateLabels: function(chart) {
+                                const labels = Chart.defaults.plugins.legend.labels.generateLabels(chart);
+                                // Groupe visuellement les légendes
+                                return labels.map(label => {
+                                    if (label.text.includes('Total')) {
+                                        label.fontStyle = 'bold';
+                                    }
+                                    return label;
+                                });
+                            }
                         }
                     },
                     tooltip: {
                         callbacks: {
                             label: function(context) {
                                 return context.dataset.label + ': ' + 
-                                       new Intl.NumberFormat('fr-FR').format(context.parsed.y) + ' MGA';
+                                       new Intl.NumberFormat('fr-FR').format(context.parsed.y) + ' ';
+                            },
+                            afterLabel: function(context) {
+                                // Ajoute des informations contextuelles
+                                if (context.dataset.label.includes('Total')) {
+                                    return '(Ligne principale)';
+                                } else if (context.dataset.label.includes('📈')) {
+                                    return '(Composant de gains)';
+                                } else if (context.dataset.label.includes('📉')) {
+                                    return '(Composant de déductions)';
+                                }
+                                return '';
                             }
                         }
                     }
@@ -439,107 +503,6 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         });
     }
-
-    // Graphique des gains
-    if (document.getElementById('earningsChart') && chartData.earnings_components) {
-        const ctx2 = document.getElementById('earningsChart').getContext('2d');
-        const earningsDatasets = [];
-        const colors = ['#ffc107', '#6f42c1', '#20c997', '#fd7e14', '#e83e8c'];
-        
-        Object.keys(chartData.earnings_components).forEach((component, index) => {
-            earningsDatasets.push({
-                label: component,
-                data: chartData.earnings_components[component] || [],
-                borderColor: colors[index % colors.length],
-                backgroundColor: colors[index % colors.length] + '20',
-                borderWidth: 2,
-                tension: 0.1,
-                fill: false
-            });
-        });
-
-        new Chart(ctx2, {
-            type: 'line',
-            data: {
-                labels: chartData.labels || [],
-                datasets: earningsDatasets
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                scales: {
-                    y: {
-                        beginAtZero: true,
-                        ticks: {
-                            callback: function(value) {
-                                return new Intl.NumberFormat('fr-FR').format(value);
-                            }
-                        }
-                    }
-                },
-                plugins: {
-                    legend: {
-                        position: 'bottom',
-                        labels: {
-                            usePointStyle: true,
-                            padding: 15
-                        }
-                    }
-                }
-            }
-        });
-    }
-
-    // Graphique des déductions
-    if (document.getElementById('deductionsChart') && chartData.deductions_components) {
-        const ctx3 = document.getElementById('deductionsChart').getContext('2d');
-        const deductionsDatasets = [];
-        const deductionColors = ['#dc3545', '#6c757d', '#17a2b8', '#343a40'];
-        
-        Object.keys(chartData.deductions_components).forEach((component, index) => {
-            deductionsDatasets.push({
-                label: component,
-                data: chartData.deductions_components[component] || [],
-                borderColor: deductionColors[index % deductionColors.length],
-                backgroundColor: deductionColors[index % deductionColors.length] + '20',
-                borderWidth: 2,
-                tension: 0.1,
-                fill: false
-            });
-        });
-
-        new Chart(ctx3, {
-            type: 'line',
-            data: {
-                labels: chartData.labels || [],
-                datasets: deductionsDatasets
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                scales: {
-                    y: {
-                        beginAtZero: true,
-                        ticks: {
-                            callback: function(value) {
-                                return new Intl.NumberFormat('fr-FR').format(value);
-                            }
-                        }
-                    }
-                },
-                plugins: {
-                    legend: {
-                        position: 'bottom',
-                        labels: {
-                            usePointStyle: true,
-                            padding: 15
-                        }
-                    }
-                }
-            }
-        });
-}
-
 });
 
 </script>
