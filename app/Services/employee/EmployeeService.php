@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Services;
+namespace App\Services\employee;
 
 use App\Services\api\ErpApiService;
 use Exception;

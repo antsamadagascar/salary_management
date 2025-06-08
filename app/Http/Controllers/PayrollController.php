@@ -4,7 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Services\PayrollService;
 use App\Services\export\ExportService;
-use App\Services\EmployeeService;
+use App\Services\employee\EmployeeService;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
 use Illuminate\Http\RedirectResponse;
