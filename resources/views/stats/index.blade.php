@@ -240,7 +240,7 @@
                     <i class="fas fa-user"></i>
                     Détails de Paie - <span id="modalEmployeeName"></span>
                 </h5>
-                <button type="button" class="close" data-dismiss="modal">
+                <button type="button" class="close" data-dismiss="modal" onclick="closeEmployeeModal()">
                     <span>&times;</span>
                 </button>
             </div>
@@ -261,7 +261,9 @@
                 </div>
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-dismiss="modal">Fermer</button>
+                <button type="button" class="btn btn-secondary" data-dismiss="modal" onclick="closeEmployeeModal()">
+                    Fermer
+                </button>
             </div>
         </div>
     </div>
@@ -280,6 +282,28 @@ function initializeEmptyState() {
         showSelectionPrompt();
     } else {
         hideSelectionPrompt();
+    }
+}
+
+// Fonction pour fermer le modal
+function closeEmployeeModal() {
+    const modal = document.getElementById('employeeDetailsModal');
+    if (modal) {
+        // Méthode Bootstrap si disponible
+        if (typeof $ !== 'undefined' && $.fn.modal) {
+            $('#employeeDetailsModal').modal('hide');
+        } else {
+            // Méthode alternative sans Bootstrap
+            modal.style.display = 'none';
+            modal.classList.remove('show');
+            document.body.classList.remove('modal-open');
+            
+            // Supprime le backdrop s'il existe
+            const backdrop = document.querySelector('.modal-backdrop');
+            if (backdrop) {
+                backdrop.remove();
+            }
+        }
     }
 }
 
