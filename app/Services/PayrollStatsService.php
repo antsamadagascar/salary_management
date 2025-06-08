@@ -47,7 +47,7 @@ class PayrollStatsService
                     'net_pay', 'total_deduction', 'currency', 'posting_date'
                 ],
                 'order_by' => 'start_date asc',
-                'limit_page_length' => 2000
+                'limit_page_length' => 1000
             ]);
 
             return $this->processPayrollDataByMonth($payslips);
@@ -228,8 +228,8 @@ class PayrollStatsService
             $payslips = $this->erpApiService->getResource('Salary Slip', [
                 'filters' => [['docstatus', '=', 1]],
                 'fields' => ['start_date'],
-                'order_by' => 'start_date desc',
-                'limit_page_length' => 500
+                'order_by' => 'start_date asc',
+                'limit_page_length' => 1000
             ]);
 
             $years = [];
