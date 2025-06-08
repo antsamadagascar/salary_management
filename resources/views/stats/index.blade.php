@@ -13,7 +13,7 @@
                         Tableau de Paie
                     </h3>
                     <!-- <div class="card-tools">
-                        <button type="button" class="btn btn-success btn-sm" onclick="exportCsv()">
+                        <button type="button" class="btn btn-success btn-sm"  id="exportBtn" onclick="exportCsv()">
                             <i class="fas fa-download"></i> Exporter CSV
                         </button>
                     </div> -->
@@ -34,25 +34,29 @@
                                 <label for="monthFilter">
                                     <i class="fas fa-calendar"></i> Filtrer par mois :
                                 </label>
-                                <select id="monthFilter" class="form-control" onchange="if(this.value) filterByMonth()">
-                                    <option value="">Veuillez sélectionner un mois</option>
-                                    @forelse($availableMonths as $month)
-                                        <option value="{{ $month['value'] }}">
+                                <select id="monthFilter" class="form-control">
+                                    <option value="">-- Sélectionnez un mois --</option>
+                                    @foreach($availableMonths as $month)
+                                        <option value="{{ $month['value'] }}" 
+                                                {{ $currentMonth === $month['value'] ? 'selected' : '' }}>
                                             {{ $month['label'] }}
                                         </option>
-                                    @empty
-                                        <option value="{{ $currentMonth }}">
-                                            {{ \Carbon\Carbon::createFromFormat('Y-m', $currentMonth)->format('F Y') }}
-                                        </option>
-                                    @endforelse
+                                    @endforeach
                                 </select>
-
                             </div>
                         </div>
+
                     </div>
 
-                    <!-- Résumé des totaux -->
-                    <div class="row mb-4">
+                    <!-- Message d'information initial -->
+                    <div id="selectionPrompt" class="alert alert-info text-center" 
+                         style="display: {{ $currentMonth ? 'none' : 'block' }}">
+                        <i class="fas fa-info-circle"></i>
+                        <strong>Veuillez sélectionner un mois</strong> pour afficher les données de paie.
+                    </div>
+
+                     <!-- Résumé des totaux -->
+                     <div class="row mb-4">
                         <div class="col-md-3">
                             <div class="info-box">
                                 <span class="info-box-icon bg-info">
@@ -121,7 +125,7 @@
                                             @foreach($totals['earnings_breakdown'] as $component => $amount)
                                                 <div class="d-flex justify-content-between mb-2">
                                                     <span>{{ $component }}</span>
-                                                    <span class="badge badge-success">
+                                                    <span class="info-box-number">
                                                         {{ number_format($amount, 2) }} 
                                                     </span>
                                                 </div>
@@ -146,7 +150,7 @@
                                             @foreach($totals['deductions_breakdown'] as $component => $amount)
                                                 <div class="d-flex justify-content-between mb-2">
                                                     <span>{{ $component }}</span>
-                                                    <span class="badge badge-warning">
+                                                    <span class="info-box-number">
                                                         {{ number_format($amount, 2) }} 
                                                     </span>
                                                 </div>
@@ -159,6 +163,7 @@
                             </div>
                         </div>
                     </div>
+
                     <!-- Loading spinner -->
                     <div id="loadingSpinner" class="text-center" style="display: none;">
                         <div class="spinner-border" role="status">
@@ -167,14 +172,13 @@
                     </div>
 
                     <!-- Tableau des employés -->
-                    <div class="table-responsive" id="payrollTable">
+                    <div class="table-responsive" id="payrollTable" 
+                         style="display: {{ $currentMonth ? 'block' : 'none' }}">
                         <table class="table table-bordered table-striped table-hover">
                             <thead class="thead-dark">
                                 <tr>
                                     <th>ID Employé</th>
                                     <th>Nom</th>
-                                    <!-- <th>Département</th>
-                                    <th>Poste</th> -->
                                     <th>Salaire Brut</th>
                                     <th>Déductions</th>
                                     <th>Salaire Net</th>
@@ -186,29 +190,27 @@
                                 @forelse($payrollData as $employee)
                                     <tr>
                                         <td>{{ $employee['employee_id'] }}</td>
-                                        <td>
-                                            <strong>{{ $employee['employee_name'] }}</strong>
-                                        </td>
-                                        <td>{{ $employee['department'] }}</td>
-                                        <td>{{ $employee['designation'] }}</td>
+                                        <td><strong>{{ $employee['employee_name'] }}</strong></td>
                                         <td class="text-right">
                                             <span class="badge badge-success text-dark">
-                                                {{ number_format($employee['gross_pay'], 2) }} 
+                                                {{ number_format($employee['gross_pay'], 2) }} {{ $employee['currency'] ?? 'Ar' }}
                                             </span>
                                         </td>
                                         <td class="text-right">
                                             <span class="badge badge-warning text-dark">
-                                                {{ number_format($employee['total_deduction'], 2) }} 
+                                                {{ number_format($employee['total_deduction'], 2) }} {{ $employee['currency'] ?? 'Ar' }}
                                             </span>
                                         </td>
                                         <td class="text-right">
-                                           <span class="badge badge-primary text-dark">
-                                                {{ number_format($employee['net_pay'], 2) }} 
+                                            <span class="badge badge-primary text-dark">
+                                                {{ number_format($employee['net_pay'], 2) }} {{ $employee['currency'] ?? 'Ar' }}
                                             </span>
                                         </td>
+                                        <td class="text-center">
+                                            <span class="badge badge-primary text-dark">{{ $employee['currency'] ?? 'Ar' }}</span>
+                                        </td>
                                         <td>
-                                            <button type="button" 
-                                                    class="btn btn-info btn-sm" 
+                                            <button type="button" class="btn btn-info btn-sm" 
                                                     onclick="showEmployeeDetails('{{ $employee['employee_id'] }}', {{ json_encode($employee) }})">
                                                 <i class="fas fa-eye"></i> Détails
                                             </button>
@@ -216,7 +218,7 @@
                                     </tr>
                                 @empty
                                     <tr>
-                                        <td colspan="8" class="text-center">
+                                        <td colspan="7" class="text-center">
                                             <i class="fas fa-inbox"></i>
                                             Aucune donnée de paie trouvée pour ce mois
                                         </td>
@@ -240,9 +242,6 @@
                     <i class="fas fa-user"></i>
                     Détails de Paie - <span id="modalEmployeeName"></span>
                 </h5>
-                <button type="button" class="close" data-dismiss="modal" onclick="closeEmployeeModal()">
-                    <span>&times;</span>
-                </button>
             </div>
             <div class="modal-body">
                 <div class="row">
@@ -268,224 +267,244 @@
         </div>
     </div>
 </div>
-@endsection
 
-@section('scripts')
 <script>
-// Fonction pour initialiser l'état vide
-function initializeEmptyState() {
-    const selectedMonth = document.getElementById('monthFilter').value;
-    
-    if (!selectedMonth || selectedMonth === '' || selectedMonth === 'default') {
-        // Vide le contenu au lieu de masquer
-        clearAllData();
-        showSelectionPrompt();
-    } else {
-        hideSelectionPrompt();
-    }
-}
-
-// Fonction pour fermer le modal
-function closeEmployeeModal() {
-    const modal = document.getElementById('employeeDetailsModal');
-    if (modal) {
-        // Méthode Bootstrap si disponible
-        if (typeof $ !== 'undefined' && $.fn.modal) {
-            $('#employeeDetailsModal').modal('hide');
-        } else {
-            // Méthode alternative sans Bootstrap
-            modal.style.display = 'none';
-            modal.classList.remove('show');
-            document.body.classList.remove('modal-open');
-            
-            // Supprime le backdrop s'il existe
-            const backdrop = document.querySelector('.modal-backdrop');
-            if (backdrop) {
-                backdrop.remove();
-            }
+const PayrollManager = {
+    currentMonth: @json($currentMonth),
+    init() {
+        this.bindEvents();
+        this.updateUI();
+    },
+    bindEvents() {
+        const monthFilter = document.getElementById('monthFilter');
+        if (monthFilter) {
+            monthFilter.addEventListener('change', () => this.handleMonthChange());
         }
-    }
-}
-
-// Fonction pour vider toutes les données
-function clearAllData() {
-    // Vide le tableau
-    const tbody = document.getElementById('payrollTableBody');
-    if (tbody) {
-        tbody.innerHTML = `
-            <tr>
-                <td colspan="8" class="text-center text-muted">
-                    <i class="fas fa-info-circle"></i>
-                    Sélectionnez un mois pour afficher les données
-                </td>
-            </tr>
-        `;
-    }
+    },
     
-    // Remet les totaux à zéro
-    const totalEmployees = document.getElementById('totalEmployees');
-    const totalGrossPay = document.getElementById('totalGrossPay');
-    const totalDeductions = document.getElementById('totalDeductions');
-    const totalNetPay = document.getElementById('totalNetPay');
-    
-    if (totalEmployees) totalEmployees.textContent = '0';
-    if (totalGrossPay) totalGrossPay.textContent = '0,00 ';
-    if (totalDeductions) totalDeductions.textContent = '0,00 ';
-    if (totalNetPay) totalNetPay.textContent = '0,00 ';
-    
-    // Vide les breakdowns
-    const earningsDiv = document.getElementById('earningsBreakdown');
-    if (earningsDiv) {
-        earningsDiv.innerHTML = '<p class="text-muted">Sélectionnez un mois pour voir les composants</p>';
-    }
-    
-    const deductionsDiv = document.getElementById('deductionsBreakdown');
-    if (deductionsDiv) {
-        deductionsDiv.innerHTML = '<p class="text-muted">Sélectionnez un mois pour voir les déductions</p>';
-    }
-}
-
-// Affiche un message d'invite pour sélectionner un mois
-function showSelectionPrompt() {
-    let promptDiv = document.getElementById('selectionPrompt');
-    if (!promptDiv) {
-        promptDiv = document.createElement('div');
-        promptDiv.id = 'selectionPrompt';
-        promptDiv.className = 'alert alert-info text-center';
-        promptDiv.innerHTML = `
-            <i class="fas fa-info-circle"></i>
-            <strong>Veuillez sélectionner un mois</strong> pour afficher les données de paie.
-        `;
+    // Gestion du changement de mois
+    handleMonthChange() {
+        const selectedMonth = document.getElementById('monthFilter').value;
         
-        // Insère le message avant le tableau
-        const payrollTable = document.getElementById('payrollTable');
-        if (payrollTable) {
-            payrollTable.parentNode.insertBefore(promptDiv, payrollTable);
+        if (!selectedMonth) {
+            this.showEmptyState();
+            return;
         }
-    }
-    promptDiv.style.display = 'block';
-}
-
-// Masque le message d'invite
-function hideSelectionPrompt() {
-    const promptDiv = document.getElementById('selectionPrompt');
-    if (promptDiv) {
-        promptDiv.style.display = 'none';
-    }
-}
-
-function filterByMonth() {
-    const selectedMonth = document.getElementById('monthFilter').value;
+        
+        this.loadPayrollData(selectedMonth);
+    },
     
-    // Vérifie si un mois valide est sélectionné
-    if (!selectedMonth || selectedMonth === '' || selectedMonth === 'default') {
-        initializeEmptyState();
-        return;
-    }
-    
-    const loadingSpinner = document.getElementById('loadingSpinner');
-    const payrollTable = document.getElementById('payrollTable');
-    
-    // Affiche le spinner
-    if (loadingSpinner) loadingSpinner.style.display = 'block';
-    if (payrollTable) payrollTable.style.display = 'none';
-    
-    // Requête AJAX
-    fetch(`{{ route('stats.data') }}?month=${selectedMonth}`, {
-        method: 'GET',
-        headers: {
-            'X-Requested-With': 'XMLHttpRequest',
-            'Accept': 'application/json'
+    // Chargement des données via AJAX
+    async loadPayrollData(month) {
+        this.showLoading(true);
+        
+        try {
+            const response = await fetch(`{{ route('stats.data') }}?month=${month}`, {
+                method: 'GET',
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'Accept': 'application/json'
+                }
+            });
+            
+            const data = await response.json();
+            
+            if (data.success) {
+                this.currentMonth = month;
+                this.updatePayrollTable(data.data);
+                this.updateTotals(data.totals);
+                this.updateBreakdowns(data.totals);
+                this.showDataSections(true);
+            } else {
+                alert('Erreur: ' + data.message);
+            }
+        } catch (error) {
+            console.error('Erreur:', error);
+            alert('Erreur lors du chargement des données');
+        } finally {
+            this.showLoading(false);
         }
-    })
-    .then(response => response.json())
-    .then(data => {
-        if (data.success) {
-            updatePayrollTable(data.data);
-            updateTotals(data.totals);
-            updateBreakdowns(data.totals);
-            hideSelectionPrompt(); // Masque le message d'invite après chargement
+    },
+    
+    // Mise à jour du tableau
+    updatePayrollTable(payrollData) {
+        const tbody = document.getElementById('payrollTableBody');
+        if (!tbody) return;
+        
+        tbody.innerHTML = '';
+        
+        if (payrollData.length === 0) {
+            tbody.innerHTML = `
+                <tr>
+                    <td colspan="7" class="text-center">
+                        <i class="fas fa-inbox"></i>
+                        Aucune donnée de paie trouvée pour ce mois
+                    </td>
+                </tr>
+            `;
+            return;
+        }
+        
+        payrollData.forEach(employee => {
+            const currency = employee.currency || 'Ar';
+            tbody.innerHTML += `
+                <tr>
+                    <td>${employee.employee_id}</td>
+                    <td><strong>${employee.employee_name}</strong></td>
+                    <td class="text-right">
+                        <span class="badge badge-success text-dark">
+                            ${this.formatMoney(employee.gross_pay)} ${currency}
+                        </span>
+                    </td>
+                    <td class="text-right">
+                        <span class="badge badge-warning text-dark">
+                            ${this.formatMoney(employee.total_deduction)} ${currency}
+                        </span>
+                    </td>
+                    <td class="text-right">
+                        <span class="badge badge-primary text-dark">
+                            ${this.formatMoney(employee.net_pay)} ${currency}
+                        </span>
+                    </td>
+                    <td class="text-center">
+                        <span class="badge badge-primary text-dark">${currency}</span>
+                    </td>
+                    <td>
+                        <button type="button" class="btn btn-info btn-sm" 
+                                onclick="PayrollManager.showEmployeeDetails('${employee.employee_id}', ${JSON.stringify(employee).replace(/"/g, '&quot;')})">
+                            <i class="fas fa-eye"></i> Détails
+                        </button>
+                    </td>
+                </tr>
+            `;
+        });
+    },
+    
+    // Mise à jour des totaux
+    updateTotals(totals) {
+        const elements = {
+            totalEmployees: totals.total_employees,
+            totalGrossPay: this.formatMoney(totals.total_gross_pay) + ' ',
+            totalDeductions: this.formatMoney(totals.total_deductions) + ' ',
+            totalNetPay: this.formatMoney(totals.total_net_pay) + ' '
+        };
+        
+        Object.entries(elements).forEach(([id, value]) => {
+            const element = document.getElementById(id);
+            if (element) element.textContent = value;
+        });
+    },
+    
+    // Mise à jour des répartitions
+    updateBreakdowns(totals) {
+        this.updateBreakdown('earningsBreakdown', totals.earnings_breakdown, 'badge-success', 'Aucun composant de gain');
+        this.updateBreakdown('deductionsBreakdown', totals.deductions_breakdown, 'badge-warning', 'Aucune déduction');
+    },
+    
+    // Méthode utilitaire pour les répartitions
+    updateBreakdown(containerId, data, badgeClass, emptyMessage) {
+        const container = document.getElementById(containerId);
+        if (!container) return;
+        
+        container.innerHTML = '';
+        
+        if (data && Object.keys(data).length > 0) {
+            Object.entries(data).forEach(([component, amount]) => {
+                container.innerHTML += `
+                    <div class="d-flex justify-content-between mb-2">
+                        <span>${component}</span>
+                        <span class="badge ${badgeClass} text-dark">
+                            ${this.formatMoney(amount)} Ar
+                        </span>
+                    </div>
+                `;
+            });
         } else {
-            alert('Erreur lors du chargement des données: ' + data.message);
+            container.innerHTML = `<p class="text-muted">${emptyMessage}</p>`;
         }
-    })
-    .catch(error => {
-        console.error('Erreur:', error);
-        alert('Erreur lors du chargement des données');
-    })
-    .finally(() => {
-        // Masque le spinner
-        if (loadingSpinner) loadingSpinner.style.display = 'none';
-        if (payrollTable) payrollTable.style.display = 'block';
-    });
-}
+    },
+    
+    // Affichage des détails employé
+    showEmployeeDetails(employeeId, employeeData) {
+        document.getElementById('modalEmployeeName').textContent = employeeData.employee_name;
+        
+        const currency = employeeData.currency || 'Ar';
+        
+        // Gains
+        const earningsDiv = document.getElementById('earningsDetails');
+        this.populateDetails(earningsDiv, employeeData.earnings, 'badge-success', currency, 'Aucun élément de gain');
+        
+        // Déductions
+        const deductionsDiv = document.getElementById('deductionsDetails');
+        this.populateDetails(deductionsDiv, employeeData.deductions, 'badge-warning', currency, 'Aucune déduction');
 
-function updatePayrollTable(payrollData) {
-    const tbody = document.getElementById('payrollTableBody');
-    if (!tbody) return;
+        if (typeof $ !== 'undefined') {
+            $('#employeeDetailsModal').modal('show');
+        }
+    },
     
-    tbody.innerHTML = '';
+    // Méthode utilitaire pour remplir les détails
+    populateDetails(container, data, badgeClass, currency, emptyMessage) {
+        if (!container) return;
+        
+        container.innerHTML = '';
+        
+        if (data && data.length > 0) {
+            data.forEach(item => {
+                container.innerHTML += `
+                    <div class="d-flex justify-content-between mb-2">
+                        <span>${item.component}</span>
+                        <span class="badge ${badgeClass} text-dark">
+                            ${this.formatMoney(item.amount)} ${currency}
+                        </span>
+                    </div>
+                `;
+            });
+        } else {
+            container.innerHTML = `<p class="text-muted">${emptyMessage}</p>`;
+        }
+    },
     
-    if (payrollData.length === 0) {
-        tbody.innerHTML = `
-            <tr>
-                <td colspan="8" class="text-center">
-                    <i class="fas fa-inbox"></i>
-                    Aucune donnée de paie trouvée pour ce mois
-                </td>
-            </tr>
-        `;
-        return;
+    // Gestion des états d'affichage
+    showEmptyState() {
+        this.currentMonth = null;
+        this.showDataSections(false);
+        document.getElementById('selectionPrompt').style.display = 'block';
+     //   document.getElementById('exportBtn').disabled = true;
+    },
+    
+    showDataSections(show) {
+        const sections = ['totalsSection', 'breakdownsSection', 'payrollTable'];
+        const display = show ? 'block' : 'none';
+        
+        sections.forEach(id => {
+            const element = document.getElementById(id);
+            if (element) element.style.display = display;
+        });
+        
+        document.getElementById('selectionPrompt').style.display = show ? 'none' : 'block';
+      //  document.getElementById('exportBtn').disabled = !show;
+    },
+    
+    showLoading(show) {
+        document.getElementById('loadingSpinner').style.display = show ? 'block' : 'none';
+        document.getElementById('payrollTable').style.display = show ? 'none' : 'block';
+    },
+    
+    updateUI() {
+        if (this.currentMonth) {
+            this.showDataSections(true);
+        } else {
+            this.showEmptyState();
+        }
+    },
+    
+    // Formatage des montants
+    formatMoney(amount) {
+        return parseFloat(amount).toLocaleString('fr-FR', {minimumFractionDigits: 2});
     }
-    
-    payrollData.forEach(employee => {
-        const row = `
-            <tr>
-                <td>${employee.employee_id}</td>
-                <td><strong>${employee.employee_name}</strong></td>
-                <td class="text-right">
-                    <span class="badge badge-success text-dark">
-                        ${parseFloat(employee.gross_pay).toLocaleString('fr-FR', {minimumFractionDigits: 2})} 
-                    </span>
-                </td>
-                <td class="text-right">
-                    <span class="badge badge-warning text-dark">
-                        ${parseFloat(employee.total_deduction).toLocaleString('fr-FR', {minimumFractionDigits: 2})} 
-                    </span>
-                </td>
-                <td class="text-right">
-                   <span class="badge badge-primary text-dark">
-                        ${parseFloat(employee.net_pay).toLocaleString('fr-FR', {minimumFractionDigits: 2})} 
-                    </span>
-                </td>
-                <td>${employee.currency}</td>
-                <td>
-                    <button type="button" 
-                            class="btn btn-info btn-sm" 
-                            onclick="showEmployeeDetails('${employee.employee_id}', ${JSON.stringify(employee).replace(/"/g, '&quot;')})">
-                        <i class="fas fa-eye"></i> Détails
-                    </button>
-                </td>
-            </tr>
-        `;
-        tbody.innerHTML += row;
-    });
-}
+};
 
-function updateTotals(totals) {
-    const totalEmployees = document.getElementById('totalEmployees');
-    const totalGrossPay = document.getElementById('totalGrossPay');
-    const totalDeductions = document.getElementById('totalDeductions');
-    const totalNetPay = document.getElementById('totalNetPay');
-    
-    if (totalEmployees) totalEmployees.textContent = totals.total_employees;
-    if (totalGrossPay) totalGrossPay.textContent = 
-        parseFloat(totals.total_gross_pay).toLocaleString('fr-FR', {minimumFractionDigits: 2}) + ' ';
-    if (totalDeductions) totalDeductions.textContent = 
-        parseFloat(totals.total_deductions).toLocaleString('fr-FR', {minimumFractionDigits: 2}) + ' ';
-    if (totalNetPay) totalNetPay.textContent = 
-        parseFloat(totals.total_net_pay).toLocaleString('fr-FR', {minimumFractionDigits: 2}) + ' ';
-}
 
 function showEmployeeDetails(employeeId, employeeData) {
     const modalEmployeeName = document.getElementById('modalEmployeeName');
@@ -536,69 +555,38 @@ function showEmployeeDetails(employeeId, employeeData) {
         $('#employeeDetailsModal').modal('show');
     }
 }
-
-function updateBreakdowns(totals) {
-    // Mise à jour des gains
-    const earningsDiv = document.getElementById('earningsBreakdown');
-    if (earningsDiv) {
-        earningsDiv.innerHTML = '';
-        
-        if (totals.earnings_breakdown && Object.keys(totals.earnings_breakdown).length > 0) {
-            Object.entries(totals.earnings_breakdown).forEach(([component, amount]) => {
-                earningsDiv.innerHTML += `
-                    <div class="d-flex justify-content-between mb-2">
-                        <span>${component}</span>
-                        <span class="info-box-number">
-                            ${parseFloat(amount).toLocaleString('fr-FR', {minimumFractionDigits: 2})} 
-                        </span>
-                    </div>
-                `;
-            });
+// Fonction pour fermer le modal
+function closeEmployeeModal() {
+    const modal = document.getElementById('employeeDetailsModal');
+    if (modal) {
+        // Méthode Bootstrap si disponible
+        if (typeof $ !== 'undefined' && $.fn.modal) {
+            $('#employeeDetailsModal').modal('hide');
         } else {
-            earningsDiv.innerHTML = '<p class="text-muted">Aucun composant de gain</p>';
-        }
-    }
-    
-    // Mise à jour des déductions
-    const deductionsDiv = document.getElementById('deductionsBreakdown');
-    if (deductionsDiv) {
-        deductionsDiv.innerHTML = '';
-        
-        if (totals.deductions_breakdown && Object.keys(totals.deductions_breakdown).length > 0) {
-            Object.entries(totals.deductions_breakdown).forEach(([component, amount]) => {
-                deductionsDiv.innerHTML += `
-                    <div class="d-flex justify-content-between mb-2">
-                        <span>${component}</span>
-                        <span class="info-box-number">
-                            ${parseFloat(amount).toLocaleString('fr-FR', {minimumFractionDigits: 2})} 
-                        </span>
-                    </div>
-                `;
-            });
-        } else {
-            deductionsDiv.innerHTML = '<p class="text-muted">Aucune déduction</p>';
+            // Méthode alternative sans Bootstrap
+            modal.style.display = 'none';
+            modal.classList.remove('show');
+            document.body.classList.remove('modal-open');
+            
+            // Supprime le backdrop s'il existe
+            const backdrop = document.querySelector('.modal-backdrop');
+            if (backdrop) {
+                backdrop.remove();
+            }
         }
     }
 }
+// Export CSV (alea possible)
+// function exportCsv() {
+//     if (!PayrollManager.currentMonth) {
+//         alert('Veuillez sélectionner un mois avant d\'exporter');
+//         return;
+//     }
+//     window.location.href = `{{ route('stats.export') }}?month=${PayrollManager.currentMonth}`;
+// }
 
-function exportCsv() {
-    const selectedMonth = document.getElementById('monthFilter').value;
-    if (!selectedMonth || selectedMonth === '' || selectedMonth === 'default') {
-        alert('Veuillez sélectionner un mois avant d\'exporter');
-        return;
-    }
-    window.location.href = `{{ route('stats.export') }}?month=${selectedMonth}`;
-}
-
-// Initialisation au chargement de la page
-document.addEventListener('DOMContentLoaded', function() {
-    // Initialise l'état vide au chargement
-    initializeEmptyState();
-    // Ajoute un listener sur le changement de sélection
-    const monthFilter = document.getElementById('monthFilter');
-    if (monthFilter) {
-        monthFilter.addEventListener('change', filterByMonth);
-    }
+document.addEventListener('DOMContentLoaded', () => {
+    PayrollManager.init();
 });
 </script>
 @endsection

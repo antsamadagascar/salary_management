@@ -257,7 +257,12 @@
                                         </td>
                                         <td class="text-center">
                                         <div class="btn-group" role="group">
-                                            <a href="{{ route('payroll.stats.month-details', $stats['month']) }}" 
+                                            <!-- <a href="{{ route('payroll.stats.month-details', $stats['month']) }}" 
+                                            class="btn btn-sm btn-outline-primary"
+                                            title="Voir les détails du mois {{ $stats['month'] }}">
+                                                <i class="mdi mdi-eye"></i> Détails
+                                            </a> -->
+                                            <a href="{{ route('stats.index') }}?month={{ $stats['month'] }}"
                                             class="btn btn-sm btn-outline-primary"
                                             title="Voir les détails du mois {{ $stats['month'] }}">
                                                 <i class="mdi mdi-eye"></i> Détails

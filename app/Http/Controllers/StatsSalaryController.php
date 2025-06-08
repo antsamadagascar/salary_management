@@ -29,8 +29,13 @@ class StatsSalaryController extends Controller
                     'label' => Carbon::createFromFormat('Y-m', $currentMonth)->format('F Y')
                 ]];
             }
+            if($currentMonth!=null) {
+                $payrollData = $this->payrollService->getPayrollDataByMonth($currentMonth);
+            }
+            else {
+                $payrollData = [];
+            }
 
-            $payrollData = $this->payrollService->getPayrollDataByMonth($currentMonth);
             $totals = $this->payrollService->getPayrollTotals($currentMonth);
 
             return view('stats.index', compact(
