@@ -26,14 +26,16 @@
                 <div class="card-body">
                     <form method="GET" action="{{ route('payroll.stats.index') }}" class="d-flex align-items-end">
                         <div class="me-3">
-                            <label for="year" class="form-label">Année</label>
-                            <select name="year" id="year" class="form-select" onchange="this.form.submit()">
+                        <label for="year" class="form-label">Année</label>
+                            <select name="year" id="year" class="form-select" onchange="if(this.value) this.form.submit()">
+                                <option value="">Veuillez sélectionner une année</option>
                                 @foreach($availableYears as $availableYear)
-                                    <option value="{{ $availableYear }}" {{ $availableYear == $year ? 'selected' : '' }}>
+                                    <option value="{{ $availableYear }}">
                                         {{ $availableYear }}
                                     </option>
                                 @endforeach
                             </select>
+
                             <!-- <select name="year" id="year" class="form-select" onchange="this.form.submit()">
                                 <option value="2023" {{ $year == 2023 ? 'selected' : '' }}>2023</option>
                                 <option value="2024" {{ $year == 2024 ? 'selected' : '' }}>2024</option>
