@@ -361,7 +361,7 @@ class PayrollService
                     ['docstatus', '=', 1]
                 ],
                 'fields' => ['start_date', 'end_date'],
-                'order_by' => 'start_date desc',
+                'order_by' => 'start_date asc',
                 'limit' => 1000 // Limite pour éviter trop de données
             ]);
 
