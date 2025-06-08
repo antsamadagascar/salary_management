@@ -1,8 +1,8 @@
 <?php
 
-namespace App\Services;
+namespace App\Services\employee;
 
-use App\Services\ErpApiService;
+use App\Services\api\ErpApiService;
 use Exception;
 
 class EmployeeService
@@ -205,9 +205,6 @@ class EmployeeService
         return array_values($filtered); 
     }
 
-    /**
-     * Trier les employés selon le critère donné
-     */
     private function sortEmployees(array &$employees, string $orderBy): void
     {
         $parts = explode(' ', trim($orderBy));
@@ -224,9 +221,6 @@ class EmployeeService
         });
     }
 
-    /**
-     * Obtenir les statistiques des employés
-     */
     public function getEmployeeStats(): array
     {
         try {

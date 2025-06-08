@@ -2,7 +2,7 @@
 
 namespace App\Http\Controllers;
 
-use App\Services\PayrollService;
+use App\Services\payroll\PayrollService;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
 use Carbon\Carbon;
@@ -29,8 +29,13 @@ class StatsSalaryController extends Controller
                     'label' => Carbon::createFromFormat('Y-m', $currentMonth)->format('F Y')
                 ]];
             }
+            if($currentMonth!=null) {
+                $payrollData = $this->payrollService->getPayrollDataByMonth($currentMonth);
+            }
+            else {
+                $payrollData = [];
+            }
 
-            $payrollData = $this->payrollService->getPayrollDataByMonth($currentMonth);
             $totals = $this->payrollService->getPayrollTotals($currentMonth);
 
             return view('stats.index', compact(

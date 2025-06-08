@@ -6,8 +6,8 @@ fonctionnalites (ALEA POSSIBLES) :
 */
 namespace App\Http\Controllers;
 
-use App\Services\PayrollStatsService;
-use App\Services\ExportService;
+use App\Services\payroll\PayrollStatsService;
+use App\Services\export\ExportService;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
 use Illuminate\Http\JsonResponse;
@@ -104,17 +104,21 @@ class PayrollStatsController extends Controller
         try {
             $monthDetails = $this->statsService->getMonthDetails($month);
             $monthName = Carbon::createFromFormat('Y-m', $month)->locale('fr')->translatedFormat('F Y');
-            
+    
+            $currency = count($monthDetails) > 0 ? $monthDetails[0]['currency'] : null;
+    
             return view('payroll.stats.month-details', compact(
                 'monthDetails',
                 'month',
-                'monthName'
+                'monthName',
+                'currency'
             ));
         } catch (\Exception $e) {
             return redirect()->route('payroll.stats.index')
                 ->withError('Erreur lors du chargement des détails: ' . $e->getMessage());
         }
     }
+    
 
     /**
      * Exporte les statistiques mensuelles en Excel (EXPORT EXCEL  DONNNES TOTAL LIGNE POUR CHAQUE MOIS )

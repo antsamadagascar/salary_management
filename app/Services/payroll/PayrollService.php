@@ -1,8 +1,8 @@
 <?php
 
-namespace App\Services;
+namespace App\Services\payroll;
 
-use App\Services\ErpApiService;
+use App\Services\api\ErpApiService;
 use Carbon\Carbon;
 use Exception;
 
@@ -58,7 +58,7 @@ class PayrollService
                     'net_pay', 'status'
                 ],
                 'order_by' => 'posting_date desc',
-                'limit_page_length' => 100
+                'limit_page_length' => 1000
             ]);
 
             // Grouper par mois
@@ -361,8 +361,8 @@ class PayrollService
                     ['docstatus', '=', 1]
                 ],
                 'fields' => ['start_date', 'end_date'],
-                'order_by' => 'start_date desc',
-                'limit' => 50 // Limite pour éviter trop de données
+                'order_by' => 'start_date asc',
+                'limit' => 1000 // Limite pour éviter trop de données
             ]);
 
             $months = [];

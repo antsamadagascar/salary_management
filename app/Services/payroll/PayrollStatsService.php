@@ -9,9 +9,9 @@
 // - getChartData : Prépare les données pour les graphiques d'évolution
 // - getMonthDetails : Récupère les détails des employés pour un mois spécifique
 
-namespace App\Services;
+namespace App\Services\payroll;
 
-use App\Services\ErpApiService;
+use App\Services\api\ErpApiService;
 use Carbon\Carbon;
 use Exception;
 use Illuminate\Support\Facades\DB;
@@ -47,7 +47,7 @@ class PayrollStatsService
                     'net_pay', 'total_deduction', 'currency', 'posting_date'
                 ],
                 'order_by' => 'start_date asc',
-                'limit_page_length' => 2000
+                'limit_page_length' => 1000
             ]);
 
             return $this->processPayrollDataByMonth($payslips);
@@ -99,6 +99,7 @@ class PayrollStatsService
             'total_gross_pay' => 0,
             'total_deductions' => 0,
             'total_net_pay' => 0,
+            'currency' => $payslips[0]['currency'] ?? 'MGA',
             'earnings_breakdown' => [],
             'deductions_breakdown' => [],
             'employees' => []
@@ -140,7 +141,8 @@ class PayrollStatsService
                 'total_deduction' => floatval($payslip['total_deduction'] ?? 0),
                 'net_pay' => floatval($payslip['net_pay'] ?? 0),
                 'earnings' => $components['earnings'],
-                'deductions' => $components['deductions']
+                'deductions' => $components['deductions'],
+                'currency' =>$payslip['currency']
             ];
         }
 
@@ -157,39 +159,6 @@ class PayrollStatsService
             'deductions' => []
         ];
 
-        try {
-            // Méthode 1: Via Salary Detail
-            $earnings = $this->erpApiService->getResource('Salary Detail', [
-                'filters' => [
-                    ['parent', '=', $payslipName],
-                    ['parentfield', '=', 'earnings']
-                ],
-                'fields' => ['salary_component', 'amount', 'default_amount']
-            ]);
-
-            $deductions = $this->erpApiService->getResource('Salary Detail', [
-                'filters' => [
-                    ['parent', '=', $payslipName],
-                    ['parentfield', '=', 'deductions']
-                ],
-                'fields' => ['salary_component', 'amount', 'default_amount']
-            ]);
-
-            $components['earnings'] = array_map(function ($item) {
-                return [
-                    'component' => $item['salary_component'],
-                    'amount' => $item['amount'] ?? $item['default_amount'] ?? 0
-                ];
-            }, $earnings);
-
-            $components['deductions'] = array_map(function ($item) {
-                return [
-                    'component' => $item['salary_component'],
-                    'amount' => $item['amount'] ?? $item['default_amount'] ?? 0
-                ];
-            }, $deductions);
-
-        } catch (Exception $e) {
             // Méthode 2: Via le document complet
             try {
                 $payslip = $this->erpApiService->getResourceByName('Salary Slip', $payslipName);
@@ -214,7 +183,7 @@ class PayrollStatsService
             } catch (Exception $e2) {
                 // on  Retourne les composants vides en cas d'échec
             }
-        }
+
 
         return $components;
     }
@@ -228,8 +197,8 @@ class PayrollStatsService
             $payslips = $this->erpApiService->getResource('Salary Slip', [
                 'filters' => [['docstatus', '=', 1]],
                 'fields' => ['start_date'],
-                'order_by' => 'start_date desc',
-                'limit_page_length' => 100
+                'order_by' => 'start_date asc',
+                'limit_page_length' => 1000
             ]);
 
             $years = [];
@@ -330,7 +299,7 @@ class PayrollStatsService
                 ],
                 'fields' => [
                     'name', 'employee', 'employee_name', 'department',
-                    'designation', 'gross_pay', 'net_pay', 'total_deduction'
+                    'designation', 'gross_pay', 'net_pay', 'total_deduction','currency'
                 ]
             ]);
 
@@ -339,6 +308,7 @@ class PayrollStatsService
                 $components = $this->getPayrollComponents($payslip['name']);
                 
                 $details[] = [
+                    'currency' => $payslip['currency'],
                     'employee_id' => $payslip['employee'],
                     'employee_name' => $payslip['employee_name'],
                     'department' => $payslip['department'] ?? 'N/A',

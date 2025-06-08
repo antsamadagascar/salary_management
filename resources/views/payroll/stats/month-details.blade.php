@@ -3,6 +3,7 @@
 @section('title', 'Détails du mois - ' . $monthName)
 
 @section('content')
+
 <div class="container-fluid">
     <div class="row">
         <div class="col-12">
@@ -64,7 +65,8 @@
                         <div>
                             <h6 class="card-title">Total Brut</h6>
                             <h4 class="mb-0">{{ number_format(array_sum(array_column($monthDetails, 'gross_pay')), 0, ',', ' ') }}</h4>
-                            <small>MGA</small>
+                            <small>{{ $currency }}</small>
+
                         </div>
                         <div class="align-self-center">
                             <i class="mdi mdi-currency-usd h1"></i>
@@ -80,7 +82,8 @@
                         <div>
                             <h6 class="card-title">Total Déductions</h6>
                             <h4 class="mb-0">{{ number_format(array_sum(array_column($monthDetails, 'total_deduction')), 0, ',', ' ') }}</h4>
-                            <small>MGA</small>
+                            <small>{{ $currency }}</small>
+
                         </div>
                         <div class="align-self-center">
                             <i class="mdi mdi-minus-circle-outline h1"></i>
@@ -96,7 +99,7 @@
                         <div>
                             <h6 class="card-title">Total Net</h6>
                             <h4 class="mb-0">{{ number_format(array_sum(array_column($monthDetails, 'net_pay')), 0, ',', ' ') }}</h4>
-                            <small>MGA</small>
+                            <small>{{ $currency }}</small>
                         </div>
                         <div class="align-self-center">
                             <i class="mdi mdi-cash-multiple h1"></i>
@@ -125,11 +128,13 @@
                                     <th>Salaire Brut</th>
                                     <th>Déductions</th>
                                     <th>Salaire Net</th>
+                                    <th>Devise</th>
                                     <th>Actions</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 @forelse($monthDetails as $employee)
+
                                     <tr>
                                         <td>
                                             <div class="d-flex align-items-center">
@@ -145,13 +150,21 @@
                                         <td>{{ $employee['department'] }}</td>
                                         <td>{{ $employee['designation'] }}</td>
                                         <td class="text-end">
-                                            {{ number_format($employee['gross_pay'], 0, ',', ' ') }} MGA
+                                            {{ number_format($employee['gross_pay'], 0, ',', ' ') }} 
                                         </td>
                                         <td class="text-end text-danger">
-                                            {{ number_format($employee['total_deduction'], 0, ',', ' ') }} MGA
+                                            {{ number_format($employee['total_deduction'], 0, ',', ' ') }} 
+
                                         </td>
                                         <td class="text-end fw-bold text-success">
-                                            {{ number_format($employee['net_pay'], 0, ',', ' ') }} MGA
+                                            {{ number_format($employee['net_pay'], 0, ',', ' ') }} 
+
+                                        </td>
+                                        <td class="text-end fw-bold text-success">
+                                            {{  $employee['currency'] }}
+
+                                        </td>
+
                                         </td>
                                         <td>
                                             <button class="btn btn-sm btn-outline-info" 
@@ -198,6 +211,9 @@
                     </div>
                     <div class="col-md-6">
                         <strong>Poste:</strong> <span id="modal-designation"></span>
+                    </div>
+                    <div class="col-md-6">
+                        <strong>Devise:</strong> <span> {{ $currency }}</span>
                     </div>
                 </div>
 
@@ -293,11 +309,11 @@ function showEmployeeDetails(employee) {
     
     // Rempli le résumé financier
     document.getElementById('modal-gross-pay').textContent = 
-        new Intl.NumberFormat('fr-FR').format(employee.gross_pay) + ' MGA';
+        new Intl.NumberFormat('fr-FR').format(employee.gross_pay);
     document.getElementById('modal-deductions').textContent = 
-        new Intl.NumberFormat('fr-FR').format(employee.total_deduction) + ' MGA';
+        new Intl.NumberFormat('fr-FR').format(employee.total_deduction);
     document.getElementById('modal-net-pay').textContent = 
-        new Intl.NumberFormat('fr-FR').format(employee.net_pay) + ' MGA';
+        new Intl.NumberFormat('fr-FR').format(employee.net_pay);
     
     // Rempli la liste des gains
     const earningsDiv = document.getElementById('modal-earnings');
@@ -310,7 +326,7 @@ function showEmployeeDetails(employee) {
             item.innerHTML = `
                 <span>${earning.component}</span>
                 <span class="fw-bold text-success">
-                    ${new Intl.NumberFormat('fr-FR').format(earning.amount)} MGA
+                    ${new Intl.NumberFormat('fr-FR').format(earning.amount)} 
                 </span>
             `;
             earningsDiv.appendChild(item);
@@ -330,8 +346,8 @@ function showEmployeeDetails(employee) {
             item.innerHTML = `
                 <span>${deduction.component}</span>
                 <span class="fw-bold text-danger">
-                    ${new Intl.NumberFormat('fr-FR').format(deduction.amount)} MGA
-                </span>
+                    ${new Intl.NumberFormat('fr-FR').format(deduction.amount)} 
+                </span
             `;
             deductionsDiv.appendChild(item);
         });
