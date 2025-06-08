@@ -9,7 +9,7 @@
 // - getChartData : Prépare les données pour les graphiques d'évolution
 // - getMonthDetails : Récupère les détails des employés pour un mois spécifique
 
-namespace App\Services;
+namespace App\Services\payroll;
 
 use App\Services\api\ErpApiService;
 use Carbon\Carbon;

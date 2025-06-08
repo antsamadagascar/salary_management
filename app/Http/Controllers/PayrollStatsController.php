@@ -6,7 +6,7 @@ fonctionnalites (ALEA POSSIBLES) :
 */
 namespace App\Http\Controllers;
 
-use App\Services\PayrollStatsService;
+use App\Services\payroll\PayrollStatsService;
 use App\Services\export\ExportService;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
