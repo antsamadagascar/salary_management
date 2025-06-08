@@ -229,7 +229,7 @@ class PayrollStatsService
                 'filters' => [['docstatus', '=', 1]],
                 'fields' => ['start_date'],
                 'order_by' => 'start_date desc',
-                'limit_page_length' => 100
+                'limit_page_length' => 500
             ]);
 
             $years = [];

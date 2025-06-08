@@ -1,0 +1,24 @@
+salary structure,name,Abbr,type,valeur,company
+gasy1,Salaire Base,SB,earning,base,My Company
+gasy1,Indemnité,IND,earning,SB * 0.3,My Company
+gasy1,Taxe sociale,TS,deduction,(SB + IND) * 0.2,My Company
+gasy2,Salaire Minimum,SM,earning,base,My Company
+gasy2,Prime Transport,PT,earning,SM * 0.1,My Company
+gasy2,Prime Repas,PR,earning,SM * 0.15,My Company
+gasy2,Cotisation Retraite,CR,deduction,(SM + PT + PR) * 0.15,My Company
+gasy2,Impôt sur Revenu,IR,deduction,(SM + PT + PR) * 0.25,My Company
+gasy3,Salaire Cadre,SC,earning,base,My Company
+gasy3,Prime Responsabilité,PRESP,earning,SC * 0.4,My Company
+gasy3,Prime Performance,PERF,earning,SC * 0.2,My Company
+gasy3,Assurance Santé,AS,deduction,(SC + PRESP + PERF) * 0.1,My Company
+gasy3,Retenue Fiscale,RF,deduction,(SC + PRESP + PERF) * 0.3,My Company
+gasy4,Salaire Consultant,SCON,earning,base,My Company
+gasy4,Frais Mission,FM,earning,SCON * 0.25,My Company
+gasy4,Prime Expertise,PEXP,earning,SCON * 0.35,My Company
+gasy4,Charge Sociale,CS,deduction,(SCON + FM + PEXP) * 0.18,My Company
+gasy4,Retenue Source,RS,deduction,(SCON + FM + PEXP) * 0.28,My Company
+gasy5,Salaire Ouvrier,SO,earning,base,My Company
+gasy5,Heures Supplémentaires,HS,earning,SO * 0.25,My Company
+gasy5,Prime Pénibilité,PP,earning,SO * 0.1,My Company
+gasy5,Cotisation Sociale,CS,deduction,(SO + HS + PP) * 0.12,My Company
+gasy5,Retenue Syndicale,RSYN,deduction,(SO + HS + PP) * 0.05,My Company
