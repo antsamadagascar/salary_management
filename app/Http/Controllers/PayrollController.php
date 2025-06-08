@@ -2,7 +2,7 @@
 
 namespace App\Http\Controllers;
 
-use App\Services\PayrollService;
+use App\Services\payroll\PayrollService;
 use App\Services\export\ExportService;
 use App\Services\employee\EmployeeService;
 use Illuminate\Http\Request;

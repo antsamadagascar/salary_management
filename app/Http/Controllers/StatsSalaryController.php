@@ -2,7 +2,7 @@
 
 namespace App\Http\Controllers;
 
-use App\Services\PayrollService;
+use App\Services\payroll\PayrollService;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
 use Carbon\Carbon;
