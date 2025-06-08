@@ -11,7 +11,7 @@
 
 namespace App\Services;
 
-use App\Services\ErpApiService;
+use App\Services\api\ErpApiService;
 use Carbon\Carbon;
 use Exception;
 use Illuminate\Support\Facades\DB;

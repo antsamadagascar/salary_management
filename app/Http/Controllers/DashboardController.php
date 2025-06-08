@@ -1,7 +1,7 @@
 <?php
 namespace App\Http\Controllers;
 
-use App\Services\ErpApiService;
+use App\Services\api\ErpApiService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 

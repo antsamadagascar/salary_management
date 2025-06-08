@@ -2,7 +2,7 @@
 
 namespace App\Services;
 
-use App\Services\ErpApiService;
+use App\Services\api\ErpApiService;
 use Carbon\Carbon;
 use Exception;
 

@@ -24,9 +24,6 @@ class PayrollController extends Controller
         $this->employeeService = $employeeService;
     }
 
-    /**
-     * Afficher la liste des employés
-     */
     public function index(): View
     {
         try {
@@ -40,9 +37,7 @@ class PayrollController extends Controller
         }
     }
 
-    /**
-     * Afficher la fiche employé avec ses salaires par mois
-     */
+
     public function show(string $employeeId): View|RedirectResponse
     {
         try {
@@ -61,9 +56,6 @@ class PayrollController extends Controller
         }
     }
 
-    /**
-     * Afficher une fiche de paie spécifique
-     */
     public function showSalarySlip(string $salarySlipId): View|RedirectResponse
     {
         try {
