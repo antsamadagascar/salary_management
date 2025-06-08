@@ -245,7 +245,13 @@
                                             </span>
                                         </td>
                                         <td class="text-end">
-                                            <a href="{{ route('payroll.stats.month-details', $stats['month']) }}" 
+                                            <!-- <a href="{{ route('payroll.stats.month-details', $stats['month']) }}" 
+                                               class="text-decoration-none">
+                                                <span class="text-info fw-bold">
+                                                    {{ number_format($stats['total_net_pay'], 0, ',', ' ') }} 
+                                                </span>
+                                            </a> -->
+                                            <a href="{{ route('stats.index') }}?month={{ $stats['month'] }}"
                                                class="text-decoration-none">
                                                 <span class="text-info fw-bold">
                                                     {{ number_format($stats['total_net_pay'], 0, ',', ' ') }} 

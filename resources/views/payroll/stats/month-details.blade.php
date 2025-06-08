@@ -3,6 +3,7 @@
 @section('title', 'Détails du mois - ' . $monthName)
 
 @section('content')
+
 <div class="container-fluid">
     <div class="row">
         <div class="col-12">
@@ -29,10 +30,10 @@
         </div>
         <div class="col-md-6">
             <div class="d-flex justify-content-end">
-                <!-- <a href="{{ route('payroll.stats.export-month', $month) }}" 
+                <a href="{{ route('payroll.stats.export-month', $month) }}" 
                    class="btn btn-success me-2">
                     <i class="mdi mdi-download"></i> Exporter Excel
-                </a> -->
+                </a>
                 <button type="button" class="btn btn-info" onclick="toggleSummary()">
                     <i class="mdi mdi-chart-box"></i> Résumé
                 </button>
