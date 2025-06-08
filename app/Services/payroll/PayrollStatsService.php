@@ -159,39 +159,6 @@ class PayrollStatsService
             'deductions' => []
         ];
 
-       // try {
-        //     // Méthode 1: Via Salary Detail
-        //     $earnings = $this->erpApiService->getResource('Salary Detail', [
-        //         'filters' => [
-        //             ['parent', '=', $payslipName],
-        //             ['parentfield', '=', 'earnings']
-        //         ],
-        //         'fields' => ['salary_component', 'amount', 'default_amount']
-        //     ]);
-
-        //     $deductions = $this->erpApiService->getResource('Salary Detail', [
-        //         'filters' => [
-        //             ['parent', '=', $payslipName],
-        //             ['parentfield', '=', 'deductions']
-        //         ],
-        //         'fields' => ['salary_component', 'amount', 'default_amount']
-        //     ]);
-
-        //     $components['earnings'] = array_map(function ($item) {
-        //         return [
-        //             'component' => $item['salary_component'],
-        //             'amount' => $item['amount'] ?? $item['default_amount'] ?? 0
-        //         ];
-        //     }, $earnings);
-
-        //     $components['deductions'] = array_map(function ($item) {
-        //         return [
-        //             'component' => $item['salary_component'],
-        //             'amount' => $item['amount'] ?? $item['default_amount'] ?? 0
-        //         ];
-        //     }, $deductions);
-
-        // } catch (Exception $e) {
             // Méthode 2: Via le document complet
             try {
                 $payslip = $this->erpApiService->getResourceByName('Salary Slip', $payslipName);
@@ -216,7 +183,7 @@ class PayrollStatsService
             } catch (Exception $e2) {
                 // on  Retourne les composants vides en cas d'échec
             }
-       // }
+
 
         return $components;
     }
