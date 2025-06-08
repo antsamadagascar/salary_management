@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Services;
+namespace App\Services\export;
 
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Support\Facades\View;

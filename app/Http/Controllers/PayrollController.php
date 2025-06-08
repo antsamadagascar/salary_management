@@ -3,7 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Services\PayrollService;
-use App\Services\ExportService;
+use App\Services\export\ExportService;
 use App\Services\EmployeeService;
 use Illuminate\Http\Request;
 use Illuminate\View\View;

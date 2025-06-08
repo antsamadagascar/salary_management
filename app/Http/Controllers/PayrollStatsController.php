@@ -7,7 +7,7 @@ fonctionnalites (ALEA POSSIBLES) :
 namespace App\Http\Controllers;
 
 use App\Services\PayrollStatsService;
-use App\Services\ExportService;
+use App\Services\export\ExportService;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
 use Illuminate\Http\JsonResponse;
