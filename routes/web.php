@@ -78,5 +78,8 @@ Route::middleware([\App\Http\Middleware\FrappeAuthMiddleware::class])->group(fun
         Route::post('/table/{table}', [ResetDataController::class, 'resetSpecificTable'])->name('table');
         Route::post('/confirm', [ResetDataController::class, 'confirmReset'])->name('confirm');
     });
-    
+
+    // Route::get('/dashboard/formulaire', [DashboardController::class, 'formulaire'])->name('dashboard.formulaire');
+    // Route::get('/dashboard/tableau', [DashboardController::class, 'tableau'])->name('dashboard.tableau');
+    // Route::post('/dashboard/store', [DashboardController::class, 'store'])->name('dashboard.store');
 });
