@@ -251,7 +251,7 @@
                                                     {{ number_format($stats['total_net_pay'], 0, ',', ' ') }} 
                                                 </span>
                                             </a> -->
-                                            <a href="{{ route('stats.index') }}?month={{ $stats['month'] }}"
+                                            <a href="{{ route('payroll.stats.salary-details') }}?month={{ $stats['month'] }}"
                                                class="text-decoration-none">
                                                 <span class="text-info fw-bold">
                                                     {{ number_format($stats['total_net_pay'], 0, ',', ' ') }} 
@@ -268,7 +268,7 @@
                                             title="Voir les détails du mois {{ $stats['month'] }}">
                                                 <i class="mdi mdi-eye"></i> Détails
                                             </a> -->
-                                            <a href="{{ route('stats.index') }}?month={{ $stats['month'] }}"
+                                            <a href="{{ route('payroll.stats.salary-details') }}?month={{ $stats['month'] }}"
                                             class="btn btn-sm btn-outline-primary"
                                             title="Voir les détails du mois {{ $stats['month'] }}">
                                                 <i class="mdi mdi-eye"></i> Détails

@@ -38,14 +38,14 @@ class SalaryDetailsController extends Controller
 
             $totals = $this->payrollService->getPayrollTotals($currentMonth);
 
-            return view('payroll.stats.salary-details', compact(
+            return view('payroll.details.salary-details', compact(
                 'payrollData',
                 'totals',
                 'availableMonths',
                 'currentMonth'
             ));
         } catch (Exception $e) {
-            return view('payroll.stats.salary-details', [
+            return view('payroll.details.salary-details', [
                 'payrollData' => [],
                 'totals' => [
                     'total_employees' => 0,
