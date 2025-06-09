@@ -2,7 +2,7 @@
 
 namespace App\Http\Controllers;
 
-use App\Services\payroll\PayrollService;
+use App\Services\payroll\PayrollDataService;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
 use Carbon\Carbon;
@@ -10,9 +10,9 @@ use Exception;
 
 class SalaryDetailsController extends Controller
 {
-    private PayrollService $payrollService;
+    private PayrollDataService $payrollService;
 
-    public function __construct(PayrollService $payrollService)
+    public function __construct(PayrollDataService $payrollService)
     {
         $this->payrollService = $payrollService;
     }

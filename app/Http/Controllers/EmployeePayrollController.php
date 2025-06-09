@@ -2,7 +2,8 @@
 
 namespace App\Http\Controllers;
 
-use App\Services\payroll\PayrollService;
+use App\Services\payroll\PayrollDataService;
+use App\Services\payroll\PayrollEmployeeService;
 use App\Services\export\ExportService;
 use App\Services\employee\EmployeeService;
 use Illuminate\Http\Request;
@@ -13,15 +14,17 @@ use Carbon\Carbon;
 
 class EmployeePayrollController extends Controller
 {
-    private PayrollService $payrollService;
+    private PayrollDataService $payrollService;
     private ExportService $exportService;
     private EmployeeService $employeeService;
+    private PayrollEmployeeService $payrollEmployeeService;
 
-    public function __construct(PayrollService $payrollService, ExportService $exportService, EmployeeService $employeeService)
+    public function __construct(PayrollDataService $payrollService, ExportService $exportService, EmployeeService $employeeService,PayrollEmployeeService $payrollEmployeeService)
     {
         $this->payrollService = $payrollService;
         $this->exportService = $exportService;
         $this->employeeService = $employeeService;
+        $this->payrollEmployeeService = $payrollEmployeeService;
     }
 
     public function index(): View
@@ -47,8 +50,8 @@ class EmployeePayrollController extends Controller
                 return redirect()->route('payroll.index')->withError('Employé non trouvé');
             }
 
-            $salariesByMonth = $this->payrollService->getEmployeeSalariesByMonth($employeeId);
-            $stats = $this->payrollService->getPayrollStats($employeeId);
+            $salariesByMonth = $this->payrollEmployeeService->getEmployeeSalariesByMonth($employeeId);
+            $stats = $this->payrollEmployeeService->getPayrollStats($employeeId);
             
             return view('payroll.employee.employee-salary-sheet', compact('employee', 'salariesByMonth', 'stats'));
         } catch (\Exception $e) {
@@ -77,6 +80,23 @@ class EmployeePayrollController extends Controller
         }
     }
 
+    public function search(Request $request): View
+    {
+        $search = $request->get('search', '');
+    
+        try {
+            $employees = $this->employeeService->searchEmployees($search);
+    
+            return view('payroll.employee.employee-list', compact('employees', 'search'));
+        } catch (\Exception $e) {
+            return view('payroll.employee.employee-list', [
+                'employees' => [],
+                'search' => $search,
+                'error' => 'Erreur lors de la recherche: ' . $e->getMessage()
+            ]);
+        }
+    }
+
     /**
      * Export pdf  salaires d'un employé pour un mois
      */
@@ -84,7 +104,7 @@ class EmployeePayrollController extends Controller
     {
         try {
             $employee = $this->employeeService->getEmployeeByName($employeeId);
-            $salarySlips = $this->payrollService->getSalarySlipsForMonth($employeeId, $month);
+            $salarySlips = $this->payrollEmployeeService->getSalarySlipsForMonth($employeeId, $month);
             
 
             if (!$employee) {
@@ -117,11 +137,11 @@ class EmployeePayrollController extends Controller
     // public function exportEmployeesExcel(): Response|RedirectResponse
     // {
     //     try {
-    //         $employees = $this->payrollService->getEmployees();
+    //         $employees = $this->payrollEmployeeService->getEmployees();
     //         $data = [];
             
     //         foreach ($employees as $employee) {
-    //             $stats = $this->payrollService->getPayrollStats($employee['name']);
+    //             $stats = $this->payrollEmployeeService->getPayrollStats($employee['name']);
     //             $data[] = [
     //                 $employee['employee_number'] ?? '',
     //                 $employee['employee_name'] ?? '',
@@ -153,31 +173,4 @@ class EmployeePayrollController extends Controller
     //     }
     // }
 
-    /**
-     * Rechercher des employés
-     */
-    public function search(Request $request): View
-    {
-        $search = $request->get('search', '');
-        
-        try {
-            $employees = $this->payrollService->getEmployees();
-            
-            if ($search) {
-                $employees = array_filter($employees, function ($employee) use ($search) {
-                    return stripos($employee['employee_name'], $search) !== false ||
-                           stripos($employee['employee_number'] ?? '', $search) !== false ||
-                           stripos($employee['department'] ?? '', $search) !== false;
-                });
-            }
-
-            return view('payroll.employee.employee-list', compact('employees', 'search'));
-        } catch (\Exception $e) {
-            return view('payroll.employee.employee-list', [
-                'employees' => [],
-                'search' => $search,
-                'error' => 'Erreur lors de la recherche: ' . $e->getMessage()
-            ]);
-        }
-    }
 }
