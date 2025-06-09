@@ -52,28 +52,24 @@ Route::middleware([\App\Http\Middleware\FrappeAuthMiddleware::class])->group(fun
             ->where('salarySlipId', '.*');
         
         Route::get('/employee/{employeeId}/month/{month}/pdf', [EmployeePayrollController::class, 'exportMonthlyPdf'])->name('employee.monthly.pdf');
-        Route::get('/export/excel', [EmployeePayrollController::class, 'exportEmployeesExcel'])->name('export.excel');
+        // Route::get('/export/excel', [EmployeePayrollController::class, 'exportEmployeesExcel'])->name('export.excel');
 
          // Routes pour les statistiques 
         Route::prefix('stats')->name('stats.')->group(function () {
             Route::get('/', [PayrollStatsController::class, 'index'])->name('index');
             Route::get('/month/{month}', [PayrollStatsController::class, 'showMonthDetails'])->name('month-details');
-            Route::get('/export', [PayrollStatsController::class, 'exportMonthlyStats'])->name('export');
+            Route::get('/export/year', [PayrollStatsController::class, 'exportMonthlyStats'])->name('export.year');
             Route::get('/export/month/{month}', [PayrollStatsController::class, 'exportMonthDetails'])->name('export-month');
             Route::get('/graphs', [PayrollStatsController::class, 'graphsIndex'])->name('graphs');
             Route::get('/chart-data', [PayrollStatsController::class, 'getChartData'])->name('chart-data');
             Route::get('/api/chart-data', [PayrollStatsController::class, 'getChartData'])->name('api.chart-data');
             Route::get('/api/yearly-stats', [PayrollStatsController::class, 'getYearlyStats'])->name('api.yearly-stats');
             Route::get('/salary-details', [SalaryDetailsController::class, 'getSalaryDetails'])->name('salary-details');
+            Route::get('/data', [SalaryDetailsController::class, 'getPayrollData'])->name('data');
         });
 
     });
     
-    Route::prefix('stats')->name('stats.')->group(function () {
-        Route::get('/', [SalaryDetailsController::class, 'index'])->name('index');
-        Route::get('/data', [SalaryDetailsController::class, 'getPayrollData'])->name('data');
-        Route::get('/export', [SalaryDetailsController::class, 'exportCsv'])->name('export');
-    });
 
     Route::prefix('reset-data')->name('reset-data.')->group(function () {
         Route::get('/', [ResetDataController::class, 'showConfirmation'])->name('show');

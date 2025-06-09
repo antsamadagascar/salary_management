@@ -53,7 +53,7 @@
             <div class="card">
                 <div class="card-body">
                     <div class="d-flex justify-content-end">
-                        <!-- <a href="{{ route('payroll.stats.export', ['year' => $year]) }}" 
+                        <!-- <a href="{{ route('payroll.stats.export.year', ['year' => $year]) }}" 
                            class="btn btn-success me-2">
                             <i class="mdi mdi-download"></i> Exporter Excel
                         </a> -->
@@ -273,11 +273,11 @@
                                             title="Voir les détails du mois {{ $stats['month'] }}">
                                                 <i class="mdi mdi-eye"></i> Détails
                                             </a>
-                                            <!-- <a href="{{ route('payroll.stats.export-month', $stats['month']) }}" 
-                                            class="btn btn-sm btn-outline-success"
-                                            title="Exporter les données du mois {{ $stats['month'] }}">
-                                                <i class="mdi mdi-download"></i> Export
-                                            </a> -->
+                                                    <!-- <a href="{{ route('payroll.stats.export-month', $stats['month']) }}" 
+                                                    class="btn btn-sm btn-outline-success"
+                                                    title="Exporter les données du mois {{ $stats['month'] }}">
+                                                        <i class="mdi mdi-download"></i> Export
+                                                    </a> -->
                                         </div>
                                     </td>
                                     </tr>

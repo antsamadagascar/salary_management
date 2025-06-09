@@ -12,11 +12,11 @@
                         <i class="fas fa-money-check-alt"></i>
                         Tableau de Paie
                     </h3>
-                    <!-- <div class="card-tools">
+                    <div class="card-tools">
                         <button type="button" class="btn btn-success btn-sm"  id="exportBtn" onclick="exportCsv()">
                             <i class="fas fa-download"></i> Exporter CSV
                         </button>
-                    </div> -->
+                    </div>
                 </div>
 
                 <div class="card-body">
@@ -299,7 +299,7 @@ const PayrollManager = {
         this.showLoading(true);
         
         try {
-            const response = await fetch(`{{ route('stats.data') }}?month=${month}`, {
+            const response = await fetch(`{{ route('payroll.stats.data') }}?month=${month}`, {
                 method: 'GET',
                 headers: {
                     'X-Requested-With': 'XMLHttpRequest',
@@ -577,13 +577,16 @@ function closeEmployeeModal() {
     }
 }
 // Export CSV (alea possible)
-// function exportCsv() {
-//     if (!PayrollManager.currentMonth) {
-//         alert('Veuillez sélectionner un mois avant d\'exporter');
-//         return;
-//     }
-//     window.location.href = `{{ route('stats.export') }}?month=${PayrollManager.currentMonth}`;
-// }
+function exportCsv() {
+    if (!PayrollManager.currentMonth) {
+        alert('Veuillez sélectionner un mois avant d\'exporter');
+        return;
+    }
+    const urlTemplate = `{{ route('payroll.stats.export-month', ['month' => '__MONTH__']) }}`;
+    const exportUrl = urlTemplate.replace('__MONTH__', PayrollManager.currentMonth);
+    window.location.href = exportUrl;
+}
+    
 
 document.addEventListener('DOMContentLoaded', () => {
     PayrollManager.init();
