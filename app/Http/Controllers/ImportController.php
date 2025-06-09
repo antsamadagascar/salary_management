@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 use App\Services\import\EmployeeServiceImport;
 use App\Services\import\SalaryStructureServiceImport;
 use App\Services\import\PayrollServiceImport;
+use App\Services\import\FiscalYearManagerService;
 use App\Utils\FileValidator;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
@@ -15,17 +16,20 @@ class ImportController extends Controller
     protected EmployeeServiceImport $employeeService;
     protected SalaryStructureServiceImport $salaryStructureService;
     protected PayrollServiceImport $payrollService;
+    protected FiscalYearManagerService $fiscalYearManager;
     protected FileValidator $fileValidator;
 
     public function __construct(
         EmployeeServiceImport $employeeService,
         SalaryStructureServiceImport $salaryStructureService,
         PayrollServiceImport $payrollService,
+        FiscalYearManagerService $fiscalYearManager,
         FileValidator $fileValidator
     ) {
         $this->employeeService = $employeeService;
         $this->salaryStructureService = $salaryStructureService;
         $this->payrollService = $payrollService;
+        $this->fiscalYearManager = $fiscalYearManager;
         $this->fileValidator = $fileValidator;
     }
 
@@ -93,7 +97,9 @@ class ImportController extends Controller
         return Validator::make($request->all(), $rules, $messages);
     }
 
-    
+    /**
+    * Gère le processus d'import avec création automatique des années fiscales
+     */
     private function handleImportProcess(Request $request)
     {
         Log::info('Début du processus d\'import - tous les fichiers validés');
@@ -104,6 +110,22 @@ class ImportController extends Controller
             ->toArray();
 
         try {
+            // ÉTAPE 1: on Vérifie et crée si les années fiscales nécessaires avant l'import payroll
+            if ($request->hasFile('payroll_file')) {
+                Log::info('Vérification des années fiscales pour les données payroll');
+                $payrollData = $this->loadPayrollData($request->file('payroll_file'));
+                
+                $fiscalYearResult = $this->fiscalYearManager->ensureFiscalYearsExist($payrollData);
+                
+                if (!$fiscalYearResult['success']) {
+                    throw new \Exception("Erreur lors de la gestion des années fiscales: " . $fiscalYearResult['message']);
+                }
+                
+                Log::info('Années fiscales gérées avec succès', $fiscalYearResult);
+                $results['fiscal_years'] = $fiscalYearResult;
+            }
+
+            // ÉTAPE 2:on Procéde aux imports dans l'ordre
             $importMethods = [
                 'employees' => fn() => $this->employeeService->import($request->file('employees_file')),
                 'salary_structure' => fn() => $this->salaryStructureService->import($request->file('salary_structure_file')),
@@ -111,6 +133,10 @@ class ImportController extends Controller
             ];
 
             foreach ($importMethods as $type => $importMethod) {
+                if (!$request->hasFile("{$type}_file")) {
+                    continue; // Passer si le fichier n'est pas fourni
+                }
+                
                 Log::info("Début import {$type}");
                 $result = $importMethod();
                 $results[$type] = $result;
@@ -118,12 +144,21 @@ class ImportController extends Controller
                 if (!empty($result['errors'])) {
                     throw new \Exception("Erreurs lors de l'import des {$type}: " . implode(', ', $result['errors']));
                 }
+                
+                Log::info("Import {$type} terminé avec succès: {$result['success']} enregistrement(s)");
             }
 
             $totalSuccess = array_sum(array_column($results, 'success'));
             DB::commit();
 
             $message = "Import terminé avec succès: {$totalSuccess} enregistrement(s) importé(s)";
+            
+            // on ajout les détails sur les années fiscales créées si applicable (facultatife)
+            if (isset($results['fiscal_years']) && !empty($results['fiscal_years']['created_years'])) {
+                $createdYears = implode(', ', $results['fiscal_years']['created_years']);
+                $message .= ". Années fiscales créées: {$createdYears}";
+            }
+            
             Log::info($message, $results);
 
             return redirect()->back()->with('success', $message)->with('import_results', $results);
@@ -140,6 +175,36 @@ class ImportController extends Controller
                 ->with('error', 'Import annulé: ' . $e->getMessage())
                 ->with('import_results', $results)
                 ->withInput();
+        }
+    }
+
+    /**
+     * Charge les données du fichier payroll pour l'analyse des années fiscales
+     */
+    private function loadPayrollData($file): array
+    {
+        try {
+            if (!$file || !$file->isValid()) {
+                return [];
+            }
+
+            $csvData = [];
+            if (($handle = fopen($file->getPathname(), 'r')) !== false) {
+                $headers = fgetcsv($handle);
+                
+                while (($data = fgetcsv($handle)) !== false) {
+                    if (count($data) === count($headers)) {
+                        $csvData[] = array_combine($headers, $data);
+                    }
+                }
+                fclose($handle);
+            }
+
+            return $csvData;
+            
+        } catch (\Exception $e) {
+            Log::error('Erreur lors du chargement des données payroll: ' . $e->getMessage());
+            return [];
         }
     }
 

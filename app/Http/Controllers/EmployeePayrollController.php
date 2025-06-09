@@ -2,7 +2,8 @@
 
 namespace App\Http\Controllers;
 
-use App\Services\payroll\PayrollService;
+use App\Services\payroll\PayrollDataService;
+use App\Services\payroll\PayrollEmployeeService;
 use App\Services\export\ExportService;
 use App\Services\employee\EmployeeService;
 use Illuminate\Http\Request;
@@ -11,26 +12,28 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Response;
 use Carbon\Carbon;
 
-class PayrollController extends Controller
+class EmployeePayrollController extends Controller
 {
-    private PayrollService $payrollService;
+    private PayrollDataService $payrollService;
     private ExportService $exportService;
     private EmployeeService $employeeService;
+    private PayrollEmployeeService $payrollEmployeeService;
 
-    public function __construct(PayrollService $payrollService, ExportService $exportService, EmployeeService $employeeService)
+    public function __construct(PayrollDataService $payrollService, ExportService $exportService, EmployeeService $employeeService,PayrollEmployeeService $payrollEmployeeService)
     {
         $this->payrollService = $payrollService;
         $this->exportService = $exportService;
         $this->employeeService = $employeeService;
+        $this->payrollEmployeeService = $payrollEmployeeService;
     }
 
     public function index(): View
     {
         try {
             $employees = $this->employeeService->getEmployees();
-            return view('payroll.index', compact('employees'));
+            return view('payroll.employee.employee-list', compact('employees'));
         } catch (\Exception $e) {
-            return view('payroll.index', [
+            return view('payroll.employee.employee-list', [
                 'employees' => [],
                 'error' => 'Erreur lors du chargement des employés: ' . $e->getMessage()
             ]);
@@ -47,10 +50,10 @@ class PayrollController extends Controller
                 return redirect()->route('payroll.index')->withError('Employé non trouvé');
             }
 
-            $salariesByMonth = $this->payrollService->getEmployeeSalariesByMonth($employeeId);
-            $stats = $this->payrollService->getPayrollStats($employeeId);
+            $salariesByMonth = $this->payrollEmployeeService->getEmployeeSalariesByMonth($employeeId);
+            $stats = $this->payrollEmployeeService->getPayrollStats($employeeId);
             
-            return view('payroll.show', compact('employee', 'salariesByMonth', 'stats'));
+            return view('payroll.employee.employee-salary-sheet', compact('employee', 'salariesByMonth', 'stats'));
         } catch (\Exception $e) {
             return redirect()->route('payroll.index')->withError('Erreur lors du chargement de la fiche employé: ' . $e->getMessage());
         }
@@ -70,10 +73,27 @@ class PayrollController extends Controller
                 return redirect()->route('payroll.index')->withError('Fiche de paie non trouvée ou accès non autorisé');
             }
     
-            return view('payroll.salary-slip', compact('salarySlip'));
+            return view('payroll.employee.employee-salary-slip-details', compact('salarySlip'));
         } catch (\Exception $e) {
             \Log::error("Erreur lors du chargement de la fiche de paie $decodedId: " . $e->getMessage());
             return redirect()->route('payroll.index')->withError('Erreur lors du chargement de la fiche de paie: accès non autorisé ou erreur serveur');
+        }
+    }
+
+    public function search(Request $request): View
+    {
+        $search = $request->get('search', '');
+    
+        try {
+            $employees = $this->employeeService->searchEmployees($search);
+    
+            return view('payroll.employee.employee-list', compact('employees', 'search'));
+        } catch (\Exception $e) {
+            return view('payroll.employee.employee-list', [
+                'employees' => [],
+                'search' => $search,
+                'error' => 'Erreur lors de la recherche: ' . $e->getMessage()
+            ]);
         }
     }
 
@@ -84,7 +104,7 @@ class PayrollController extends Controller
     {
         try {
             $employee = $this->employeeService->getEmployeeByName($employeeId);
-            $salarySlips = $this->payrollService->getSalarySlipsForMonth($employeeId, $month);
+            $salarySlips = $this->payrollEmployeeService->getSalarySlipsForMonth($employeeId, $month);
             
 
             if (!$employee) {
@@ -117,11 +137,11 @@ class PayrollController extends Controller
     // public function exportEmployeesExcel(): Response|RedirectResponse
     // {
     //     try {
-    //         $employees = $this->payrollService->getEmployees();
+    //         $employees = $this->payrollEmployeeService->getEmployees();
     //         $data = [];
             
     //         foreach ($employees as $employee) {
-    //             $stats = $this->payrollService->getPayrollStats($employee['name']);
+    //             $stats = $this->payrollEmployeeService->getPayrollStats($employee['name']);
     //             $data[] = [
     //                 $employee['employee_number'] ?? '',
     //                 $employee['employee_name'] ?? '',
@@ -153,31 +173,4 @@ class PayrollController extends Controller
     //     }
     // }
 
-    /**
-     * Rechercher des employés
-     */
-    public function search(Request $request): View
-    {
-        $search = $request->get('search', '');
-        
-        try {
-            $employees = $this->payrollService->getEmployees();
-            
-            if ($search) {
-                $employees = array_filter($employees, function ($employee) use ($search) {
-                    return stripos($employee['employee_name'], $search) !== false ||
-                           stripos($employee['employee_number'] ?? '', $search) !== false ||
-                           stripos($employee['department'] ?? '', $search) !== false;
-                });
-            }
-
-            return view('payroll.index', compact('employees', 'search'));
-        } catch (\Exception $e) {
-            return view('payroll.index', [
-                'employees' => [],
-                'search' => $search,
-                'error' => 'Erreur lors de la recherche: ' . $e->getMessage()
-            ]);
-        }
-    }
 }

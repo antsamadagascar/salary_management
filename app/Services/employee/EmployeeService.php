@@ -270,4 +270,17 @@ class EmployeeService
             throw new Exception("Erreur lors du calcul des statistiques: " . $e->getMessage());
         }
     }
+
+    /**
+     * Récupére un employé par son ID
+     */
+    public function getEmployeeByID(string $employeeId): ?array
+    {
+        try {
+            return $this->erpApiService->getResourceByName('Employee', $employeeId);
+        } catch (Exception $e) {
+            return null;
+        }
+    }
+    
 }

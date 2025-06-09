@@ -7,8 +7,8 @@
             </div>
             <div class="offcanvas-body">
                 <div class="sidebar-header text-center py-4">
-                    <img src="{{ asset('logos/erpnext-logo.svg') }}" alt="Logo" class="img-fluid mb-2" style="max-height: 60px;">
-                    <h5 class="mb-0">ERP Management</h5>
+                    <img src="{{ asset('logos/frappe-hr-logo.svg') }}" alt="Logo" class="img-fluid mb-2" style="max-height: 60px;">
+                    <h5 class="mb-0">Salary Management</h5>
                 </div>
                 <hr>
                 <div class="position-sticky pt-3">
@@ -62,7 +62,7 @@
                         </li>
                         
                         <li class="nav-item">
-                            <a class="nav-link" href="{{ route('stats.index') }}">
+                            <a class="nav-link" href="{{ route('payroll.stats.salary-details') }}">
                             <i class="fas fa-chart-bar"></i> Month
                             </a>
                         </li>

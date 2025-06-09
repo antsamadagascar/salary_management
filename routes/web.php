@@ -5,9 +5,9 @@ use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\ErpController;
 use App\Http\Controllers\InvoiceController;
-use App\Http\Controllers\PayrollController;
+use App\Http\Controllers\EmployeePayrollController;
 
-use App\Http\Controllers\StatsSalaryController;
+use App\Http\Controllers\SalaryDetailsController;
 use App\Http\Controllers\ResetDataController;
 use App\Http\Controllers\PayrollStatsController;
 
@@ -43,36 +43,33 @@ Route::middleware([\App\Http\Middleware\FrappeAuthMiddleware::class])->group(fun
     });
     
     Route::prefix('payroll')->name('payroll.')->group(function () {
-        Route::get('/', [PayrollController::class, 'index'])->name('index');
-        Route::get('/search', [PayrollController::class, 'search'])->name('search');
-        Route::get('/employee/{employeeId}', [PayrollController::class, 'show'])->name('employee.show');
+        Route::get('/', [EmployeePayrollController::class, 'index'])->name('index');
+        Route::get('/search', [EmployeePayrollController::class, 'search'])->name('search');
+        Route::get('/employee/{employeeId}', [EmployeePayrollController::class, 'show'])->name('employee.show');
         
-        Route::get('/salary-slip/{salarySlipId}', [PayrollController::class, 'showSalarySlip'])
+        Route::get('/salary-slip/{salarySlipId}', [EmployeePayrollController::class, 'showSalarySlip'])
             ->name('salary-slip.show')
             ->where('salarySlipId', '.*');
         
-        Route::get('/employee/{employeeId}/month/{month}/pdf', [PayrollController::class, 'exportMonthlyPdf'])->name('employee.monthly.pdf');
-        Route::get('/export/excel', [PayrollController::class, 'exportEmployeesExcel'])->name('export.excel');
+        Route::get('/employee/{employeeId}/month/{month}/pdf', [EmployeePayrollController::class, 'exportMonthlyPdf'])->name('employee.monthly.pdf');
+        // Route::get('/export/excel', [EmployeePayrollController::class, 'exportEmployeesExcel'])->name('export.excel');
 
          // Routes pour les statistiques 
         Route::prefix('stats')->name('stats.')->group(function () {
             Route::get('/', [PayrollStatsController::class, 'index'])->name('index');
             Route::get('/month/{month}', [PayrollStatsController::class, 'showMonthDetails'])->name('month-details');
-            Route::get('/export', [PayrollStatsController::class, 'exportMonthlyStats'])->name('export');
+            Route::get('/export/year', [PayrollStatsController::class, 'exportMonthlyStats'])->name('export.year');
             Route::get('/export/month/{month}', [PayrollStatsController::class, 'exportMonthDetails'])->name('export-month');
             Route::get('/graphs', [PayrollStatsController::class, 'graphsIndex'])->name('graphs');
             Route::get('/chart-data', [PayrollStatsController::class, 'getChartData'])->name('chart-data');
             Route::get('/api/chart-data', [PayrollStatsController::class, 'getChartData'])->name('api.chart-data');
             Route::get('/api/yearly-stats', [PayrollStatsController::class, 'getYearlyStats'])->name('api.yearly-stats');
+            Route::get('/salary-details', [SalaryDetailsController::class, 'getSalaryDetails'])->name('salary-details');
+            Route::get('/data', [SalaryDetailsController::class, 'getPayrollData'])->name('data');
         });
 
     });
     
-    Route::prefix('stats')->name('stats.')->group(function () {
-        Route::get('/', [StatsSalaryController::class, 'index'])->name('index');
-        Route::get('/data', [StatsSalaryController::class, 'getPayrollData'])->name('data');
-        Route::get('/export', [StatsSalaryController::class, 'exportCsv'])->name('export');
-    });
 
     Route::prefix('reset-data')->name('reset-data.')->group(function () {
         Route::get('/', [ResetDataController::class, 'showConfirmation'])->name('show');
@@ -81,5 +78,8 @@ Route::middleware([\App\Http\Middleware\FrappeAuthMiddleware::class])->group(fun
         Route::post('/table/{table}', [ResetDataController::class, 'resetSpecificTable'])->name('table');
         Route::post('/confirm', [ResetDataController::class, 'confirmReset'])->name('confirm');
     });
-    
+
+    // Route::get('/dashboard/formulaire', [DashboardController::class, 'formulaire'])->name('dashboard.formulaire');
+    // Route::get('/dashboard/tableau', [DashboardController::class, 'tableau'])->name('dashboard.tableau');
+    // Route::post('/dashboard/store', [DashboardController::class, 'store'])->name('dashboard.store');
 });

@@ -53,7 +53,7 @@
             <div class="card">
                 <div class="card-body">
                     <div class="d-flex justify-content-end">
-                        <!-- <a href="{{ route('payroll.stats.export', ['year' => $year]) }}" 
+                        <!-- <a href="{{ route('payroll.stats.export.year', ['year' => $year]) }}" 
                            class="btn btn-success me-2">
                             <i class="mdi mdi-download"></i> Exporter Excel
                         </a> -->
@@ -251,7 +251,7 @@
                                                     {{ number_format($stats['total_net_pay'], 0, ',', ' ') }} 
                                                 </span>
                                             </a> -->
-                                            <a href="{{ route('stats.index') }}?month={{ $stats['month'] }}"
+                                            <a href="{{ route('payroll.stats.salary-details') }}?month={{ $stats['month'] }}"
                                                class="text-decoration-none">
                                                 <span class="text-info fw-bold">
                                                     {{ number_format($stats['total_net_pay'], 0, ',', ' ') }} 
@@ -266,18 +266,18 @@
                                             <!-- <a href="{{ route('payroll.stats.month-details', $stats['month']) }}" 
                                             class="btn btn-sm btn-outline-primary"
                                             title="Voir les détails du mois {{ $stats['month'] }}">
-                                                <i class="mdi mdi-eye"></i> Détails
+                                                <i class="mdi mdi-eye"></i> voir plus
                                             </a> -->
-                                            <a href="{{ route('stats.index') }}?month={{ $stats['month'] }}"
+                                            <a href="{{ route('payroll.stats.salary-details') }}?month={{ $stats['month'] }}"
                                             class="btn btn-sm btn-outline-primary"
                                             title="Voir les détails du mois {{ $stats['month'] }}">
                                                 <i class="mdi mdi-eye"></i> Détails
                                             </a>
-                                            <!-- <a href="{{ route('payroll.stats.export-month', $stats['month']) }}" 
-                                            class="btn btn-sm btn-outline-success"
-                                            title="Exporter les données du mois {{ $stats['month'] }}">
-                                                <i class="mdi mdi-download"></i> Export
-                                            </a> -->
+                                                    <!-- <a href="{{ route('payroll.stats.export-month', $stats['month']) }}" 
+                                                    class="btn btn-sm btn-outline-success"
+                                                    title="Exporter les données du mois {{ $stats['month'] }}">
+                                                        <i class="mdi mdi-download"></i> Export
+                                                    </a> -->
                                         </div>
                                     </td>
                                     </tr>
