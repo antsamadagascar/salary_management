@@ -11,7 +11,7 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Response;
 use Carbon\Carbon;
 
-class PayrollController extends Controller
+class EmployeePayrollController extends Controller
 {
     private PayrollService $payrollService;
     private ExportService $exportService;
@@ -28,9 +28,9 @@ class PayrollController extends Controller
     {
         try {
             $employees = $this->employeeService->getEmployees();
-            return view('payroll.employee.index', compact('employees'));
+            return view('payroll.employee.employee-list', compact('employees'));
         } catch (\Exception $e) {
-            return view('payroll.employee.index', [
+            return view('payroll.employee.employee-list', [
                 'employees' => [],
                 'error' => 'Erreur lors du chargement des employés: ' . $e->getMessage()
             ]);
@@ -50,7 +50,7 @@ class PayrollController extends Controller
             $salariesByMonth = $this->payrollService->getEmployeeSalariesByMonth($employeeId);
             $stats = $this->payrollService->getPayrollStats($employeeId);
             
-            return view('payroll.employee.show', compact('employee', 'salariesByMonth', 'stats'));
+            return view('payroll.employee.employee-salary-sheet', compact('employee', 'salariesByMonth', 'stats'));
         } catch (\Exception $e) {
             return redirect()->route('payroll.index')->withError('Erreur lors du chargement de la fiche employé: ' . $e->getMessage());
         }
@@ -70,7 +70,7 @@ class PayrollController extends Controller
                 return redirect()->route('payroll.index')->withError('Fiche de paie non trouvée ou accès non autorisé');
             }
     
-            return view('payroll.employee.salary-slip', compact('salarySlip'));
+            return view('payroll.employee.employee-salary-slip-details', compact('salarySlip'));
         } catch (\Exception $e) {
             \Log::error("Erreur lors du chargement de la fiche de paie $decodedId: " . $e->getMessage());
             return redirect()->route('payroll.index')->withError('Erreur lors du chargement de la fiche de paie: accès non autorisé ou erreur serveur');
@@ -171,9 +171,9 @@ class PayrollController extends Controller
                 });
             }
 
-            return view('payroll.employee.index', compact('employees', 'search'));
+            return view('payroll.employee.employee-list', compact('employees', 'search'));
         } catch (\Exception $e) {
-            return view('payroll.employee.index', [
+            return view('payroll.employee.employee-list', [
                 'employees' => [],
                 'search' => $search,
                 'error' => 'Erreur lors de la recherche: ' . $e->getMessage()
