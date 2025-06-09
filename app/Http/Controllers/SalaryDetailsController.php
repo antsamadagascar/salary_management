@@ -8,7 +8,7 @@ use Illuminate\Http\JsonResponse;
 use Carbon\Carbon;
 use Exception;
 
-class StatsSalaryController extends Controller
+class SalaryDetailsController extends Controller
 {
     private PayrollService $payrollService;
 
@@ -17,7 +17,7 @@ class StatsSalaryController extends Controller
         $this->payrollService = $payrollService;
     }
 
-    public function index(Request $request)
+    public function getSalaryDetails(Request $request)
     {
         try {
             $currentMonth = $request->get('month', Carbon::now()->format('Y-m'));
@@ -38,14 +38,14 @@ class StatsSalaryController extends Controller
 
             $totals = $this->payrollService->getPayrollTotals($currentMonth);
 
-            return view('stats.index', compact(
+            return view('payroll.stats.salary-details', compact(
                 'payrollData',
                 'totals',
                 'availableMonths',
                 'currentMonth'
             ));
         } catch (Exception $e) {
-            return view('stats.index', [
+            return view('payroll.stats.salary-details', [
                 'payrollData' => [],
                 'totals' => [
                     'total_employees' => 0,

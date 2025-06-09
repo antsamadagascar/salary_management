@@ -7,7 +7,7 @@ use App\Http\Controllers\ErpController;
 use App\Http\Controllers\InvoiceController;
 use App\Http\Controllers\PayrollController;
 
-use App\Http\Controllers\StatsSalaryController;
+use App\Http\Controllers\SalaryDetailsController;
 use App\Http\Controllers\ResetDataController;
 use App\Http\Controllers\PayrollStatsController;
 
@@ -64,14 +64,15 @@ Route::middleware([\App\Http\Middleware\FrappeAuthMiddleware::class])->group(fun
             Route::get('/chart-data', [PayrollStatsController::class, 'getChartData'])->name('chart-data');
             Route::get('/api/chart-data', [PayrollStatsController::class, 'getChartData'])->name('api.chart-data');
             Route::get('/api/yearly-stats', [PayrollStatsController::class, 'getYearlyStats'])->name('api.yearly-stats');
+            Route::get('/salary-details', [SalaryDetailsController::class, 'getSalaryDetails'])->name('salary-details');
         });
 
     });
     
     Route::prefix('stats')->name('stats.')->group(function () {
-        Route::get('/', [StatsSalaryController::class, 'index'])->name('index');
-        Route::get('/data', [StatsSalaryController::class, 'getPayrollData'])->name('data');
-        Route::get('/export', [StatsSalaryController::class, 'exportCsv'])->name('export');
+        Route::get('/', [SalaryDetailsController::class, 'index'])->name('index');
+        Route::get('/data', [SalaryDetailsController::class, 'getPayrollData'])->name('data');
+        Route::get('/export', [SalaryDetailsController::class, 'exportCsv'])->name('export');
     });
 
     Route::prefix('reset-data')->name('reset-data.')->group(function () {

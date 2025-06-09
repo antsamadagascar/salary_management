@@ -62,7 +62,7 @@
                         </li>
                         
                         <li class="nav-item">
-                            <a class="nav-link" href="{{ route('stats.index') }}">
+                            <a class="nav-link" href="{{ route('payroll.stats.salary-details') }}">
                             <i class="fas fa-chart-bar"></i> Month
                             </a>
                         </li>
