@@ -26,7 +26,7 @@ return [
                 5 => ['field' => 'date naissance', 'format' => 'd/m/Y']
             ],
             'enum_fields' => [
-                3 => ['field' => 'genre', 'values' => ['Masculin', 'Feminin']]
+             //   3 => ['field' => 'genre', 'values' => ['Masculin', 'Feminin']]
             ]
         ],
 
