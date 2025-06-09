@@ -11,12 +11,12 @@ return [
     'validation_rules' => [
         'employees' => [
             'required_fields' => [
-                0 => 'Ref', 
-                2 => 'Prenom', 
-                3 => 'genre', 
-                4 => 'Date embauche', 
-                5 => 'date naissance', 
-                6 => 'company' 
+                0 => 'Ref',
+                2 => 'Prenom',
+                3 => 'genre',
+                4 => 'Date embauche',
+                5 => 'date naissance',
+                6 => 'company'
             ],
             'numeric_fields' => [
                 0 => 'Ref'
@@ -32,12 +32,12 @@ return [
 
         'salary_structure' => [
             'required_fields' => [
-                0 => 'salary structure', 
+                0 => 'salary structure',
                 1 => 'name',
-                2 => 'Abbr', 
-                3 => 'type', 
-                4 => 'valeur', 
-                5 => 'company' 
+                2 => 'Abbr',
+                3 => 'type',
+                4 => 'valeur',
+                5 => 'company'
             ],
             'enum_fields' => [
                 3 => ['field' => 'type', 'values' => ['earning','Earning','deduction','Deduction']]
@@ -46,10 +46,10 @@ return [
 
         'payroll' => [
             'required_fields' => [
-                0 => 'Mois', 
+                0 => 'Mois',
                 1 => 'Ref Employe',
-             //  2 => 'Salaire Base', // peut etre vide (par defaut value=0 par erpnext)
-                3 => 'Salaire' 
+                // 2 => 'Salaire Base', // peut etre vide (par defaut value=0 par erpnext)
+                3 => 'Salaire'
             ],
             'numeric_fields' => [
                 1 => 'Ref Employe',
@@ -73,11 +73,11 @@ return [
         'extra_headers' => 'Colonnes supplémentaires dans :type: :headers',
         'empty_file' => 'Fichier :type vide ou format invalide',
         'read_error' => 'Impossible de lire le fichier :type',
-        'required_field' => 'Ligne :line: :field requis',
-        'invalid_date' => 'Ligne :line: Format de :field invalide (attendu: :format)',
-        'invalid_enum' => 'Ligne :line: :field doit être :values',
-        'invalid_numeric' => 'Ligne :line: :field doit être numérique',
-        'negative_not_allowed' => 'Ligne :line - Le champ « :field » ne peut pas être négatif.',
+        'required_field' => 'Ligne :line: :field requis (valeur vide)',
+        'invalid_date' => 'Ligne :line: Format de :field invalide (:value) - attendu: :format',
+        'invalid_enum' => 'Ligne :line: :field a une valeur invalide (:value) - doit être :values',
+        'invalid_numeric' => 'Ligne :line: :field doit être numérique (valeur actuelle: :value)',
+        'negative_not_allowed' => 'Ligne :line: Le champ :field ne peut pas être négatif (valeur actuelle: :value)',
         'date_before_hire' => 'Ligne :line: La date de salaire (:salary_date) est antérieure à la date d\'embauche (:hire_date)'
     ]
 ];
