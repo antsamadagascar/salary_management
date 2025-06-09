@@ -34,8 +34,19 @@ class PayrollStatsController extends Controller
     {
         try {
             $currentYear = Carbon::now()->year;
-            $year = $request->get('year', $currentYear);
-            
+            $year = $request->get('year');
+
+            if (empty($year) || !is_numeric($year)) {
+                return view('payroll.stats.index', [
+                    'monthlyStats' => [],
+                    'chartData' => [],
+                    'availableYears' => $this->statsService->getAvailableYears(),
+                    'year' => $currentYear
+                ]);
+            }
+
+            $year = (int) $year;
+
             $availableYears = $this->statsService->getAvailableYears();
             $monthlyStats = $this->statsService->getYearlyPayrollStats($year);
             $chartData = $this->statsService->getChartData($year);

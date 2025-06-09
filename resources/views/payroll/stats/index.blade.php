@@ -266,7 +266,7 @@
                                             <!-- <a href="{{ route('payroll.stats.month-details', $stats['month']) }}" 
                                             class="btn btn-sm btn-outline-primary"
                                             title="Voir les détails du mois {{ $stats['month'] }}">
-                                                <i class="mdi mdi-eye"></i> Détails
+                                                <i class="mdi mdi-eye"></i> voir plus
                                             </a> -->
                                             <a href="{{ route('payroll.stats.salary-details') }}?month={{ $stats['month'] }}"
                                             class="btn btn-sm btn-outline-primary"
