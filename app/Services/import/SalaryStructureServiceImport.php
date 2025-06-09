@@ -70,17 +70,20 @@ class SalaryStructureServiceImport
             if ($this->apiService->resourceExists("Salary Component/{$componentName}")) {
                 return true;
             }
-
+            
+            $type = strtolower(trim($componentData['type']));
+            $isEarning = ($type === 'earning' || $type === 'earnings');
+            
             $salaryComponentData = [
                 'salary_component' => $componentName,
-                'salary_component_abbr' => trim($componentData['Abbr']), 
-                'type' => trim($componentData['type']) === 'earning' ? 'Earning' : 'Deduction',
+                'salary_component_abbr' => trim($componentData['Abbr']),
+                'type' => $isEarning ? 'Earning' : 'Deduction',
                 'depends_on_payment_days' => 0,
-                'is_tax_applicable' => trim($componentData['type']) === 'earning' ? 1 : 0,
-                'company' => trim($componentData['company']), 
+                'is_tax_applicable' => $isEarning ? 1 : 0,
+                'company' => trim($componentData['company']),
                 'currency' => 'MGA'
             ];
-
+            
             return $this->apiService->createResource('Salary Component', $salaryComponentData);
         } catch (\Exception $e) {
             Log::error("Erreur lors de la création du composant de salaire {$componentName}: " . $e->getMessage());
@@ -113,7 +116,8 @@ class SalaryStructureServiceImport
                 $componentData['amount'] = (float)$valeur;
             }
         
-            if (trim($component['type']) === 'earning') {
+            $type = strtolower(trim($component['type']));
+            if ($type === 'earning' || $type === 'earnings') {
                 $earnings[] = $componentData;
             } else {
                 $deductions[] = $componentData;

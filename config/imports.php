@@ -40,7 +40,7 @@ return [
                 5 => 'company'
             ],
             'enum_fields' => [
-                3 => ['field' => 'type', 'values' => ['earning','Earning','deduction','Deduction']]
+             //   3 => ['field' => 'type', 'values' => ['earning','Earning','deduction','Deduction']]
             ]
         ],
 
