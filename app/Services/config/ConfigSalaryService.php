@@ -190,7 +190,7 @@ class ConfigSalaryService
     }
 
     /**
-     * Annuler l'assignment actuel, créer un nouveau, et mettre à jour les Salary Slips
+     * Annuler l'assignment actuel, créer un nouveau 
      */
     private function updateSalaryAssignment(string $employeeName, array $currentAssignment, float $newBaseSalary): bool
     {
@@ -216,7 +216,7 @@ class ConfigSalaryService
                 'base' => $newBaseSalary,
                 'company' => $currentAssignment['company'] ?? 'Orinasa SA',
                 'currency' => $currentAssignment['currency'] ?? 'MGA',
-                'docstatus' => 0 // Créer en brouillon pour éviter les erreurs de soumission
+                'docstatus' => 1
             ];
 
             Log::debug("Données nouvelle assignation", ['data' => $newAssignmentData]);
@@ -242,8 +242,6 @@ class ConfigSalaryService
                 return false;
             }
 
-            // Étape 4 : Mettre à jour les Salary Slips
-            return $this->updateSalarySlips($employeeName, $newAssignment);
 
         } catch (\Exception $e) {
             Log::error("Erreur mise à jour assignment pour {$employeeName}", [
@@ -254,89 +252,7 @@ class ConfigSalaryService
             return false;
         }
     }
-    /**
-     * Mettre à jour ou créer des Salary Slips pour refléter le nouvel assignment
-     */
-    private function updateSalarySlips(string $employeeName, array $newAssignment): bool
-    {
-        try {
-            $startDate = date('Y-m-01'); // Premier jour du mois
-            $endDate = date('Y-m-t');   // Dernier jour du mois
-
-            // Étape 1 : Vérifie les Salary Slips existants
-            $filters = [
-                ['employee', '=', $employeeName],
-                ['start_date', '>=', $startDate],
-                ['end_date', '<=', $endDate],
-                ['docstatus', '<', 1] // Brouillons uniquement
-            ];
-            $existingSlips = $this->erpApiService->getResource('Salary Slip', [
-                'filters' => json_encode($filters),
-                'fields' => json_encode(['name', 'docstatus'])
-            ]);
-
-            // Étape 2 : Annuler les brouillons existants
-            foreach ($existingSlips as $slip) {
-                if ($slip['docstatus'] == 0) {
-                    $cancelResult = $this->erpApiService->executeMethod('frappe.client', 'cancel', [
-                        'doctype' => 'Salary Slip',
-                        'name' => $slip['name']
-                    ]);
-                    if (!$cancelResult) {
-                        Log::error("Échec annulation Salary Slip {$slip['name']}", [
-                            'response' => $cancelResult
-                        ]);
-                    }
-                }
-            }
-
-            // Étape 3 : Créer un nouveau Salary Slip
-            $slipData = [
-                'employee' => $employeeName,
-                'start_date' => $startDate,
-                'end_date' => $endDate,
-                'salary_structure' => $newAssignment['salary_structure'],
-                'company' => $newAssignment['company'] ?? 'Orinasa SA',
-                'currency' => $newAssignment['currency'] ?? 'MGA',
-                'payroll_date' => date('Y-m-d'), // Champ obligatoire
-                'posting_date' => date('Y-m-d'), // Champ obligatoire
-                'docstatus' => 0 // Créer en brouillon
-            ];
-
-            Log::debug("Données nouveau Salary Slip", ['data' => $slipData]);
-            $newSlip = $this->erpApiService->createResource('Salary Slip', $slipData);
-
-            if (!$newSlip || !isset($newSlip['name'])) {
-                Log::error("Échec création Salary Slip pour {$employeeName}", [
-                    'response' => $newSlip
-                ]);
-                return false;
-            }
-
-            // Étape 4 : Soumettre le Salary Slip (facultatif)
-            $submitResult = $this->erpApiService->executeMethod('frappe.client', 'submit', [
-                'doctype' => 'Salary Slip',
-                'name' => $newSlip['name']
-            ]);
-
-            if (!$submitResult || (isset($submitResult['message']) && $submitResult['message'] === false)) {
-                Log::error("Échec soumission Salary Slip {$newSlip['name']}", [
-                    'response' => $submitResult
-                ]);
-                return false;
-            }
-
-            return true;
-
-        } catch (\Exception $e) {
-            Log::error("Erreur mise à jour Salary Slip pour {$employeeName}", [
-                'message' => $e->getMessage(),
-                'code' => $e->getCode(),
-                'response' => method_exists($e, 'getResponse') ? $e->getResponse()->getBody()->getContents() : null
-            ]);
-            return false;
-        }
-    }
+    
     /**
      * Aperçu des modifications
      */
