@@ -85,23 +85,24 @@
 
                             </a>
                         </li> -->
-                        <!-- Section Configuration -->
-                        <!-- <li class="nav-item">
+                      
+                     <li class="nav-item">
                             <h6 class="sidebar-heading d-flex justify-content-between align-items-center px-3 mt-4 mb-1 text-muted">
                                 <span>CONFIGURATION</span>
                             </h6>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link" href="">
-                                <i class="fas fa-cog"></i> Paramètres ERPNext
+                            <a class="nav-link" href="{{ route('salaire.generateSalary')}}">
+                                <i class="fas fa-history"></i> Generation Salaire
                             </a>
                         </li>
-                        <li class="nav-item">
-                            <a class="nav-link" href="">
-                                <i class="fas fa-history"></i> Logs API
-                            </a>
-                        </li> -->
                         
+                        <li class="nav-item">
+                            <a class="nav-link" href="{{ route('salaire.configuration') }}">
+                                <i class="fas fa-cog"></i> Salaire de base
+                            </a>
+                        </li>
+
                         <hr>
                     </ul>
                 </div>
