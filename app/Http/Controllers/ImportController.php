@@ -98,19 +98,19 @@ class ImportController extends Controller
     }
 
     /**
-    * Gère le processus d'import avec création automatique des années fiscales
+     * Gère le processus d'import avec création automatique des années fiscales
+     * Import atomique : soit tout réussit, soit tout échoue
      */
     private function handleImportProcess(Request $request)
     {
-        Log::info('Début du processus d\'import - tous les fichiers validés');
+        Log::info('Début du processus d\'import atomique - tous les fichiers validés');
         
         DB::beginTransaction();
-        $results = collect($this->fileValidator->getFileTypes())
-            ->mapWithKeys(fn($type) => [$type => ['success' => 0, 'errors' => []]])
-            ->toArray();
+        $errors = [];
+        $results = [];
 
         try {
-            // ÉTAPE 1: on Vérifie et crée si les années fiscales nécessaires avant l'import payroll
+            // ÉTAPE 1: Vérification et création des années fiscales si nécessaire
             if ($request->hasFile('payroll_file')) {
                 Log::info('Vérification des années fiscales pour les données payroll');
                 $payrollData = $this->loadPayrollData($request->file('payroll_file'));
@@ -118,20 +118,22 @@ class ImportController extends Controller
                 $fiscalYearResult = $this->fiscalYearManager->ensureFiscalYearsExist($payrollData);
                 
                 if (!$fiscalYearResult['success']) {
-                    throw new \Exception("Erreur lors de la gestion des années fiscales: " . $fiscalYearResult['message']);
+                    $errors['fiscal_years'] = ["Erreur lors de la gestion des années fiscales: " . $fiscalYearResult['message']];
+                    throw new \Exception("Échec de la gestion des années fiscales");
                 }
                 
                 Log::info('Années fiscales gérées avec succès', $fiscalYearResult);
                 $results['fiscal_years'] = $fiscalYearResult;
             }
 
-            // ÉTAPE 2:on Procéde aux imports dans l'ordre
+            // ÉTAPE 2: Validation de tous les imports AVANT insertion
             $importMethods = [
                 'employees' => fn() => $this->employeeService->import($request->file('employees_file')),
                 'salary_structure' => fn() => $this->salaryStructureService->import($request->file('salary_structure_file')),
                 'payroll' => fn() => $this->payrollService->import($request->file('payroll_file')),
             ];
 
+            // Exécution de tous les imports
             foreach ($importMethods as $type => $importMethod) {
                 if (!$request->hasFile("{$type}_file")) {
                     continue; // Passer si le fichier n'est pas fourni
@@ -141,19 +143,22 @@ class ImportController extends Controller
                 $result = $importMethod();
                 $results[$type] = $result;
 
+                // Si des erreurs sont détectées, on les collecte et on arrête
                 if (!empty($result['errors'])) {
-                    throw new \Exception("Erreurs lors de l'import des {$type}: " . implode(', ', $result['errors']));
+                    $errors[$type] = $result['errors'];
+                    throw new \Exception("Erreurs détectées lors de l'import des {$type}");
                 }
                 
-                Log::info("Import {$type} terminé avec succès: {$result['success']} enregistrement(s)");
+                Log::info("Import {$type} validé avec succès: {$result['success']} enregistrement(s)");
             }
 
+            // Si on arrive ici, tout s'est bien passé
             $totalSuccess = array_sum(array_column($results, 'success'));
             DB::commit();
 
             $message = "Import terminé avec succès: {$totalSuccess} enregistrement(s) importé(s)";
             
-            // on ajout les détails sur les années fiscales créées si applicable (facultatife)
+            // Ajout des détails sur les années fiscales créées si applicable
             if (isset($results['fiscal_years']) && !empty($results['fiscal_years']['created_years'])) {
                 $createdYears = implode(', ', $results['fiscal_years']['created_years']);
                 $message .= ". Années fiscales créées: {$createdYears}";
@@ -161,21 +166,57 @@ class ImportController extends Controller
             
             Log::info($message, $results);
 
-            return redirect()->back()->with('success', $message)->with('import_results', $results);
+            return redirect()->back()->with('success', $message);
 
         } catch (\Exception $e) {
             DB::rollBack();
-            Log::error('Erreur durant l\'import', [
+            
+            Log::error('Erreur durant l\'import atomique', [
                 'message' => $e->getMessage(),
+                'errors' => $errors,
                 'trace' => $e->getTraceAsString(),
-                'results' => $results,
             ]);
 
+            // Retourner SEULEMENT les erreurs, pas de succès partiel
             return redirect()->back()
-                ->with('error', 'Import annulé: ' . $e->getMessage())
-                ->with('import_results', $results)
+                ->with('error', 'Import annulé : Toutes les opérations ont été annulées en raison d\'erreurs.')
+                ->with('import_errors', $errors)
+                ->with('error_details', $this->formatImportErrors($errors))
                 ->withInput();
         }
+    }
+
+    /**
+     * Formate les erreurs d'import pour un affichage clair
+     */
+    private function formatImportErrors(array $errors): array
+    {
+        $formatted = [];
+        
+        foreach ($errors as $type => $typeErrors) {
+            $formatted[$type] = [
+                'count' => count($typeErrors),
+                'errors' => $typeErrors,
+                'type_label' => $this->getTypeLabel($type)
+            ];
+        }
+        
+        return $formatted;
+    }
+
+    /**
+     * Retourne le libellé français du type d'import
+     */
+    private function getTypeLabel(string $type): string
+    {
+        $labels = [
+            'employees' => 'Employés',
+            'salary_structure' => 'Structure salariale',
+            'payroll' => 'Paie',
+            'fiscal_years' => 'Années fiscales'
+        ];
+        
+        return $labels[$type] ?? ucfirst($type);
     }
 
     /**

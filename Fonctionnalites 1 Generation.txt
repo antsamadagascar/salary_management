@@ -1,0 +1,31 @@
+Fonctionnalites 1:Generation salaires :
+Input:
+	-Champ listes option employer 
+	-Champ input date fin et date de debut 
+
+Output:
+	-LIstes des salaires d'un employer entre le date generer
+
+
+Fonctionnalites 2: MOdification salaire de base (Condition  d'enlevement ou d'ajoute augmentation salaire de base) 
+Input: 
+	-champ pourcentage (valeur)
+	-Liste des elements de salaires  (Indemnites,taxe sociale)
+	
+Output: 
+	- Changement valeur salaire de base pour chaque employer cibles dans la condition 
+
+TODO:
+-Creation section sidebar COnfiguration salaire employe (ok)
+-Creaton blade (configuration/index.blade,generate,blade)(ok)
+
+
+-creation services COnfigurationSalaryServices:
+-creation services  generateSalarySlip dans employeeService 
+-Creation services getSalarySlip dans employeeService
+-Creation controller:
+	-GenerateSalaryController:integration du services employeeService(getEmployee)
+	
+	-ConfigurationCOntroller:integration du services empployeeService(getEmployee) 
+
+

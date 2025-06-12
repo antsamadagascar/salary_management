@@ -10,6 +10,8 @@ use App\Http\Controllers\EmployeePayrollController;
 use App\Http\Controllers\SalaryDetailsController;
 use App\Http\Controllers\ResetDataController;
 use App\Http\Controllers\PayrollStatsController;
+use App\Http\Controllers\GenerateSalaryController;
+use App\Http\Controllers\ConfigurationController;
 
 Route::get('/', function () {
     return redirect()->route('login');
@@ -70,7 +72,13 @@ Route::middleware([\App\Http\Middleware\FrappeAuthMiddleware::class])->group(fun
 
     });
     
-
+    Route::prefix('configuration')->name('salaire.')->group(function() {
+        Route::get('/configuration',[ConfigurationController::class, 'formulaire'])->name('configuration');
+        Route::get('/generateSalary',[GenerateSalaryController::class, 'tableau'])->name('generateSalary');
+        
+    }); 
+    Route::get('/generate', [GenerateSalaryController::class, 'tableau'])->name('generate.tableau');
+    Route::post('/generate/store', [GenerateSalaryController::class, 'store'])->name('generate.store');
     Route::prefix('reset-data')->name('reset-data.')->group(function () {
         Route::get('/', [ResetDataController::class, 'showConfirmation'])->name('show');
         Route::get('/check', [ResetDataController::class, 'checkData'])->name('check');
@@ -79,7 +87,7 @@ Route::middleware([\App\Http\Middleware\FrappeAuthMiddleware::class])->group(fun
         Route::post('/confirm', [ResetDataController::class, 'confirmReset'])->name('confirm');
     });
 
-    // Route::get('/dashboard/formulaire', [DashboardController::class, 'formulaire'])->name('dashboard.formulaire');
-    // Route::get('/dashboard/tableau', [DashboardController::class, 'tableau'])->name('dashboard.tableau');
-    // Route::post('/dashboard/store', [DashboardController::class, 'store'])->name('dashboard.store');
+    Route::get('/dashboard/formulaire', [DashboardController::class, 'formulaire'])->name('dashboard.formulaire');
+    Route::get('/dashboard/tableau', [DashboardController::class, 'tableau'])->name('dashboard.tableau');
+    Route::post('/dashboard/store', [DashboardController::class, 'store'])->name('dashboard.store');
 });
