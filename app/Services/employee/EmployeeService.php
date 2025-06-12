@@ -282,5 +282,54 @@ class EmployeeService
             return null;
         }
     }
-    
+    public function generateSalaries(string $employeeId, string $dateDebut, string $dateFin, float $salaireBase): array
+    {
+        $createdSalaries = [];
+        $start = Carbon::parse($dateDebut)->startOfMonth();
+        $end = Carbon::parse($dateFin)->endOfMonth();
+
+        while ($start <= $end) {
+            $month = $start->format('Y-m');
+            
+            // Vérifie si un salaire existe pour ce mois
+            $existingSalary = $this->erpApiService->getResource('Salary Slip', [
+                'filters' => json_encode([
+                    ['employee', '=', $employeeId],
+                    ['start_date', 'like', $month . '%']
+                ])
+            ]);
+
+            if (empty($existingSalary)) {
+                // Chercher le dernier salaire avant la date de début
+                $lastSalary = $this->erpApiService->getResource('Salary Slip', [
+                    'filters' => json_encode([
+                        ['employee', '=', $employeeId],
+                        ['start_date', '<', $dateDebut]
+                    ]),
+                    'order_by' => 'start_date desc',
+                    'limit' => 1
+                ]);
+
+                $salaryAmount = !empty($lastSalary) ? ($lastSalary[0]['gross_pay'] ?? $salaireBase) : $salaireBase;
+
+                // Crée le nouveau salaire
+                $salaryData = [
+                    'employee' => $employeeId,
+                    'start_date' => $start->format('Y-m-d'),
+                    'end_date' => $start->endOfMonth()->format('Y-m-d'),
+                    'gross_pay' => $salaryAmount,
+                    'status' => 'Draft'
+                ];
+
+                if ($this->erpApiService->createResource('Salary Slip', $salaryData)) {
+                    $createdSalaries[] = $salaryData;
+                }
+            }
+
+            $start->addMonth();
+        }
+
+        return $createdSalaries;
+    }
+
 }
