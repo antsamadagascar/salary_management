@@ -263,7 +263,7 @@ class ConfigSalaryService
             $startDate = date('Y-m-01'); // Premier jour du mois
             $endDate = date('Y-m-t');   // Dernier jour du mois
 
-            // Étape 1 : Vérifier les Salary Slips existants
+            // Étape 1 : Vérifie les Salary Slips existants
             $filters = [
                 ['employee', '=', $employeeName],
                 ['start_date', '>=', $startDate],
