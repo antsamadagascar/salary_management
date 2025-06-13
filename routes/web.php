@@ -11,7 +11,7 @@ use App\Http\Controllers\SalaryDetailsController;
 use App\Http\Controllers\ResetDataController;
 use App\Http\Controllers\PayrollStatsController;
 use App\Http\Controllers\GenerateSalaryController;
-use App\Http\Controllers\ConfigurationController;
+use App\Http\Controllers\ConfigurationSalaryController;
 
 Route::get('/', function () {
     return redirect()->route('login');
@@ -72,9 +72,12 @@ Route::middleware([\App\Http\Middleware\FrappeAuthMiddleware::class])->group(fun
 
     });
     
-    Route::prefix('salaries')->name('salaries.')->group(function() {
+    Route::prefix('salaries')->name('salaries.')->group(function () {
         Route::get('/', [GenerateSalaryController::class, 'index'])->name('generate.index');
         Route::post('/generate', [GenerateSalaryController::class, 'generate'])->name('generate');
+        Route::get('/config', [ConfigurationSalaryController::class, 'index'])->name('config.index');
+        Route::post('/config/generate', [ConfigurationSalaryController::class, 'generate'])->name('config.generate');
+        Route::post('/config/preview', [ConfigurationSalaryController::class, 'preview'])->name('config.preview');
     });
 
     Route::prefix('reset-data')->name('reset-data.')->group(function () {

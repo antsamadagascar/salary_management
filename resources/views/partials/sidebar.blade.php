@@ -98,7 +98,7 @@
                         </li>
                         
                         <li class="nav-item">
-                            <a class="nav-link" href="">
+                            <a class="nav-link" href="{{ route('salaries.config.index') }}">
                                 <i class="fas fa-cog"></i> Salaire de base
                             </a>
                         </li>
