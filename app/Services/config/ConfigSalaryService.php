@@ -105,55 +105,49 @@ class ConfigSalaryService
         }
     }
 
-    /**
-     * Récupérer la valeur d'un composant salarial depuis la Salary Structure
-     */
     private function getComponentValue(array $assignment, string $componentName): float
     {
         try {
             if (!isset($assignment['salary_structure'])) {
                 return 0.0;
             }
-
+    
             $baseSalary = (float) ($assignment['base'] ?? 0);
-            $salaryStructure = $this->erpApiService->getResource("Salary Structure/{$assignment['salary_structure']}", [
-                'fields' => json_encode(['name', 'earnings', 'deductions'])
+    
+            $structure = $this->erpApiService->getResource("Salary Structure/{$assignment['salary_structure']}", [
+                'fields' => json_encode(['earnings', 'deductions'])
             ]);
-
+    
             $components = array_merge(
-                $salaryStructure['earnings'] ?? [],
-                $salaryStructure['deductions'] ?? []
+                $structure['earnings'] ?? [],
+                $structure['deductions'] ?? []
             );
-
-            $values = ['SB' => $baseSalary, 'IDM' => 0, 'TSP' => 0, 'IMP' => 0];
-
-            foreach ($components as $item) {
-                if ($item['salary_component'] === 'Salaire Base') {
-                    $values['SB'] = $baseSalary;
-                } elseif ($item['salary_component'] === $componentName) {
-                    if (isset($item['amount']) && !$item['amount_based_on_formula']) {
-                        return (float) $item['amount'];
-                    } elseif (isset($item['formula'])) {
-                        if ($item['salary_component'] === 'Indemnité') {
-                            $values['IDM'] = $values['SB'] * 0.35;
-                            return $values['IDM'];
-                        } elseif ($item['salary_component'] === 'Taxe spéciale') {
-                            $values['TSP'] = ($values['SB'] + $values['IDM']) * 0.21;
-                            return $values['TSP'];
-                        } elseif ($item['salary_component'] === 'Impôt') {
-                            $values['IMP'] = ($values['SB'] + $values['IDM'] - $values['TSP']) * 0.1;
-                            return $values['IMP'];
-                        }
+    
+            foreach ($components as $component) {
+                if ($component['salary_component'] === $componentName) {
+                    if (isset($component['amount']) && empty($component['amount_based_on_formula'])) {
+                        return (float) $component['amount'];
+                    }
+    
+                    if (!empty($component['formula'])) {
+                        $formula = $component['formula'];
+    
+                        $variables = [
+                            'base' => $baseSalary,
+                        ];
+    
+                        return $this->safeEvaluateFormula($formula, $variables);
                     }
                 }
             }
-
+    
             return 0.0;
         } catch (\Exception $e) {
-            Log::error("Erreur récupération composant {$componentName} pour {$assignment['salary_structure']} : " . $e->getMessage());
+            Log::error("Erreur récupération composant {$componentName} : " . $e->getMessage());
             return 0.0;
         }
     }
+    
 
     /**
      * Vérifier la condition
@@ -169,6 +163,22 @@ class ConfigSalaryService
             default => false
         };
     }
+
+    private function safeEvaluateFormula(string $formula, array $vars): float
+    {
+        try {
+            foreach ($vars as $key => $value) {
+                $formula = str_replace($key, (string)(float) $value, $formula);
+            }
+
+            $result = eval("return $formula;");
+            return is_numeric($result) ? (float)$result : 0.0;
+        } catch (\Throwable $e) {
+            Log::error("Erreur d'évaluation formule [$formula] : " . $e->getMessage());
+            return 0.0;
+        }
+    }
+
 
     /**
      * Calculer le nouveau salaire
