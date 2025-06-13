@@ -11,7 +11,7 @@ use App\Http\Controllers\SalaryDetailsController;
 use App\Http\Controllers\ResetDataController;
 use App\Http\Controllers\PayrollStatsController;
 use App\Http\Controllers\GenerateSalaryController;
-use App\Http\Controllers\ConfigurationController;
+use App\Http\Controllers\ConfigurationSalaryController;
 
 Route::get('/', function () {
     return redirect()->route('login');
@@ -72,19 +72,14 @@ Route::middleware([\App\Http\Middleware\FrappeAuthMiddleware::class])->group(fun
 
     });
     
-    Route::prefix('configuration')->name('salaire.')->group(function() {
-        Route::get('/configuration',[ConfigurationController::class, 'formulaire'])->name('configuration');
-        Route::get('/generateSalary',[GenerateSalaryController::class, 'tableau'])->name('generateSalary');
-        
-    }); 
+    Route::prefix('salaries')->name('salaries.')->group(function () {
+        Route::get('/', [GenerateSalaryController::class, 'index'])->name('generate.index');
+        Route::post('/generate', [GenerateSalaryController::class, 'generate'])->name('generate');
+        Route::get('/config', [ConfigurationSalaryController::class, 'index'])->name('config.index');
+        Route::post('/config/generate', [ConfigurationSalaryController::class, 'generate'])->name('config.generate');
+        Route::post('/config/preview', [ConfigurationSalaryController::class, 'preview'])->name('config.preview');
+    });
 
-
-    // Ou plus simplement :
-    Route::resource('salaries', GenerateSalaryController::class)->only(['index', 'store']);
-    Route::post('salaries/generate', [GenerateSalaryController::class, 'generate'])->name('salaries.generate');
-
-    Route::get('/generate', [GenerateSalaryController::class, 'tableau'])->name('generate.tableau');
-    Route::post('/generate/store', [GenerateSalaryController::class, 'store'])->name('generate.store');
     Route::prefix('reset-data')->name('reset-data.')->group(function () {
         Route::get('/', [ResetDataController::class, 'showConfirmation'])->name('show');
         Route::get('/check', [ResetDataController::class, 'checkData'])->name('check');
