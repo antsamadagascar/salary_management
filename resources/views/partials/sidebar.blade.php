@@ -92,13 +92,13 @@
                             </h6>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link" href="{{ route('salaire.generateSalary')}}">
+                            <a class="nav-link" href="{{ route('salaries.generate.index')}}">
                                 <i class="fas fa-history"></i> Generation Salaire
                             </a>
                         </li>
                         
                         <li class="nav-item">
-                            <a class="nav-link" href="{{ route('salaire.configuration') }}">
+                            <a class="nav-link" href="">
                                 <i class="fas fa-cog"></i> Salaire de base
                             </a>
                         </li>
