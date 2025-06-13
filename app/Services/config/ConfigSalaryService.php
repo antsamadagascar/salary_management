@@ -195,87 +195,102 @@ class ConfigSalaryService
     private function updateSalaryAssignment(string $employeeName, array $currentAssignment, float $newBaseSalary): bool
     {
         try {
+            // Étape 1 : Annuler l'assignation actuelle
             $cancelResult = $this->erpApiService->executeMethod('frappe.client', 'cancel', [
                 'doctype' => 'Salary Structure Assignment',
                 'name' => $currentAssignment['name']
             ]);
 
             if (!$cancelResult || (isset($cancelResult['message']) && $cancelResult['message'] === false)) {
-                Log::error("Échec annulation assignment {$currentAssignment['name']}", ['response' => $cancelResult]);
+                Log::error("Échec annulation assignment {$currentAssignment['name']}", [
+                    'response' => $cancelResult
+                ]);
                 return false;
             }
 
+            // Étape 2 : Créer une nouvelle assignation
             $newAssignmentData = [
                 'employee' => $employeeName,
                 'salary_structure' => $currentAssignment['salary_structure'],
                 'from_date' => date('Y-m-d'),
                 'base' => $newBaseSalary,
                 'company' => $currentAssignment['company'] ?? 'Orinasa SA',
-                'currency' => $currentAssignment['currency'] ?? 'MGA', 
-                'docstatus' => 1
+                'currency' => $currentAssignment['currency'] ?? 'MGA',
+                'docstatus' => 0 // Créer en brouillon pour éviter les erreurs de soumission
             ];
 
+            Log::debug("Données nouvelle assignation", ['data' => $newAssignmentData]);
             $newAssignment = $this->erpApiService->createResource('Salary Structure Assignment', $newAssignmentData);
+
             if (!$newAssignment || !isset($newAssignment['name'])) {
-                Log::error("Échec création nouvel assignment pour {$employeeName}", ['response' => $newAssignment]);
+                Log::error("Échec création nouvel assignment pour {$employeeName}", [
+                    'response' => $newAssignment
+                ]);
                 return false;
             }
 
-            // Soumettre le nouvel assignment
+            // Étape 3 : Soumettre la nouvelle assignation
             $submitResult = $this->erpApiService->executeMethod('frappe.client', 'submit', [
                 'doctype' => 'Salary Structure Assignment',
                 'name' => $newAssignment['name']
             ]);
 
             if (!$submitResult || (isset($submitResult['message']) && $submitResult['message'] === false)) {
-                Log::error("Échec soumission nouvel assignment {$newAssignment['name']}", ['response' => $submitResult]);
+                Log::error("Échec soumission nouvel assignment {$newAssignment['name']}", [
+                    'response' => $submitResult
+                ]);
                 return false;
             }
 
-            $this->updateSalarySlips($employeeName, $newAssignment);
+            // Étape 4 : Mettre à jour les Salary Slips
+            return $this->updateSalarySlips($employeeName, $newAssignment);
 
-            return true;
         } catch (\Exception $e) {
-            Log::error("Erreur mise à jour assignment pour {$employeeName} : " . $e->getMessage());
+            Log::error("Erreur mise à jour assignment pour {$employeeName}", [
+                'message' => $e->getMessage(),
+                'code' => $e->getCode(),
+                'response' => method_exists($e, 'getResponse') ? $e->getResponse()->getBody()->getContents() : null
+            ]);
             return false;
         }
     }
-
     /**
      * Mettre à jour ou créer des Salary Slips pour refléter le nouvel assignment
      */
     private function updateSalarySlips(string $employeeName, array $newAssignment): bool
     {
         try {
-            $startDate = date('Y-m-01'); 
-            $endDate = date('Y-m-t'); 
+            $startDate = date('Y-m-01'); // Premier jour du mois
+            $endDate = date('Y-m-t');   // Dernier jour du mois
 
-            // Vérifie les Salary Slips existants pour la période
+            // Étape 1 : Vérifie les Salary Slips existants
             $filters = [
                 ['employee', '=', $employeeName],
                 ['start_date', '>=', $startDate],
                 ['end_date', '<=', $endDate],
-                ['docstatus', '<', 1]
+                ['docstatus', '<', 1] // Brouillons uniquement
             ];
             $existingSlips = $this->erpApiService->getResource('Salary Slip', [
                 'filters' => json_encode($filters),
                 'fields' => json_encode(['name', 'docstatus'])
             ]);
 
-            // Annule les Salary Slips existants non soumis
+            // Étape 2 : Annuler les brouillons existants
             foreach ($existingSlips as $slip) {
-                if ($slip['docstatus'] == 0) { // Brouillon
+                if ($slip['docstatus'] == 0) {
                     $cancelResult = $this->erpApiService->executeMethod('frappe.client', 'cancel', [
                         'doctype' => 'Salary Slip',
                         'name' => $slip['name']
                     ]);
                     if (!$cancelResult) {
-                        Log::error("Échec annulation Salary Slip {$slip['name']} pour {$employeeName}", ['response' => $cancelResult]);
+                        Log::error("Échec annulation Salary Slip {$slip['name']}", [
+                            'response' => $cancelResult
+                        ]);
                     }
                 }
             }
 
-            // Crée un nouveau Salary Slip
+            // Étape 3 : Créer un nouveau Salary Slip
             $slipData = [
                 'employee' => $employeeName,
                 'start_date' => $startDate,
@@ -283,33 +298,45 @@ class ConfigSalaryService
                 'salary_structure' => $newAssignment['salary_structure'],
                 'company' => $newAssignment['company'] ?? 'Orinasa SA',
                 'currency' => $newAssignment['currency'] ?? 'MGA',
-                'docstatus' => 1
+                'payroll_date' => date('Y-m-d'), // Champ obligatoire
+                'posting_date' => date('Y-m-d'), // Champ obligatoire
+                'docstatus' => 0 // Créer en brouillon
             ];
 
+            Log::debug("Données nouveau Salary Slip", ['data' => $slipData]);
             $newSlip = $this->erpApiService->createResource('Salary Slip', $slipData);
+
             if (!$newSlip || !isset($newSlip['name'])) {
-                Log::error("Échec création nouveau Salary Slip pour {$employeeName}", ['response' => $newSlip]);
+                Log::error("Échec création Salary Slip pour {$employeeName}", [
+                    'response' => $newSlip
+                ]);
                 return false;
             }
 
-            // Soumettre le nouveau Salary Slip
+            // Étape 4 : Soumettre le Salary Slip (facultatif)
             $submitResult = $this->erpApiService->executeMethod('frappe.client', 'submit', [
                 'doctype' => 'Salary Slip',
                 'name' => $newSlip['name']
             ]);
 
             if (!$submitResult || (isset($submitResult['message']) && $submitResult['message'] === false)) {
-                Log::error("Échec soumission nouveau Salary Slip {$newSlip['name']} pour {$employeeName}", ['response' => $submitResult]);
+                Log::error("Échec soumission Salary Slip {$newSlip['name']}", [
+                    'response' => $submitResult
+                ]);
                 return false;
             }
 
             return true;
+
         } catch (\Exception $e) {
-            Log::error("Erreur mise à jour Salary Slip pour {$employeeName} : " . $e->getMessage());
+            Log::error("Erreur mise à jour Salary Slip pour {$employeeName}", [
+                'message' => $e->getMessage(),
+                'code' => $e->getCode(),
+                'response' => method_exists($e, 'getResponse') ? $e->getResponse()->getBody()->getContents() : null
+            ]);
             return false;
         }
     }
-
     /**
      * Aperçu des modifications
      */
