@@ -73,7 +73,8 @@ Route::middleware([\App\Http\Middleware\FrappeAuthMiddleware::class])->group(fun
     });
     
     Route::prefix('salaries')->name('salaries.')->group(function() {
-        Route::get('/',[GenerateSalaryController::class, 'index'])->name('generate');
+        Route::get('/', [GenerateSalaryController::class, 'index'])->name('generate.index');
+        Route::post('/generate', [GenerateSalaryController::class, 'generate'])->name('generate');
     });
 
     Route::prefix('reset-data')->name('reset-data.')->group(function () {
