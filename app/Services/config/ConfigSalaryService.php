@@ -136,7 +136,7 @@ class ConfigSalaryService
                             'base' => $baseSalary,
                         ];
     
-                        return $this->safeEvaluateFormula($formula, $variables);
+                        return $this->safeEvaluateFormula($formula, $vet mettre à jour les Salary Slipsariables);
                     }
                 }
             }
@@ -216,7 +216,11 @@ class ConfigSalaryService
                 'base' => $newBaseSalary,
                 'company' => $currentAssignment['company'] ?? 'Orinasa SA',
                 'currency' => $currentAssignment['currency'] ?? 'MGA',
+
                 'docstatus' => 1
+
+                'docstatus' => 0 // Créer en brouillon pour éviter les erreurs de soumission
+
             ];
 
             Log::debug("Données nouvelle assignation", ['data' => $newAssignmentData]);
@@ -243,16 +247,24 @@ class ConfigSalaryService
             }
 
 
+
+
         } catch (\Exception $e) {
             Log::error("Erreur mise à jour assignment pour {$employeeName}", [
                 'message' => $e->getMessage(),
                 'code' => $e->getCode(),
                 'response' => method_exists($e, 'getResponse') ? $e->getResponse()->getBody()->getContents() : null
+
             ]);
             return false;
         }
     }
     
+            ]);
+            return false;
+        }
+    }
+
     /**
      * Aperçu des modifications
      */
