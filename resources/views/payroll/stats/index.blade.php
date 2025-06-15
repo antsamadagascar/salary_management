@@ -53,10 +53,10 @@
             <div class="card">
                 <div class="card-body">
                     <div class="d-flex justify-content-end">
-                        <!-- <a href="{{ route('payroll.stats.export.year', ['year' => $year]) }}" 
+                        <a href="{{ route('payroll.stats.export.year', ['year' => $year]) }}" 
                            class="btn btn-success me-2">
                             <i class="mdi mdi-download"></i> Exporter Excel
-                        </a> -->
+                        </a>
                         <button type="button" class="btn btn-info" onclick="toggleCharts()">
                             <i class="mdi mdi-chart-line"></i> Afficher/Masquer Graphiques
                         </button>
@@ -130,6 +130,13 @@
                 </div>
             </div>
         </div> -->
+        @php
+            $currency = null;
+            if (!empty($monthlyStats)) {
+                $firstKey = array_key_first($monthlyStats);
+                $currency = $monthlyStats[$firstKey]['currency'] ?? null;
+            }
+        @endphp
         <div class="col-lg-3 col-md-6">
             <div class="card bg-success text-white">
                 <div class="card-body">
@@ -141,8 +148,9 @@
                                 @else
                                     0
                                 @endif
-                                <small></small>
+                                
                             </h3>
+                            <small>{{ $currency }}</small>
                             <p class="mb-0">Total Brut</p>
                         </div>
                         <div class="avatar-sm">
@@ -165,8 +173,8 @@
                                 @else
                                     0
                                 @endif
-                                <small></small>
                             </h3>
+                             <small>{{ $currency }}</small>
                             <p class="mb-0">Total Déductions</p>
                         </div>
                         <div class="avatar-sm">
@@ -189,8 +197,8 @@
                                 @else
                                     0
                                 @endif
-                                <small></small>
                             </h3>
+                             <small>{{ $currency }}</small>
                             <p class="mb-0">Total Net</p>
                         </div>
                         <div class="avatar-sm">
@@ -273,11 +281,11 @@
                                             title="Voir les détails du mois {{ $stats['month'] }}">
                                                 <i class="mdi mdi-eye"></i> Détails
                                             </a>
-                                                    <!-- <a href="{{ route('payroll.stats.export-month', $stats['month']) }}" 
+                                            <a href="{{ route('payroll.stats.export-month', $stats['month']) }}" 
                                                     class="btn btn-sm btn-outline-success"
                                                     title="Exporter les données du mois {{ $stats['month'] }}">
-                                                        <i class="mdi mdi-download"></i> Export
-                                                    </a> -->
+                                                <i class="mdi mdi-download"></i> Export
+                                            </a>
                                         </div>
                                     </td>
                                     </tr>
