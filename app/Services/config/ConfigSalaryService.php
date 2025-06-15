@@ -119,7 +119,34 @@ class ConfigSalaryService
     private function getComponentValueFromLatestSlip(string $employeeName, string $componentName): float
     {
         try {
-            // Récupére le dernier salary slip validé
+            // Stratégie 1: Récupére depuis le dernier salary slip validé
+            $slipValue = $this->getComponentFromSlip($employeeName, $componentName);
+            if ($slipValue !== null) {
+                Log::debug("Valeur trouvée dans salary slip pour {$employeeName}: {$slipValue}");
+                return $slipValue;
+            }
+
+            $structureValue = $this->getComponentFromStructure($employeeName, $componentName);
+            if ($structureValue !== null) {
+                Log::debug("Valeur calculée depuis structure pour {$employeeName}: {$structureValue}");
+                return $structureValue;
+            }
+
+            Log::info("Composant {$componentName} non trouvé pour {$employeeName}");
+            return 0.0;
+
+        } catch (\Exception $e) {
+            Log::error("Erreur récupération composant {$componentName} pour {$employeeName}: " . $e->getMessage());
+            return 0.0;
+        }
+    }
+
+    /**
+     * Récupére la valeur depuis le salary slip
+     */
+    private function getComponentFromSlip(string $employeeName, string $componentName): ?float
+    {
+        try {
             $slips = $this->erpApiService->getResource('Salary Slip', [
                 'filters' => json_encode([
                     ['employee', '=', $employeeName],
@@ -131,8 +158,7 @@ class ConfigSalaryService
             ]);
 
             if (empty($slips)) {
-                Log::info("Aucun salary slip trouvé pour {$employeeName}");
-                return 0.0;
+                return null;
             }
 
             $slip = $slips[0];
@@ -147,25 +173,100 @@ class ConfigSalaryService
                 }
             }
 
-            Log::info("Composant {$componentName} non trouvé dans le salary slip de {$employeeName}");
+            return null;
+        } catch (\Exception $e) {
+            Log::error("Erreur récupération depuis slip: " . $e->getMessage());
+            return null;
+        }
+    }
+
+    /**
+     * Calcule la valeur depuis la salary structure (fallback)
+     */
+    private function getComponentFromStructure(string $employeeName, string $componentName): ?float
+    {
+        try {
+            $assignment = $this->getActiveSalaryAssignment($employeeName);
+            if (!$assignment || !isset($assignment['salary_structure'])) {
+                return null;
+            }
+
+            $structure = $this->erpApiService->getResource("Salary Structure/{$assignment['salary_structure']}", [
+                'fields' => json_encode(['earnings', 'deductions'])
+            ]);
+
+            $components = array_merge(
+                $structure['earnings'] ?? [],
+                $structure['deductions'] ?? []
+            );
+
+            foreach ($components as $component) {
+                if ($component['salary_component'] === $componentName) {
+                    // Si c'est un montant fixe
+                    if (isset($component['amount']) && !empty($component['amount']) && empty($component['amount_based_on_formula'])) {
+                        return (float) $component['amount'];
+                    }
+
+                    // Si c'est basé sur le salaire de base (formule simple)
+                    if (!empty($component['formula'])) {
+                        $baseSalary = (float) ($assignment['base'] ?? 0);
+                        return $this->calculateSimpleFormula($component['formula'], $baseSalary);
+                    }
+                }
+            }
+
+            return null;
+        } catch (\Exception $e) {
+            Log::error("Erreur récupération depuis structure: " . $e->getMessage());
+            return null;
+        }
+    }
+
+    /**
+     * Calculer les formules simples uniquement (pour éviter la complexité)
+     */
+    private function calculateSimpleFormula(string $formula, float $baseSalary): float
+    {
+        try {
+            $formula = str_replace(['base', 'SB', 'BS'], (string) $baseSalary, $formula);
+            
+            // Vérifie si la formule est simple (seulement chiffres et opérateurs de base)
+            if (preg_match('/^[\d\.\+\-\*\/\(\)\s]+$/', $formula)) {
+                $result = eval("return $formula;");
+                return is_numeric($result) ? (float) $result : 0.0;
+            }
+
+            // Si la formule est complexe, retourner 0 (sera pris en charge par l'ERP)
+            Log::info("Formule complexe ignorée: {$formula}");
             return 0.0;
 
         } catch (\Exception $e) {
-            Log::error("Erreur récupération composant {$componentName} pour {$employeeName}: " . $e->getMessage());
+            Log::error("Erreur calcul formule simple: " . $e->getMessage());
             return 0.0;
         }
     }
 
     private function checkCondition(float $componentValue, float $montant, string $condition): bool
     {
-        return match ($condition) {
+        $tolerance = 0.1; 
+        
+        $result = match ($condition) {
             'inferieur' => $componentValue < $montant,
             'superieur' => $componentValue > $montant,
-            'egal' => abs($componentValue - $montant) < 0.01,
-            'inferieur_egal' => $componentValue <= $montant,
-            'superieur_egal' => $componentValue >= $montant,
+            'egal' => abs($componentValue - $montant) <= $tolerance, 
+            'inferieur_egal' => $componentValue <= ($montant + $tolerance),
+            'superieur_egal' => $componentValue >= ($montant - $tolerance),
             default => false
         };
+
+        Log::debug("Vérification condition", [
+            'component_value' => $componentValue,
+            'montant' => $montant,
+            'condition' => $condition,
+            'result' => $result
+        ]);
+
+        return $result;
     }
 
     private function calculateNewSalary(float $baseSalary, float $pourcentage, string $option): float
