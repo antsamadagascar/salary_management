@@ -29,11 +29,12 @@ class PayrollDataService
                 'params' => ['include_child_documents' => 'true']
             ]);
 
-            if ($salarySlip) {
+            if ($salarySlip && $salarySlip['docstatus'] == 1) {
                 $salarySlip['employee_details'] = $this->employeeService->getEmployeeByID($salarySlip['employee']);
+                return $salarySlip;
             }
 
-            return $salarySlip;
+            return null;
         } catch (Exception $e) {
             return null;
         }

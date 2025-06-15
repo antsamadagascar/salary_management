@@ -4,6 +4,7 @@ namespace App\Services\config;
 
 use App\Services\api\ErpApiService;
 use Illuminate\Support\Facades\Log;
+use Carbon\Carbon;
 
 class ConfigSalaryService
 {
@@ -24,16 +25,14 @@ class ConfigSalaryService
         }
     }
 
-    /**
-     * Modifier les salaires selon une condition
-     */
     public function modifyBaseSalary(
         array $employees,
         string $salaryComponent,
         float $montant,
         string $condition,
         string $option,
-        float $pourcentage
+        float $pourcentage,
+        string $targetMonth = null 
     ): array {
         try {
             $modifiedEmployees = [];
@@ -50,17 +49,29 @@ class ConfigSalaryService
                     continue;
                 }
 
-                $componentValue = $this->getComponentValue($assignment, $salaryComponent);
+                // Récupére la valeur du composant depuis le dernier salary slip
+                $componentValue = $this->getComponentValueFromLatestSlip($employee['name'], $salaryComponent);
+                
                 if ($this->checkCondition($componentValue, $montant, $condition)) {
                     $currentBaseSalary = $assignment['base'] ?? 0;
                     $newBaseSalary = $this->calculateNewSalary($currentBaseSalary, $pourcentage, $option);
 
-                    $updateResult = $this->updateSalaryAssignment($employee['name'], $assignment, $newBaseSalary);
+                    $actualTargetMonth = $targetMonth ?: Carbon::parse($assignment['from_date'])->format('Y-m');
+
+                    $updateResult = $this->updateSalaryForExistingMonth(
+                        $employee['name'], 
+                        $assignment, 
+                        $newBaseSalary, 
+                        $actualTargetMonth
+                    );
+                    
                     if ($updateResult) {
                         $modifiedEmployees[] = [
                             'employee_name' => $employee['employee_name'] ?? $employee['name'],
                             'old_base_salary' => $currentBaseSalary,
-                            'new_base_salary' => $newBaseSalary
+                            'new_base_salary' => $newBaseSalary,
+                            'target_month' => $actualTargetMonth,
+                            'original_from_date' => $assignment['from_date']
                         ];
                     }
                 }
@@ -81,16 +92,13 @@ class ConfigSalaryService
         }
     }
 
-    /**
-     * Récupérer l'assignment actif le plus récent
-     */
     private function getActiveSalaryAssignment(string $employeeName): ?array
     {
         try {
             $filters = ['employee' => $employeeName, 'docstatus' => 1];
             $assignments = $this->erpApiService->getResource('Salary Structure Assignment', [
                 'filters' => json_encode($filters),
-                'fields' => json_encode(['name', 'employee', 'salary_structure', 'from_date', 'base'])
+                'fields' => json_encode(['name', 'employee', 'salary_structure', 'from_date', 'base', 'company', 'currency'])
             ]);
 
             if (empty($assignments)) {
@@ -105,169 +113,345 @@ class ConfigSalaryService
         }
     }
 
-    private function getComponentValue(array $assignment, string $componentName): float
+    /**
+     * Récupére la valeur d'un composant depuis le dernier salary slip
+     */
+    private function getComponentValueFromLatestSlip(string $employeeName, string $componentName): float
     {
         try {
-            if (!isset($assignment['salary_structure'])) {
-                return 0.0;
+            // Stratégie 1: Récupére depuis le dernier salary slip validé
+            $slipValue = $this->getComponentFromSlip($employeeName, $componentName);
+            if ($slipValue !== null) {
+                Log::debug("Valeur trouvée dans salary slip pour {$employeeName}: {$slipValue}");
+                return $slipValue;
             }
-    
-            $baseSalary = (float) ($assignment['base'] ?? 0);
-    
+
+            $structureValue = $this->getComponentFromStructure($employeeName, $componentName);
+            if ($structureValue !== null) {
+                Log::debug("Valeur calculée depuis structure pour {$employeeName}: {$structureValue}");
+                return $structureValue;
+            }
+
+            Log::info("Composant {$componentName} non trouvé pour {$employeeName}");
+            return 0.0;
+
+        } catch (\Exception $e) {
+            Log::error("Erreur récupération composant {$componentName} pour {$employeeName}: " . $e->getMessage());
+            return 0.0;
+        }
+    }
+
+    /**
+     * Récupére la valeur depuis le salary slip
+     */
+    private function getComponentFromSlip(string $employeeName, string $componentName): ?float
+    {
+        try {
+            $slips = $this->erpApiService->getResource('Salary Slip', [
+                'filters' => json_encode([
+                    ['employee', '=', $employeeName],
+                    ['docstatus', '=', 1]
+                ]),
+                'fields' => json_encode(['name', 'earnings', 'deductions']),
+                'order_by' => 'end_date desc',
+                'limit' => 1
+            ]);
+
+            if (empty($slips)) {
+                return null;
+            }
+
+            $slip = $slips[0];
+            $allComponents = array_merge(
+                $slip['earnings'] ?? [],
+                $slip['deductions'] ?? []
+            );
+
+            foreach ($allComponents as $component) {
+                if ($component['salary_component'] === $componentName) {
+                    return (float) ($component['amount'] ?? 0);
+                }
+            }
+
+            return null;
+        } catch (\Exception $e) {
+            Log::error("Erreur récupération depuis slip: " . $e->getMessage());
+            return null;
+        }
+    }
+
+    /**
+     * Calcule la valeur depuis la salary structure (fallback)
+     */
+    private function getComponentFromStructure(string $employeeName, string $componentName): ?float
+    {
+        try {
+            $assignment = $this->getActiveSalaryAssignment($employeeName);
+            if (!$assignment || !isset($assignment['salary_structure'])) {
+                return null;
+            }
+
             $structure = $this->erpApiService->getResource("Salary Structure/{$assignment['salary_structure']}", [
                 'fields' => json_encode(['earnings', 'deductions'])
             ]);
-    
+
             $components = array_merge(
                 $structure['earnings'] ?? [],
                 $structure['deductions'] ?? []
             );
-    
+
             foreach ($components as $component) {
                 if ($component['salary_component'] === $componentName) {
-                    if (isset($component['amount']) && empty($component['amount_based_on_formula'])) {
+                    // Si c'est un montant fixe
+                    if (isset($component['amount']) && !empty($component['amount']) && empty($component['amount_based_on_formula'])) {
                         return (float) $component['amount'];
                     }
-    
+
+                    // Si c'est basé sur le salaire de base (formule simple)
                     if (!empty($component['formula'])) {
-                        $formula = $component['formula'];
-    
-                        $variables = [
-                            'base' => $baseSalary,
-                        ];
-    
-                        return $this->safeEvaluateFormula($formula, $vet mettre à jour les Salary Slipsariables);
+                        $baseSalary = (float) ($assignment['base'] ?? 0);
+                        return $this->calculateSimpleFormula($component['formula'], $baseSalary);
                     }
                 }
             }
-    
-            return 0.0;
+
+            return null;
         } catch (\Exception $e) {
-            Log::error("Erreur récupération composant {$componentName} : " . $e->getMessage());
-            return 0.0;
+            Log::error("Erreur récupération depuis structure: " . $e->getMessage());
+            return null;
         }
     }
-    
 
     /**
-     * Vérifier la condition
+     * Calculer les formules simples uniquement (pour éviter la complexité)
      */
-    private function checkCondition(float $componentValue, float $montant, string $condition): bool
-    {
-        return match ($condition) {
-            'inferieur' => $componentValue < $montant,
-            'superieur' => $componentValue > $montant,
-            'egal' => abs($componentValue - $montant) < 0.01,
-            'inferieur_egal' => $componentValue <= $montant,
-            'superieur_egal' => $componentValue >= $montant,
-            default => false
-        };
-    }
-
-    private function safeEvaluateFormula(string $formula, array $vars): float
+    private function calculateSimpleFormula(string $formula, float $baseSalary): float
     {
         try {
-            foreach ($vars as $key => $value) {
-                $formula = str_replace($key, (string)(float) $value, $formula);
+            $formula = str_replace(['base', 'SB', 'BS'], (string) $baseSalary, $formula);
+            
+            // Vérifie si la formule est simple (seulement chiffres et opérateurs de base)
+            if (preg_match('/^[\d\.\+\-\*\/\(\)\s]+$/', $formula)) {
+                $result = eval("return $formula;");
+                return is_numeric($result) ? (float) $result : 0.0;
             }
 
-            $result = eval("return $formula;");
-            return is_numeric($result) ? (float)$result : 0.0;
-        } catch (\Throwable $e) {
-            Log::error("Erreur d'évaluation formule [$formula] : " . $e->getMessage());
+            // Si la formule est complexe, retourner 0 (sera pris en charge par l'ERP)
+            Log::info("Formule complexe ignorée: {$formula}");
+            return 0.0;
+
+        } catch (\Exception $e) {
+            Log::error("Erreur calcul formule simple: " . $e->getMessage());
             return 0.0;
         }
     }
 
+    private function checkCondition(float $componentValue, float $montant, string $condition): bool
+    {
+        $tolerance = 0.1; 
+        
+        $result = match ($condition) {
+            'inferieur' => $componentValue < $montant,
+            'superieur' => $componentValue > $montant,
+            'egal' => abs($componentValue - $montant) <= $tolerance, 
+            'inferieur_egal' => $componentValue <= ($montant + $tolerance),
+            'superieur_egal' => $componentValue >= ($montant - $tolerance),
+            default => false
+        };
 
-    /**
-     * Calculer le nouveau salaire
-     */
+        Log::debug("Vérification condition", [
+            'component_value' => $componentValue,
+            'montant' => $montant,
+            'condition' => $condition,
+            'result' => $result
+        ]);
+
+        return $result;
+    }
+
     private function calculateNewSalary(float $baseSalary, float $pourcentage, string $option): float
     {
         $multiplier = $option === 'augmentation' ? (1 + $pourcentage / 100) : (1 - $pourcentage / 100);
         return round($baseSalary * $multiplier, 2);
     }
 
-    /**
-     * Annuler l'assignment actuel, créer un nouveau 
-     */
-    private function updateSalaryAssignment(string $employeeName, array $currentAssignment, float $newBaseSalary): bool
-    {
+    private function updateSalaryForExistingMonth(
+        string $employeeName, 
+        array $currentAssignment, 
+        float $newBaseSalary, 
+        string $targetMonth
+    ): bool {
         try {
-            // Étape 1 : Annuler l'assignation actuelle
-            $cancelResult = $this->erpApiService->executeMethod('frappe.client', 'cancel', [
-                'doctype' => 'Salary Structure Assignment',
-                'name' => $currentAssignment['name']
-            ]);
+            $originalFromDate = $currentAssignment['from_date'];
+            
+            Log::info("Début mise à jour salary pour {$employeeName} - from_date ORIGINAL: {$originalFromDate}");
 
-            if (!$cancelResult || (isset($cancelResult['message']) && $cancelResult['message'] === false)) {
-                Log::error("Échec annulation assignment {$currentAssignment['name']}", [
-                    'response' => $cancelResult
-                ]);
+            $targetDate = Carbon::createFromFormat('Y-m', $targetMonth);
+            $slipStartDate = $targetDate->copy()->startOfMonth()->format('Y-m-d');
+            $slipEndDate = $targetDate->copy()->endOfMonth()->format('Y-m-d');
+            
+            // 1. Mettre à jour le Salary Structure Assignment
+            $assignmentSuccess = $this->updateSalaryStructureAssignmentKeepDate(
+                $employeeName, 
+                $currentAssignment, 
+                $newBaseSalary, 
+                $originalFromDate
+            );
+
+            if (!$assignmentSuccess) {
+                Log::error("Échec mise à jour Salary Structure Assignment pour {$employeeName}");
                 return false;
             }
 
-            // Étape 2 : Créer une nouvelle assignation
+            // 2. Regénére le Salary Slip - L'ERP recalculera automatiquement tous les composants
+            $slipSuccess = $this->regenerateSalarySlip(
+                $employeeName,
+                $currentAssignment['salary_structure'],
+                $slipStartDate,
+                $slipEndDate,
+                $currentAssignment['company'] ?? 'Orinasa SA'
+            );
+
+            if (!$slipSuccess) {
+                Log::error("Échec mise à jour Salary Slip pour {$employeeName}");
+                return false;
+            }
+
+            Log::info("Mise à jour complète réussie pour {$employeeName}");
+            return true;
+
+        } catch (\Exception $e) {
+            Log::error("Erreur mise à jour salary pour {$employeeName}: " . $e->getMessage());
+            return false;
+        }
+    }
+
+    private function updateSalaryStructureAssignmentKeepDate(
+        string $employeeName, 
+        array $currentAssignment, 
+        float $newBaseSalary, 
+        string $originalFromDate
+    ): bool {
+        try {
+            Log::info("Mise à jour Salary Structure Assignment pour {$employeeName}");
+
+            // Recherche et annule l'assignment existant
+            $existingAssignments = $this->erpApiService->getResource('Salary Structure Assignment', [
+                'filters' => json_encode([
+                    ['employee', '=', $employeeName],
+                    ['salary_structure', '=', $currentAssignment['salary_structure']],
+                    ['from_date', '=', $originalFromDate],
+                    ['docstatus', '!=', 2]
+                ]),
+                'fields' => json_encode(['name', 'base', 'docstatus', 'from_date'])
+            ]);
+
+            // Annule les assignments existants
+            foreach ($existingAssignments as $assignment) {
+                if ($assignment['docstatus'] == 1) {
+                    $this->erpApiService->executeMethod('frappe.client', 'cancel', [
+                        'doctype' => 'Salary Structure Assignment',
+                        'name' => $assignment['name']
+                    ]);
+                    Log::info("Assignment {$assignment['name']} annulé");
+                } elseif ($assignment['docstatus'] == 0) {
+                    $this->erpApiService->deleteResource('Salary Structure Assignment', $assignment['name']);
+                    Log::info("Assignment draft {$assignment['name']} supprimé");
+                }
+            }
+
+            // Création du nouveau assignment
             $newAssignmentData = [
                 'employee' => $employeeName,
                 'salary_structure' => $currentAssignment['salary_structure'],
-                'from_date' => date('Y-m-d'),
+                'from_date' => $originalFromDate,
                 'base' => $newBaseSalary,
                 'company' => $currentAssignment['company'] ?? 'Orinasa SA',
                 'currency' => $currentAssignment['currency'] ?? 'MGA',
-
                 'docstatus' => 1
-
-                'docstatus' => 0 // Créer en brouillon pour éviter les erreurs de soumission
-
             ];
-
-            Log::debug("Données nouvelle assignation", ['data' => $newAssignmentData]);
+            
             $newAssignment = $this->erpApiService->createResource('Salary Structure Assignment', $newAssignmentData);
 
-            if (!$newAssignment || !isset($newAssignment['name'])) {
-                Log::error("Échec création nouvel assignment pour {$employeeName}", [
-                    'response' => $newAssignment
-                ]);
+            if (!$newAssignment) {
+                Log::error("Échec création nouvel assignment pour {$employeeName}");
                 return false;
             }
 
-            // Étape 3 : Soumettre la nouvelle assignation
-            $submitResult = $this->erpApiService->executeMethod('frappe.client', 'submit', [
-                'doctype' => 'Salary Structure Assignment',
-                'name' => $newAssignment['name']
-            ]);
-
-            if (!$submitResult || (isset($submitResult['message']) && $submitResult['message'] === false)) {
-                Log::error("Échec soumission nouvel assignment {$newAssignment['name']}", [
-                    'response' => $submitResult
-                ]);
-                return false;
-            }
-
-
-
+            Log::info("Nouvel assignment créé avec succès pour {$employeeName}");
+            return true;
 
         } catch (\Exception $e) {
-            Log::error("Erreur mise à jour assignment pour {$employeeName}", [
-                'message' => $e->getMessage(),
-                'code' => $e->getCode(),
-                'response' => method_exists($e, 'getResponse') ? $e->getResponse()->getBody()->getContents() : null
-
-            ]);
-            return false;
-        }
-    }
-    
-            ]);
+            Log::error("Erreur mise à jour Salary Structure Assignment: " . $e->getMessage());
             return false;
         }
     }
 
     /**
-     * Aperçu des modifications
+     * Regénére le Salary Slip - L'ERP recalculera automatiquement tous les composants
      */
+    private function regenerateSalarySlip(
+        string $employeeName,
+        string $salaryStructure,
+        string $startDate,
+        string $endDate,
+        string $company
+    ): bool {
+        try {
+            Log::info("Régénération Salary Slip pour {$employeeName}");
+
+            // Supprime les anciens slips pour cette période
+            $existingSlips = $this->erpApiService->getResource('Salary Slip', [
+                'filters' => json_encode([
+                    ['employee', '=', $employeeName],
+                    ['start_date', '=', $startDate],
+                    ['end_date', '=', $endDate],
+                    ['docstatus', '!=', 2]
+                ]),
+                'fields' => json_encode(['name', 'docstatus'])
+            ]);
+
+            foreach ($existingSlips as $slip) {
+                if ($slip['docstatus'] == 1) {
+                    $this->erpApiService->executeMethod('frappe.client', 'cancel', [
+                        'doctype' => 'Salary Slip',
+                        'name' => $slip['name']
+                    ]);
+                    Log::info("Salary slip {$slip['name']} annulé");
+                } elseif ($slip['docstatus'] == 0) {
+                    $this->erpApiService->deleteResource('Salary Slip', $slip['name']);
+                    Log::info("Salary slip draft {$slip['name']} supprimé");
+                }
+            }
+
+            // Crée un nouveau salary slip - L'ERP calculera automatiquement tous les composants
+            $slipData = [
+                'employee' => $employeeName,
+                'salary_structure' => $salaryStructure,
+                'company' => $company,
+                'posting_date' => $endDate,
+                'start_date' => $startDate,
+                'end_date' => $endDate,
+                'payroll_frequency' => 'Monthly',
+                'docstatus' => 1
+            ];
+
+            $newSlip = $this->erpApiService->createResource('Salary Slip', $slipData);
+
+            if (!$newSlip) {
+                Log::error("Échec création nouveau salary slip pour {$employeeName}");
+                return false;
+            }
+
+            Log::info("Salary slip régénéré avec succès pour {$employeeName} - L'ERP a recalculé tous les composants automatiquement");
+            return true;
+
+        } catch (\Exception $e) {
+            Log::error("Erreur régénération salary slip: " . $e->getMessage());
+            return false;
+        }
+    }
+
     public function previewSalaryModification(
         array $employees,
         string $salaryComponent,
@@ -285,7 +469,7 @@ class ConfigSalaryService
 
             $assignment = $this->getActiveSalaryAssignment($employee['name']);
             if ($assignment) {
-                $componentValue = $this->getComponentValue($assignment, $salaryComponent);
+                $componentValue = $this->getComponentValueFromLatestSlip($employee['name'], $salaryComponent);
                 if ($this->checkCondition($componentValue, $montant, $condition)) {
                     $currentBaseSalary = $assignment['base'] ?? 0;
                     $newBaseSalary = $this->calculateNewSalary($currentBaseSalary, $pourcentage, $option);

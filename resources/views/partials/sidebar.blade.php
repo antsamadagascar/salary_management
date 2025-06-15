@@ -25,7 +25,7 @@
                         <h6 class="sidebar-heading d-flex justify-content-between align-items-center px-3 mt-4 mb-1 text-muted" style="font-size: 0.75rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.1rem;">
                             <span>GESTION EMPLOYÉS</span>
                         </h6>
-                    </li>
+                        </li>
                         <a class="nav-link {{ request()->routeIs('employees.index') ? 'active' : '' }}" href="{{ route('employees.index') }}">
                             <i class="fas fa-users me-2"></i>Liste des Employés
                         </a>
@@ -46,7 +46,7 @@
                             </a>
                         </li> -->
                         <li class="nav-item">
-                            <a class="nav-link" href="{{ route('payroll.index') }}">
+                            <a class="nav-link {{ request()->routeIs('payroll.index') ? 'active' : '' }} "href="{{ route('payroll.index') }}">
                                 <i class="fas fa-file-invoice-dollar"></i> Fiches Employés  
                             </a>
                         </li>
@@ -57,15 +57,16 @@
                         </li> -->
                         <li class="nav-item">
                             <h6 class="sidebar-heading d-flex justify-content-between align-items-center px-3 mt-4 mb-1 text-muted">
-                                <span>Statistiques Salaire</span>
+                                <span>STATISTIQUES SALAIRE</span>
                             </h6>
                         </li>
-                        
+
                         <li class="nav-item">
-                            <a class="nav-link" href="{{ route('payroll.stats.salary-details') }}">
-                            <i class="fas fa-chart-bar"></i> Month
+                            <a class="nav-link {{ request()->routeIs('payroll.stats.salary-details') ? 'active' : '' }} " href="{{ route('payroll.stats.salary-details') }}">
+                                <i class="fas fa-calendar-alt"></i> Par Mois
                             </a>
                         </li>
+
                         <!-- Section Import/Export -->
                         <li class="nav-item">
                             <h6 class="sidebar-heading d-flex justify-content-between align-items-center px-3 mt-4 mb-1 text-muted">
@@ -74,8 +75,7 @@
                         </li>
 
                         <li class="nav-item">
-                        <a class="nav-link {{ request()->routeIs('import.*') ? 'active' : '' }}" 
-                        href="{{ route('import.form') }}">
+                         <a class="nav-link {{ request()->routeIs('import.form') ? 'active' : '' }} " href="{{ route('import.form') }}">
                                 <i class="fas fa-file-csv"></i> Import CSV
                             </a>
                         </li> 
@@ -91,18 +91,18 @@
                                 <span>CONFIGURATION</span>
                             </h6>
                         </li>
+
                         <li class="nav-item">
-                            <a class="nav-link" href="{{ route('salaries.generate.index')}}">
-                                <i class="fas fa-history"></i> Generation Salaire
-                            </a>
-                        </li>
-                        
-                        <li class="nav-item">
-                            <a class="nav-link" href="{{ route('salaries.config.index') }}">
-                                <i class="fas fa-cog"></i> Salaire de base
+                            <a class="nav-link {{ request()->routeIs('salaries.generate.index') ? 'active' : '' }} " href="{{ route('salaries.generate.index') }}" >
+                                <i class="fas fa-play-circle"></i> Générer Salaire
                             </a>
                         </li>
 
+                        <li class="nav-item">
+                            <a class="nav-link {{ request()->routeIs('salaries.config.index') ? 'active' : '' }} " href="{{ route('salaries.config.index') }}">
+                                <i class="fas fa-sliders-h"></i> Salaire de Base
+                            </a>
+                        </li>
                         <hr>
                     </ul>
                 </div>

@@ -13,7 +13,6 @@
 
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             min-height: 100vh;
             display: flex;
             align-items: center;
@@ -188,8 +187,9 @@
         }
 
         .icon-login::before {
-            content: "🚪";
+            content: "🔐";
             font-size: 16px;
+            margin-right: 8px;
         }
 
         /* Responsive */

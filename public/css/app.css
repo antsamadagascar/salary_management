@@ -153,12 +153,6 @@ body {
     box-shadow: none;
 }
 
-/* Sidebar - nouvelle version avec offcanvas */
-.sidebar {
-    background-color: var(--sidebar-bg);
-    transition: all 0.3s ease;
-}
-
 /* Styles pour l'affichage desktop de la sidebar */
 @media (min-width: 768px) {
     .sidebar {
@@ -168,6 +162,9 @@ body {
         bottom: 0;
         z-index: 1019;
         box-shadow: inset -1px 0 0 var(--border-color);
+        overflow-y: auto; /* Défilement vertical activé */
+        overflow-x: hidden; /* Pas de défilement horizontal */
+        height: calc(100vh - 56px); /* Hauteur précise */
     }
 
     /* Pas besoin d'offcanvas sur desktop */
@@ -177,6 +174,7 @@ body {
         transform: none !important;
         width: 100% !important;
         z-index: 1 !important;
+        overflow-y: auto; /* Défilement pour offcanvas aussi */
     }
     
     .offcanvas-header {
@@ -185,8 +183,9 @@ body {
     
     .offcanvas-body {
         display: block !important;
-        overflow-y: auto;
-        height: calc(100vh - 56px);
+        overflow-y: auto; /* Défilement dans le body */
+        height: calc(100vh - 56px); /* Hauteur précise */
+        padding: 0; /* Retirer les paddings par défaut */
     }
     
     /* Ajustement du contenu principal */
@@ -204,6 +203,14 @@ body {
     .offcanvas-md {
         width: 75% !important; /* Large sidebar sur mobile */
         background-color: var(--sidebar-bg) !important;
+        overflow-y: auto; /* Défilement sur mobile */
+        height: 100vh; /* Hauteur complète sur mobile */
+    }
+    
+    .offcanvas-body {
+        overflow-y: auto; /* Défilement dans le body mobile */
+        height: calc(100vh - 60px); /* Hauteur moins l'header de l'offcanvas */
+        padding: 0; /* Retirer les paddings par défaut */
     }
     
     .offcanvas-title {
@@ -212,6 +219,7 @@ body {
     
     .offcanvas-header {
         border-bottom: 1px solid var(--border-color);
+        flex-shrink: 0; /* Empêche l'header de se réduire */
     }
 
     /* Assurer que le contenu principal prend toute la largeur */
@@ -224,7 +232,18 @@ body {
     }
 }
 
-/* Styles de navigation communs */
+/* Styles de navigation communs - ajout pour le défilement */
+.sidebar {
+    background-color: var(--sidebar-bg);
+    transition: all 0.3s ease;
+    overflow-y: auto; /* Permet le défilement vertical */
+    overflow-x: hidden; /* Empêche le défilement horizontal */
+}
+
+.sidebar .nav {
+    padding: 0.5rem 0; /* Ajout d'un peu d'espace en haut et bas */
+}
+
 .sidebar .nav-link {
     font-weight: 500;
     color: var(--sidebar-text);
@@ -232,6 +251,7 @@ body {
     border-radius: 4px;
     margin: 0.25rem 0.5rem;
     transition: all 0.2s ease;
+    flex-shrink: 0; /* Empêche les liens de se réduire */
 }
 
 .sidebar .nav-link:hover {
@@ -255,8 +275,32 @@ body {
     color: var(--secondary-color);
     padding: 0.75rem 1rem;
     margin-top: 1rem;
+    flex-shrink: 0; /* Empêche les headings de se réduire */
 }
 
+/* Style pour la scrollbar (webkit browsers) */
+.sidebar::-webkit-scrollbar {
+    width: 6px;
+}
+
+.sidebar::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.sidebar::-webkit-scrollbar-thumb {
+    background-color: var(--border-color);
+    border-radius: 3px;
+}
+
+.sidebar::-webkit-scrollbar-thumb:hover {
+    background-color: var(--secondary-color);
+}
+
+/* Pour Firefox */
+.sidebar {
+    scrollbar-width: thin;
+    scrollbar-color: var(--border-color) transparent;
+}
 /* Contenu principal */
 main {
     padding-top: 56px; /* Hauteur du header */
