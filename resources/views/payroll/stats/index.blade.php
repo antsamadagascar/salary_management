@@ -130,6 +130,13 @@
                 </div>
             </div>
         </div> -->
+        @php
+            $currency = null;
+            if (!empty($monthlyStats)) {
+                $firstKey = array_key_first($monthlyStats);
+                $currency = $monthlyStats[$firstKey]['currency'] ?? null;
+            }
+        @endphp
         <div class="col-lg-3 col-md-6">
             <div class="card bg-success text-white">
                 <div class="card-body">
@@ -141,8 +148,9 @@
                                 @else
                                     0
                                 @endif
-                                <small></small>
+                                
                             </h3>
+                            <small>{{ $currency }}</small>
                             <p class="mb-0">Total Brut</p>
                         </div>
                         <div class="avatar-sm">
@@ -165,8 +173,8 @@
                                 @else
                                     0
                                 @endif
-                                <small></small>
                             </h3>
+                             <small>{{ $currency }}</small>
                             <p class="mb-0">Total Déductions</p>
                         </div>
                         <div class="avatar-sm">
@@ -189,8 +197,8 @@
                                 @else
                                     0
                                 @endif
-                                <small></small>
                             </h3>
+                             <small>{{ $currency }}</small>
                             <p class="mb-0">Total Net</p>
                         </div>
                         <div class="avatar-sm">
