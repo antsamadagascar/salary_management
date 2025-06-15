@@ -31,7 +31,8 @@ class ConfigSalaryService
         float $montant,
         string $condition,
         string $option,
-        float $pourcentage
+        float $pourcentage,
+        string $targetMonth = null 
     ): array {
         try {
             $modifiedEmployees = [];
@@ -53,12 +54,23 @@ class ConfigSalaryService
                     $currentBaseSalary = $assignment['base'] ?? 0;
                     $newBaseSalary = $this->calculateNewSalary($currentBaseSalary, $pourcentage, $option);
 
-                    $updateResult = $this->updateSalaryAssignment($employee['name'], $assignment, $newBaseSalary);
+                    // Utilise le from_date de l'assignment existant ou le mois spécifié
+                    $actualTargetMonth = $targetMonth ?: Carbon::parse($assignment['from_date'])->format('Y-m');
+
+                    $updateResult = $this->updateSalaryForExistingMonth(
+                        $employee['name'], 
+                        $assignment, 
+                        $newBaseSalary, 
+                        $actualTargetMonth
+                    );
+                    
                     if ($updateResult) {
                         $modifiedEmployees[] = [
                             'employee_name' => $employee['employee_name'] ?? $employee['name'],
                             'old_base_salary' => $currentBaseSalary,
-                            'new_base_salary' => $newBaseSalary
+                            'new_base_salary' => $newBaseSalary,
+                            'target_month' => $actualTargetMonth,
+                            'original_from_date' => $assignment['from_date']
                         ];
                     }
                 }
@@ -126,10 +138,7 @@ class ConfigSalaryService
 
                     if (!empty($component['formula'])) {
                         $formula = $component['formula'];
-                        
-                        // FIXED: Get all available salary components for formula variables
                         $variables = $this->buildFormulaVariables($assignment, $structure);
-                        
                         return $this->safeEvaluateFormula($formula, $variables);
                     }
                 }
@@ -142,38 +151,30 @@ class ConfigSalaryService
         }
     }
 
-    /**
-     * FIXED: Build comprehensive variables for formula evaluation
-     */
     private function buildFormulaVariables(array $assignment, array $structure): array
     {
         $variables = [
             'base' => (float) ($assignment['base'] ?? 0),
-            'SB' => (float) ($assignment['base'] ?? 0), // Salary Base
-            'BS' => (float) ($assignment['base'] ?? 0), // Base Salary
+            'SB' => (float) ($assignment['base'] ?? 0),
+            'BS' => (float) ($assignment['base'] ?? 0),
         ];
 
         try {
-            // Add all earnings and deductions as variables
             $allComponents = array_merge($structure['earnings'] ?? [], $structure['deductions'] ?? []);
             
             foreach ($allComponents as $component) {
                 $componentName = $component['salary_component'] ?? '';
                 if (empty($componentName)) continue;
 
-                // Calculate component value
                 $value = 0.0;
                 if (isset($component['amount']) && !empty($component['amount']) && empty($component['amount_based_on_formula'])) {
                     $value = (float) $component['amount'];
                 } elseif (!empty($component['formula'])) {
-                    // For nested formulas, try to evaluate with current variables
                     $value = $this->safeEvaluateFormula($component['formula'], $variables);
                 }
 
-                // Add common abbreviations
                 $variables[$componentName] = $value;
                 
-                // Common abbreviations for salary components
                 $abbreviations = $this->getComponentAbbreviations($componentName);
                 foreach ($abbreviations as $abbr) {
                     $variables[$abbr] = $value;
@@ -189,14 +190,10 @@ class ConfigSalaryService
         return $variables;
     }
 
-    /**
-     * Get common abbreviations for salary components
-     */
     private function getComponentAbbreviations(string $componentName): array
     {
         $abbreviations = [];
         
-        // Common patterns
         $patterns = [
             'Basic Salary' => ['BS', 'SB', 'BASE'],
             'House Rent Allowance' => ['HRA'],
@@ -217,7 +214,6 @@ class ConfigSalaryService
             }
         }
 
-        // Generate abbreviation from component name
         $words = preg_split('/[\s\-_]+/', $componentName);
         if (count($words) > 1) {
             $abbr = strtoupper(implode('', array_map(fn($w) => substr($w, 0, 1), $words)));
@@ -244,12 +240,10 @@ class ConfigSalaryService
         try {
             $originalFormula = $formula;
             
-            // Replace variables in formula
             foreach ($vars as $key => $value) {
                 $formula = str_replace($key, (string)(float) $value, $formula);
             }
 
-            // FIXED: Check if all variables were replaced
             if (preg_match('/[A-Z_]+/', $formula)) {
                 $unreplacedVars = [];
                 preg_match_all('/[A-Z_]+/', $formula, $matches);
@@ -261,7 +255,6 @@ class ConfigSalaryService
                     'available_vars' => array_keys($vars)
                 ]);
                 
-                // Try to replace with 0 for missing variables
                 foreach ($unreplacedVars as $var) {
                     if (!isset($vars[$var])) {
                         $formula = str_replace($var, '0', $formula);
@@ -270,7 +263,6 @@ class ConfigSalaryService
                 }
             }
 
-            // Validate formula contains only numbers and operators
             if (!preg_match('/^[\d\.\+\-\*\/\(\)\s]+$/', $formula)) {
                 Log::error("Formule contient des caractères invalides après remplacement", [
                     'original' => $originalFormula,
@@ -294,143 +286,98 @@ class ConfigSalaryService
         return round($baseSalary * $multiplier, 2);
     }
 
-    private function manageSalarySlips(string $employeeName, string $salaryStructure, float $newBaseSalary, string $fromDate, string $company): bool
-    {
+    /**
+     *  Mise à jour en gardant la date originale de l'assignment
+     */
+    private function updateSalaryForExistingMonth(
+        string $employeeName, 
+        array $currentAssignment, 
+        float $newBaseSalary, 
+        string $targetMonth
+    ): bool {
         try {
-            Log::info("Début gestion fiches de paie pour employé {$employeeName}, période {$fromDate}");
+            // Utilise la from_date EXISTANTE de l'assignment, pas la date actuelle
+            $originalFromDate = $currentAssignment['from_date'];
+            
+            Log::info("Début mise à jour salary pour {$employeeName} - from_date ORIGINAL: {$originalFromDate}");
 
-            $payrollDate = Carbon::createFromFormat('Y-m-d', $fromDate);
-            $startDate = $payrollDate->copy()->startOfMonth()->format('Y-m-d');
-            $endDate = $payrollDate->copy()->endOfMonth()->format('Y-m-d');
+            // Calcul les dates pour les salary slips basées sur le mois cible
+            $targetDate = Carbon::createFromFormat('Y-m', $targetMonth);
+            $slipStartDate = $targetDate->copy()->startOfMonth()->format('Y-m-d');
+            $slipEndDate = $targetDate->copy()->endOfMonth()->format('Y-m-d');
             
-            Log::debug("Recherche fiches de paie existantes", [
-                'employee' => $employeeName,
-                'start_date' => $startDate,
-                'end_date' => $endDate
-            ]);
-            
-            $existingSlips = $this->erpApiService->getResource('Salary Slip', [
-                'filters' => json_encode([
-                    ['employee', '=', $employeeName],
-                    ['start_date', '>=', $startDate],
-                    ['end_date', '<=', $endDate],
-                    ['docstatus', '!=', 2] // Not cancelled
-                ]),
-                'fields' => json_encode(['name', 'docstatus', 'start_date', 'end_date'])
+            Log::debug("Dates pour salary slips", [
+                'assignment_from_date' => $originalFromDate,
+                'slip_start_date' => $slipStartDate,
+                'slip_end_date' => $slipEndDate
             ]);
 
-            Log::info("Fiches de paie existantes trouvées : " . count($existingSlips));
+            // 1. SALARY STRUCTURE ASSIGNMENT - on Garde la MÊME from_date
+            $assignmentSuccess = $this->updateSalaryStructureAssignmentKeepDate(
+                $employeeName, 
+                $currentAssignment, 
+                $newBaseSalary, 
+                $originalFromDate // ON GARDE LA DATE ORIGINALE
+            );
 
-            // Cancel existing slips that are submitted
-            foreach ($existingSlips as $slip) {
-                if ($slip['docstatus'] == 1) { // Submitted
-                    Log::debug("Annulation fiche de paie {$slip['name']} pour {$employeeName}");
-                    $cancelResult = $this->erpApiService->executeMethod('frappe.client', 'cancel', [
-                        'doctype' => 'Salary Slip',
-                        'name' => $slip['name']
-                    ]);
-
-                    if (!$cancelResult || (isset($cancelResult['message']) && $cancelResult['message'] === false)) {
-                        Log::error("Échec annulation fiche de paie {$slip['name']}", [
-                            'response' => $cancelResult
-                        ]);
-                        return false;
-                    }
-                    Log::info("Fiche de paie {$slip['name']} annulée avec succès");
-                } elseif ($slip['docstatus'] == 0) { // Draft - delete it
-                    Log::debug("Suppression fiche de paie draft {$slip['name']} pour {$employeeName}");
-                    $deleteResult = $this->erpApiService->deleteResource('Salary Slip', $slip['name']);
-                    if ($deleteResult) {
-                        Log::info("Fiche de paie draft {$slip['name']} supprimée avec succès");
-                    }
-                }
-            }
-
-            // FIXED: Create new salary slip with correct data structure
-            $payrollData = [
-                'employee' => $employeeName,
-                'salary_structure' => $salaryStructure,
-                'company' => $company,
-                'posting_date' => $endDate, // End of month
-                'start_date' => $startDate,
-                'end_date' => $endDate,
-                'payroll_frequency' => 'Monthly',
-                'docstatus' => 0 // Create as draft first
-            ];
-
-            Log::debug("Création nouvelle fiche de paie", ['data' => $payrollData]);
-
-            $newSlip = $this->erpApiService->createResource('Salary Slip', $payrollData);
-
-            if (!$newSlip) {
-                Log::error("Échec création nouvelle fiche de paie pour {$employeeName}");
+            if (!$assignmentSuccess) {
+                Log::error("Échec mise à jour Salary Structure Assignment pour {$employeeName}");
                 return false;
             }
 
-            // Get the created slip name
-            $slipName = null;
-            if (is_array($newSlip) && isset($newSlip['name'])) {
-                $slipName = $newSlip['name'];
-            } elseif (is_string($newSlip)) {
-                $slipName = $newSlip;
+            // 2. SALARY SLIP - Mettre à jour pour le mois spécifié
+            $slipSuccess = $this->updateSalarySlipForMonth(
+                $employeeName,
+                $currentAssignment['salary_structure'],
+                $newBaseSalary,
+                $slipStartDate,
+                $slipEndDate,
+                $currentAssignment['company'] ?? 'Orinasa SA'
+            );
+
+            if (!$slipSuccess) {
+                Log::error("Échec mise à jour Salary Slip pour {$employeeName}");
+                return false;
             }
 
-            if ($slipName) {
-                Log::info("Fiche de paie {$slipName} créée pour {$employeeName}");
-                
-                // Submit the salary slip
-                try {
-                    $submitResult = $this->erpApiService->executeMethod('frappe.client', 'submit', [
-                        'doctype' => 'Salary Slip',
-                        'name' => $slipName
-                    ]);
-                    
-                    if ($submitResult) {
-                        Log::info("Fiche de paie {$slipName} soumise avec succès");
-                    } else {
-                        Log::warning("Fiche de paie {$slipName} créée mais non soumise");
-                    }
-                } catch (\Exception $e) {
-                    Log::warning("Erreur soumission fiche de paie {$slipName}: " . $e->getMessage());
-                    // Continue anyway as the slip was created
-                }
-            } else {
-                Log::info("Fiche de paie créée avec succès pour {$employeeName} (nom non disponible)");
-            }
-
+            Log::info("Mise à jour complète réussie pour {$employeeName} - from_date conservée: {$originalFromDate}");
             return true;
 
         } catch (\Exception $e) {
-            Log::error("Erreur gestion fiches de paie pour {$employeeName}: " . $e->getMessage());
+            Log::error("Erreur mise à jour salary pour {$employeeName}: " . $e->getMessage());
             return false;
         }
     }
 
-    private function updateSalaryAssignment(string $employeeName, array $currentAssignment, float $newBaseSalary): bool
-    {
+    /**
+     * NOUVEAU: Mise à jour Salary Structure Assignment en gardant la date originale
+     */
+    private function updateSalaryStructureAssignmentKeepDate(
+        string $employeeName, 
+        array $currentAssignment, 
+        float $newBaseSalary, 
+        string $originalFromDate
+    ): bool {
         try {
-            Log::info("Début mise à jour assignment pour {$employeeName}");
+            Log::info("Mise à jour Salary Structure Assignment pour {$employeeName} - GARDER date: {$originalFromDate}");
 
-            $fromDate = date('Y-m-d');
-            $payrollDate = Carbon::createFromFormat('Y-m-d', $fromDate);
-            $assignmentFromDate = $payrollDate->copy()->startOfMonth()->format('Y-m-d');
-            $nextMonth = $payrollDate->copy()->addMonth()->startOfMonth()->format('Y-m-d');
-
-            // Get existing assignments
+            // Recherche l'assignment EXACT avec la même from_date
             $existingAssignments = $this->erpApiService->getResource('Salary Structure Assignment', [
                 'filters' => json_encode([
                     ['employee', '=', $employeeName],
                     ['salary_structure', '=', $currentAssignment['salary_structure']],
-                    ['from_date', '>=', $assignmentFromDate],
-                    ['from_date', '<', $nextMonth],
-                    ['docstatus', '!=', 2]
+                    ['from_date', '=', $originalFromDate],
+                    ['docstatus', '!=', 2]  //SALARY STRUCTURE ASSIGNEMENT Pas annulé
                 ]),
-                'fields' => json_encode(['name', 'base', 'docstatus'])
+                'fields' => json_encode(['name', 'base', 'docstatus', 'from_date'])
             ]);
 
-            // Cancel existing assignments
+            Log::debug("Assignments existants avec from_date {$originalFromDate}: " . count($existingAssignments));
+
+            // ANNULATION de l'assignment existant avec cette date
             foreach ($existingAssignments as $assignment) {
-                if ($assignment['docstatus'] == 1) {
+                if ($assignment['docstatus'] == 1) { // Soumis
+                    Log::debug("Annulation assignment {$assignment['name']} avec from_date {$originalFromDate}");
                     $cancelResult = $this->erpApiService->executeMethod('frappe.client', 'cancel', [
                         'doctype' => 'Salary Structure Assignment',
                         'name' => $assignment['name']
@@ -441,81 +388,144 @@ class ConfigSalaryService
                         return false;
                     }
                     Log::info("Assignment {$assignment['name']} annulé avec succès");
+                } elseif ($assignment['docstatus'] == 0) { // Brouillon
+                    Log::debug("Suppression assignment draft {$assignment['name']}");
+                    $this->erpApiService->deleteResource('Salary Structure Assignment', $assignment['name']);
                 }
             }
 
-            // Create new assignment
+            // Création du nouveau assignment avec la MÊME from_date originale
             $newAssignmentData = [
                 'employee' => $employeeName,
                 'salary_structure' => $currentAssignment['salary_structure'],
-                'from_date' => $assignmentFromDate,
+                'from_date' => $originalFromDate, // ON GARDE LA DATE ORIGINALE
                 'base' => $newBaseSalary,
                 'company' => $currentAssignment['company'] ?? 'Orinasa SA',
                 'currency' => $currentAssignment['currency'] ?? 'MGA',
                 'docstatus' => 1
             ];
 
-            Log::debug("Données nouvelle assignation", ['data' => $newAssignmentData]);
+            Log::debug("Création nouvel assignment avec from_date ORIGINALE", [
+                'data' => $newAssignmentData,
+                'old_base' => $currentAssignment['base'],
+                'new_base' => $newBaseSalary
+            ]);
             
             $newAssignment = $this->erpApiService->createResource('Salary Structure Assignment', $newAssignmentData);
 
-            if ($newAssignment === false || $newAssignment === null) {
-                Log::error("Échec création nouvel assignment pour {$employeeName} - API returned false/null");
-                return false;
-            }
-            
-            $assignmentName = null;
-            if (is_array($newAssignment) && isset($newAssignment['name'])) {
-                $assignmentName = $newAssignment['name'];
-            } elseif (is_string($newAssignment)) {
-                $assignmentName = $newAssignment;
-            } elseif ($newAssignment === true) {
-                Log::info("Assignment créé avec succès (API returned true) pour {$employeeName}");
-
-                $createdAssignments = $this->erpApiService->getResource('Salary Structure Assignment', [
-                    'filters' => json_encode([
-                        ['employee', '=', $employeeName],
-                        ['salary_structure', '=', $currentAssignment['salary_structure']],
-                        ['from_date', '=', $assignmentFromDate],
-                        ['base', '=', $newBaseSalary]
-                    ]),
-                    'fields' => json_encode(['name']),
-                    'limit_page_length' => 1
-                ]);
-                
-                if (!empty($createdAssignments)) {
-                    $assignmentName = $createdAssignments[0]['name'];
-                    Log::info("Assignment trouvé: {$assignmentName}");
-                } else {
-                    Log::warning("Assignment créé mais nom non trouvé pour {$employeeName}");
-                }
-            }
-
-            if ($assignmentName) {
-                Log::info("Nouvel assignment créé : {$assignmentName}");
-            } else {
-                Log::info("Assignment créé pour {$employeeName} (nom non disponible)");
-            }
-
-            // Manage salary slips
-            $manageSlipsResult = $this->manageSalarySlips(
-                $employeeName,
-                $currentAssignment['salary_structure'],
-                $newBaseSalary,
-                $assignmentFromDate,
-                $currentAssignment['company'] ?? 'Orinasa SA'
-            );
-
-            if (!$manageSlipsResult) {
-                Log::error("Échec gestion fiches de paie pour {$employeeName}");
+            if (!$newAssignment) {
+                Log::error("Échec création nouvel assignment pour {$employeeName}");
                 return false;
             }
 
-            Log::info("Mise à jour assignment et fiches de paie terminée pour {$employeeName}");
+            Log::info("Nouvel assignment créé avec succès pour {$employeeName} avec from_date {$originalFromDate}");
             return true;
 
         } catch (\Exception $e) {
-            Log::error("Erreur mise à jour assignment pour {$employeeName}: " . $e->getMessage());
+            Log::error("Erreur mise à jour Salary Structure Assignment: " . $e->getMessage());
+            return false;
+        }
+    }
+
+    /**
+     *  Mise à jour Salary Slip pour un mois spécifique
+     */
+    private function updateSalarySlipForMonth(
+        string $employeeName,
+        string $salaryStructure,
+        float $newBaseSalary,
+        string $startDate,
+        string $endDate,
+        string $company
+    ): bool {
+        try {
+            Log::info("Mise à jour Salary Slip pour {$employeeName} - période: {$startDate} à {$endDate}");
+
+            // Recherche les salary slips existants pour cette période
+            $existingSlips = $this->erpApiService->getResource('Salary Slip', [
+                'filters' => json_encode([
+                    ['employee', '=', $employeeName],
+                    ['start_date', '=', $startDate],
+                    ['end_date', '=', $endDate],
+                    ['docstatus', '!=', 2] // Pas annulé
+                ]),
+                'fields' => json_encode(['name', 'docstatus', 'start_date', 'end_date'])
+            ]);
+
+            Log::debug("Salary slips existants trouvés: " . count($existingSlips));
+
+            // Annuler/supprimer les slips existants
+            foreach ($existingSlips as $slip) {
+                if ($slip['docstatus'] == 1) { // Soumis
+                    Log::debug("Annulation salary slip {$slip['name']}");
+                    $cancelResult = $this->erpApiService->executeMethod('frappe.client', 'cancel', [
+                        'doctype' => 'Salary Slip',
+                        'name' => $slip['name']
+                    ]);
+
+                    if (!$cancelResult) {
+                        Log::error("Échec annulation salary slip {$slip['name']}");
+                        return false;
+                    }
+                    Log::info("Salary slip {$slip['name']} annulé avec succès");
+                } elseif ($slip['docstatus'] == 0) { // Brouillon
+                    Log::debug("Suppression salary slip draft {$slip['name']}");
+                    $this->erpApiService->deleteResource('Salary Slip', $slip['name']);
+                }
+            }
+
+            // Création  nouveau salary slip pour la même période
+            $payrollData = [
+                'employee' => $employeeName,
+                'salary_structure' => $salaryStructure,
+                'company' => $company,
+                'posting_date' => $endDate,
+                'start_date' => $startDate,
+                'end_date' => $endDate,
+                'payroll_frequency' => 'Monthly',
+                'docstatus' => 1 
+            ];
+
+            Log::debug("Création nouveau salary slip", ['data' => $payrollData]);
+
+            $newSlip = $this->erpApiService->createResource('Salary Slip', $payrollData);
+
+            if (!$newSlip) {
+                Log::error("Échec création nouveau salary slip pour {$employeeName}");
+                return false;
+            }
+
+            // Obtient le nom du slip créé
+            $slipName = null;
+            if (is_array($newSlip) && isset($newSlip['name'])) {
+                $slipName = $newSlip['name'];
+            } elseif (is_string($newSlip)) {
+                $slipName = $newSlip;
+            }
+
+            if ($slipName) {
+                Log::info("Salary slip {$slipName} créé pour {$employeeName}");
+                
+                // Soumettre le salary slip
+                try {
+                    $submitResult = $this->erpApiService->executeMethod('frappe.client', 'submit', [
+                        'doctype' => 'Salary Slip',
+                        'name' => $slipName
+                    ]);
+                    
+                    if ($submitResult) {
+                        Log::info("Salary slip {$slipName} soumis avec succès");
+                    }
+                } catch (\Exception $e) {
+                    Log::warning("Erreur soumission salary slip {$slipName}: " . $e->getMessage());
+                }
+            }
+
+            Log::info("Salary slip mis à jour avec succès pour {$employeeName}");
+            return true;
+
+        } catch (\Exception $e) {
+            Log::error("Erreur mise à jour Salary Slip: " . $e->getMessage());
             return false;
         }
     }
