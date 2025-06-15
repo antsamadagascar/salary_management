@@ -10,7 +10,7 @@
                 </div>
                 <div class="card-body">
                     
-                    {{-- Zone des messages (sera mise à jour via AJAX) --}}
+                {{-- Zone des messages (sera mise à jour via AJAX) --}}
                     <div id="messages-container">
                         {{-- Messages de succès --}}
                         @if(session('success'))
@@ -21,10 +21,59 @@
                         @endif
 
                         {{-- Messages d'erreur généraux --}}
-                        @if(session('error'))
+                        @if(session('error') && !session('import_errors'))
                             <div class="alert alert-danger alert-dismissible fade show" role="alert">
                                 <strong>Erreur !</strong> {{ session('error') }}
                                 <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                            </div>
+                        @endif
+
+                        {{-- NOUVELLE SECTION : Erreurs d'import atomique --}}
+                        @if(session('error') && session('import_errors'))
+                            <div class="alert alert-danger">
+                                <h5><i class="fas fa-ban"></i> Import annulé - Erreurs détectées :</h5>
+                                <p class="mb-3"><strong>{{ session('error') }}</strong></p>
+                                
+                                @php
+                                    $importErrors = session('import_errors');
+                                    $errorDetails = session('error_details', []);
+                                    $totalErrors = array_sum(array_column($errorDetails, 'count'));
+                                @endphp
+                                
+                                <div class="mb-3">
+                                    <span class="badge bg-danger fs-6">{{ $totalErrors }} erreur{{ $totalErrors > 1 ? 's' : '' }} détectée{{ $totalErrors > 1 ? 's' : '' }}</span>
+                                </div>
+                                
+                                @foreach($errorDetails as $type => $details)
+                                    <div class="mb-3">
+                                        <h6 class="text-danger">
+                                            <i class="fas fa-times-circle"></i> 
+                                            {{ $details['type_label'] }}
+                                            <span class="badge bg-danger ms-2">{{ $details['count'] }}</span>
+                                        </h6>
+                                        
+                                        <div class="card border-danger">
+                                            <div class="card-body p-2">
+                                                <ul class="mb-0 list-unstyled">
+                                                    @foreach($details['errors'] as $error)
+                                                        <li class="mb-1">
+                                                            <i class="fas fa-arrow-right text-danger"></i>
+                                                            <span class="ms-2">{{ $error }}</span>
+                                                        </li>
+                                                    @endforeach
+                                                </ul>
+                                            </div>
+                                        </div>
+                                    </div>
+                                @endforeach
+                                
+                                <div class="mt-3 p-3 bg-light border-start border-warning border-3">
+                                    <small class="text-muted">
+                                        <i class="fas fa-info-circle"></i> 
+                                        <strong>Important :</strong> Aucune donnée n'a été importée. 
+                                        Toutes les opérations ont été annulées. Veuillez corriger toutes les erreurs et recommencer l'import.
+                                    </small>
+                                </div>
                             </div>
                         @endif
 
@@ -75,8 +124,8 @@
                             </div>
                         @endif
 
-                        {{-- Résultats d'import --}}
-                        @if(session('import_results'))
+                        {{-- Résultats d'import (garde seulement pour compatibilité, mais ne devrait plus apparaître avec l'import atomique) --}}
+                        @if(session('import_results') && !session('import_errors'))
                             <div class="alert alert-info">
                                 <h5><i class="fas fa-chart-bar"></i> Résultats de l'import :</h5>
                                 

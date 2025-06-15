@@ -1,0 +1,37 @@
+Fonctionnalites 1:Generation salaires :
+Input:
+	-Champ listes option employer 
+	-Champ input date fin et date de debut
+	-salaire  
+
+Output:
+	-LIstes des salaires generer pour un employer entre les date 
+
+Exemple:
+rakoto ,50000, 2025-01-01,2025-04-01
+salaire generer :
+-si entre les moi il y a deja des salaires ex:
+on ne genere que les autre mois et on recupere le salaire de reference via la date avant la date debut ou la date debut si il existe 
+
+Fonctionnalites 2: MOdification salaire de base (Condition  d'enlevement ou d'ajoute augmentation salaire de base) 
+Input: 
+	-champ pourcentage (valeur)
+	-Liste des elements de salaires  (Indemnites,taxe sociale)
+	
+Output: 
+	- Changement valeur salaire de base pour chaque employer cibles dans la condition 
+
+TODO:
+-Creation section sidebar COnfiguration salaire employe (ok)
+-Creaton blade (configuration/index.blade,generate,blade)(ok)
+
+
+-creation services COnfigurationSalaryServices:
+-creation services  generateSalarySlip dans employeeService 
+-Creation services getSalarySlip dans employeeService
+-Creation controller:
+	-GenerateSalaryController:integration du services employeeService(getEmployee)
+	
+	-ConfigurationCOntroller:integration du services empployeeService(getEmployee) 
+
+

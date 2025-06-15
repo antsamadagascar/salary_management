@@ -2,7 +2,7 @@
 
 namespace App\Http\Controllers;
 
-use App\Services\ResetDataService;
+use App\Services\resetData\ResetDataService;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
 

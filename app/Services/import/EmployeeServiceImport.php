@@ -2,7 +2,7 @@
 
 namespace App\Services\import;
 
-use App\Services\ErpApiService;
+use App\Services\api\ErpApiService;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Log;
 use League\Csv\Reader;
@@ -132,7 +132,7 @@ class EmployeeServiceImport
                 'company_name' => $companyName,
                 'default_currency' => 'MGA', //default currency
                 'country' => 'Madagascar', //default country
-                'default_holiday_list' => 'Global Holiday List 2025' //hoilday list default
+                'default_holiday_list' => 'Global Holiday List' //hoilday list default
             ];
 
             return $this->apiService->createResource('Company', $companyData);
@@ -159,13 +159,16 @@ class EmployeeServiceImport
         return ['valid' => true];
     }
 
-    private function prepareEmployeeData(array $record): array
+   private function prepareEmployeeData(array $record): array
     {
+        $gender = strtolower(trim($record['genre']));
+        $isMale = ($gender === 'masculin' || $gender === 'male' || $gender === 'm');
+        
         return [
             'employee_number' => trim($record['Ref']),
             'first_name' => trim($record['Prenom']),
             'last_name' => trim($record['Nom']),
-            'gender' => trim($record['genre']) === 'Masculin' ? 'Male' : 'Female',
+            'gender' => $isMale ? 'Male' : 'Female',
             'date_of_joining' => Carbon::createFromFormat('d/m/Y', trim($record['Date embauche']))->format('Y-m-d'),
             'date_of_birth' => Carbon::createFromFormat('d/m/Y', trim($record['date naissance']))->format('Y-m-d'),
             'company' => trim($record['company'])

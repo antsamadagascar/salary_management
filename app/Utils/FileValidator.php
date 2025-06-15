@@ -113,7 +113,8 @@ class FileValidator
 
         if (isset($rules['required_fields'])) {
             foreach ($rules['required_fields'] as $index => $fieldName) {
-                if (empty(trim($row[$index] ?? ''))) {
+                $value = trim($row[$index] ?? '');
+                if (empty($value)) {
                     $errors[] = $this->getMessage('required_field', [
                         'line' => $lineNumber,
                         'field' => $fieldName
@@ -129,6 +130,7 @@ class FileValidator
                     $errors[] = $this->getMessage('invalid_date', [
                         'line' => $lineNumber,
                         'field' => $dateConfig['field'],
+                        'value' => $value,
                         'format' => $dateConfig['format']
                     ]);
                 }
@@ -142,6 +144,7 @@ class FileValidator
                     $errors[] = $this->getMessage('invalid_enum', [
                         'line' => $lineNumber,
                         'field' => $enumConfig['field'],
+                        'value' => $value,
                         'values' => implode(' ou ', $enumConfig['values'])
                     ]);
                 }
@@ -155,12 +158,14 @@ class FileValidator
                     if (!is_numeric($value)) {
                         $errors[] = $this->getMessage('invalid_numeric', [
                             'line' => $lineNumber,
-                            'field' => $fieldName
+                            'field' => $fieldName,
+                            'value' => $value
                         ]);
                     } elseif ($value < 0) {
                         $errors[] = $this->getMessage('negative_not_allowed', [
                             'line' => $lineNumber,
-                            'field' => $fieldName
+                            'field' => $fieldName,
+                            'value' => $value
                         ]);
                     }
                 }
@@ -182,7 +187,8 @@ class FileValidator
                     if ($value < 0) {
                         $errors[] = $this->getMessage('negative_not_allowed', [
                             'line' => $lineNumber,
-                            'field' => $fieldName
+                            'field' => $fieldName,
+                            'value' => $value
                         ]);
                     }
                 }
@@ -256,4 +262,4 @@ class FileValidator
             "{$type}_file.mimes" => $this->getMessage('file_mimes', ['type' => $type]),
         ])->toArray();
     }
-} 
+}

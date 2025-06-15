@@ -2,7 +2,7 @@
 
 namespace App\Http\Controllers;
 
-use App\Services\EmployeeService;
+use App\Services\employee\EmployeeService;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
 use Exception;

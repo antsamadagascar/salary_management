@@ -7,8 +7,8 @@
             </div>
             <div class="offcanvas-body">
                 <div class="sidebar-header text-center py-4">
-                    <img src="{{ asset('logos/erpnext-logo.svg') }}" alt="Logo" class="img-fluid mb-2" style="max-height: 60px;">
-                    <h5 class="mb-0">ERP Management</h5>
+                    <img src="{{ asset('logos/frappe-hr-logo.svg') }}" alt="Logo" class="img-fluid mb-2" style="max-height: 60px;">
+                    <h5 class="mb-0">Salary Management</h5>
                 </div>
                 <hr>
                 <div class="position-sticky pt-3">
@@ -55,7 +55,18 @@
                                 <i class="fas fa-chart-bar"></i> Rapport Mensuel
                             </a>
                         </li> -->
-                        
+                        <li class="nav-item">
+                            <h6 class="sidebar-heading d-flex justify-content-between align-items-center px-3 mt-4 mb-1 text-muted">
+                                <span>STATISTIQUES SALAIRE</span>
+                            </h6>
+                        </li>
+
+                        <li class="nav-item">
+                            <a class="nav-link" href="{{ route('payroll.stats.salary-details') }}">
+                                <i class="fas fa-calendar-alt"></i> Par Mois
+                            </a>
+                        </li>
+
                         <!-- Section Import/Export -->
                         <li class="nav-item">
                             <h6 class="sidebar-heading d-flex justify-content-between align-items-center px-3 mt-4 mb-1 text-muted">
@@ -64,39 +75,35 @@
                         </li>
 
                         <li class="nav-item">
-                            <a class="nav-link" href="{{ route('stats.index') }}">
-                            <i class="fas fa-chart-bar"></i> Stats
-                            </a>
-                        </li>
-                        <li class="nav-item">
                         <a class="nav-link {{ request()->routeIs('import.*') ? 'active' : '' }}" 
                         href="{{ route('import.form') }}">
                                 <i class="fas fa-file-csv"></i> Import CSV
                             </a>
                         </li> 
-                        <li class="nav-item">
+                        <!-- <li class="nav-item">
                             <a class="nav-link" href="{{ route('reset-data.show') }}">
                              <i class="fas fa-trash-restore"></i> Reset Data
 
                             </a>
-                        </li>
-                        <!-- Section Configuration -->
-                        <!-- <li class="nav-item">
+                        </li> -->
+                      
+                     <li class="nav-item">
                             <h6 class="sidebar-heading d-flex justify-content-between align-items-center px-3 mt-4 mb-1 text-muted">
                                 <span>CONFIGURATION</span>
                             </h6>
                         </li>
+
                         <li class="nav-item">
-                            <a class="nav-link" href="">
-                                <i class="fas fa-cog"></i> Paramètres ERPNext
+                            <a class="nav-link" href="{{ route('salaries.generate.index') }}">
+                                <i class="fas fa-play-circle"></i> Générer Salaire
                             </a>
                         </li>
+
                         <li class="nav-item">
-                            <a class="nav-link" href="">
-                                <i class="fas fa-history"></i> Logs API
+                            <a class="nav-link" href="{{ route('salaries.config.index') }}">
+                                <i class="fas fa-sliders-h"></i> Salaire de Base
                             </a>
-                        </li> -->
-                        
+                        </li>
                         <hr>
                     </ul>
                 </div>

@@ -1,0 +1,5 @@
+salary structure,name,Abbr,type,valeur,company
+g1,Salaire Base,SB,earning,base,Orinasa SA
+g1,Indemnité,IDM,earning,SB * 0.35,Orinasa SA
+g1,Taxe spéciale,TSP,deduction,(SB + IDM) * 0.21,Orinasa SA
+g1,Impot,IMP,deduction,(SB + IDM - TSP ) * 0.1,Orinasa SA

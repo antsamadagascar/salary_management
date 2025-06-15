@@ -2,7 +2,7 @@
 
 namespace App\Services\import;
 
-use App\Services\ErpApiService;
+use App\Services\api\ErpApiService;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Log;
 use League\Csv\Reader;
@@ -171,7 +171,7 @@ class PayrollServiceImport
     }
 
 
-    private function createSalaryAssignment(string $employeeRef, string $salaryStructure, float $baseSalary, string $month, string $companyName): bool
+    public function createSalaryAssignment(string $employeeRef, string $salaryStructure, float $baseSalary, string $month, string $companyName): bool
     {
         try {
             $payrollDate = Carbon::createFromFormat('d/m/Y', $month);
@@ -242,7 +242,7 @@ class PayrollServiceImport
         }
     }
 
-    private function getExistingPayrolls(): array
+    public function getExistingPayrolls(): array
     {
         try {
             $payrolls = $this->apiService->getResource('Salary Slip', ['limit_page_length' => 2000]);
@@ -268,7 +268,7 @@ class PayrollServiceImport
         }
     }
 
-    private function generatePayrollKey(string $employeeRef, string $monthOrPeriod): string
+    public function generatePayrollKey(string $employeeRef, string $monthOrPeriod): string
     {
         // Normaliser la période au format Y-m
         if (preg_match('/^\d{2}\/\d{2}\/\d{4}$/', $monthOrPeriod)) {
@@ -288,7 +288,7 @@ class PayrollServiceImport
         return $employeeRef . '_' . $period;
     }
 
-    private function findEmployeeByNumber(string $employeeNumber): ?array
+    public function findEmployeeByNumber(string $employeeNumber): ?array
     {
         try {
             $employees = $this->apiService->getResource('Employee', [
@@ -324,7 +324,7 @@ class PayrollServiceImport
     //     return ['valid' => true];
     // }
 
-    private function preparePayrollData(array $record, string $companyName, string $employeeRef): array
+    public function preparePayrollData(array $record, string $companyName, string $employeeRef): array
     {
         $payrollDate = Carbon::createFromFormat('d/m/Y', trim($record['Mois']));
         $startDate = $payrollDate->copy()->startOfMonth()->format('Y-m-d');

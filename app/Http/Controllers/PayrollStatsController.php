@@ -6,8 +6,8 @@ fonctionnalites (ALEA POSSIBLES) :
 */
 namespace App\Http\Controllers;
 
-use App\Services\PayrollStatsService;
-use App\Services\ExportService;
+use App\Services\payroll\PayrollStatsService;
+use App\Services\export\ExportService;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
 use Illuminate\Http\JsonResponse;
@@ -34,8 +34,19 @@ class PayrollStatsController extends Controller
     {
         try {
             $currentYear = Carbon::now()->year;
-            $year = $request->get('year', $currentYear);
-            
+            $year = $request->get('year');
+
+            if (empty($year) || !is_numeric($year)) {
+                return view('payroll.stats.index', [
+                    'monthlyStats' => [],
+                    'chartData' => [],
+                    'availableYears' => $this->statsService->getAvailableYears(),
+                    'year' => $currentYear
+                ]);
+            }
+
+            $year = (int) $year;
+
             $availableYears = $this->statsService->getAvailableYears();
             $monthlyStats = $this->statsService->getYearlyPayrollStats($year);
             $chartData = $this->statsService->getChartData($year);
@@ -104,17 +115,21 @@ class PayrollStatsController extends Controller
         try {
             $monthDetails = $this->statsService->getMonthDetails($month);
             $monthName = Carbon::createFromFormat('Y-m', $month)->locale('fr')->translatedFormat('F Y');
-            
-            return view('payroll.stats.month-details', compact(
+    
+            $currency = count($monthDetails) > 0 ? $monthDetails[0]['currency'] : null;
+    
+            return view('payroll.details.month-details', compact(
                 'monthDetails',
                 'month',
-                'monthName'
+                'monthName',
+                'currency'
             ));
         } catch (\Exception $e) {
             return redirect()->route('payroll.stats.index')
                 ->withError('Erreur lors du chargement des détails: ' . $e->getMessage());
         }
     }
+    
 
     /**
      * Exporte les statistiques mensuelles en Excel (EXPORT EXCEL  DONNNES TOTAL LIGNE POUR CHAQUE MOIS )
@@ -257,7 +272,7 @@ class PayrollStatsController extends Controller
             $filename = "details_paie_{$month}.xlsx";
             return $this->exportService->exportToExcel($data, $headers, $filename);
         } catch (\Exception $e) {
-            return redirect()->route('payroll.stats.month-details', $month)
+            return redirect()->route('payroll.details.month-details', $month)
                 ->withError('Erreur lors de l\'export: ' . $e->getMessage());
         }
     }
