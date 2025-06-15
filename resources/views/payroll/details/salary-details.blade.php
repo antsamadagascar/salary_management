@@ -12,11 +12,11 @@
                         <i class="fas fa-money-check-alt"></i>
                         Tableau de Paie
                     </h3>
-                    <!-- <div class="card-tools">
+                    <div class="card-tools">
                         <button type="button" class="btn btn-success btn-sm"  id="exportBtn" onclick="exportCsv()">
                             <i class="fas fa-download"></i> Exporter CSV
                         </button>
-                    </div> -->
+                    </div>
                 </div>
 
                 <div class="card-body">
