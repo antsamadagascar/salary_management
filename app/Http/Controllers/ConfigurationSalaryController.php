@@ -36,7 +36,10 @@ class ConfigurationSalaryController extends Controller
             ];
             $conditions = [
                 ['name' => 'inferieur'],
-                ['name' => 'superieur']
+                ['name' => 'superieur'],
+                ['name' => 'egal'],
+                ['name' => 'inferieur_egal'],
+                ['name' => 'superieur_egal']
             ];
 
             return view('salaries.config.index', compact('employees', 'salaryComponents', 'options', 'conditions'));
@@ -54,7 +57,7 @@ class ConfigurationSalaryController extends Controller
         $validated = $request->validate([
             'salary_components' => 'required|string',
             'Montant' => 'required|numeric|min:0',
-            'conditions' => 'required|in:inferieur,superieur',
+            'conditions' => 'required|in:inferieur,superieur,egal,inferieur_egal,superieur_egal',
             'options' => 'required|in:augmentation,deductions',
             'pourcentage' => 'required|numeric|min:0'
         ]);
@@ -92,8 +95,8 @@ public function preview(Request $request)
 {
     $validated = $request->validate([
         'salary_components' => 'required|string',
-        'Montant' => 'required|numeric|min:0',
-        'conditions' => 'required|in:inferieur,superieur',
+        'Montant' => 'required|numeric|min:0',  
+        'conditions' => 'required|in:inferieur,superieur,egal,inferieur_egal,superieur_egal',
         'options' => 'required|in:augmentation,deductions',
         'pourcentage' => 'required|numeric|min:0'
     ]);

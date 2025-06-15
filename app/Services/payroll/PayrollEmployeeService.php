@@ -29,8 +29,10 @@ class PayrollEmployeeService
         try {
             $salarySlips = $this->erpApiService->getResource('Salary Slip', [
                 'filters' => [
-                    ['employee', '=', $employeeId]
+                    ['employee', '=', $employeeId],
+                    ['docstatus', '=', 1]
                 ],
+
                 'fields' => [
                     'name', 'employee', 'employee_name', 'posting_date', 
                     'start_date', 'end_date', 'gross_pay', 'total_deduction', 
