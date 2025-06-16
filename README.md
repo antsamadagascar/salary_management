@@ -316,4 +316,4 @@ salary_management/
 ## 📞 Support
 
 Pour toute question ou problème :
-- 📧 Email : antsamadagascar@gmail.com.com
+- 📧 Email : antsamadagascar@gmail.com
