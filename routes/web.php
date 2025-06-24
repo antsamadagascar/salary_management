@@ -12,6 +12,7 @@ use App\Http\Controllers\ResetDataController;
 use App\Http\Controllers\PayrollStatsController;
 use App\Http\Controllers\GenerateSalaryController;
 use App\Http\Controllers\ConfigurationSalaryController;
+use App\Http\Controllers\HistoryController;
 
 Route::get('/', function () {
     return redirect()->route('login');
@@ -78,6 +79,14 @@ Route::middleware([\App\Http\Middleware\FrappeAuthMiddleware::class])->group(fun
         Route::get('/config', [ConfigurationSalaryController::class, 'index'])->name('config.index');
         Route::post('/config/generate', [ConfigurationSalaryController::class, 'generate'])->name('config.generate');
         Route::post('/config/preview', [ConfigurationSalaryController::class, 'preview'])->name('config.preview');
+         // Route pour afficher le formulaire d'historique
+        Route::get('/history', [HistoryController::class, 'index'])->name('history.index');
+        
+        // Route pour traiter le formulaire et afficher les résultats
+        Route::post('/history', [HistoryController::class, 'show'])->name('history.show');
+        
+        // Route pour l'export CSV
+       // Route::get('/history/export', [HistoryController::class, 'export'])->name('history.export');
     });
 
     Route::prefix('reset-data')->name('reset-data.')->group(function () {
