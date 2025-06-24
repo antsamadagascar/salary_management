@@ -86,7 +86,7 @@
                             </a>
                         </li> -->
                       
-                     <li class="nav-item">
+                         <li class="nav-item">
                             <h6 class="sidebar-heading d-flex justify-content-between align-items-center px-3 mt-4 mb-1 text-muted">
                                 <span>CONFIGURATION</span>
                             </h6>
@@ -101,6 +101,18 @@
                         <li class="nav-item">
                             <a class="nav-link {{ request()->routeIs('salaries.config.index') ? 'active' : '' }} " href="{{ route('salaries.config.index') }}">
                                 <i class="fas fa-sliders-h"></i> Salaire de Base
+                            </a>
+                        </li>
+
+                         <li class="nav-item">
+                            <h6 class="sidebar-heading d-flex justify-content-between align-items-center px-3 mt-4 mb-1 text-muted">
+                                <span>Historiques</span>
+                            </h6>
+                        </li>
+
+                        <li class="nav-item">
+                            <a class="nav-link {{ request()->routeIs('salaries.history.index') ? 'active' : '' }} " href="{{ route('salaries.history.index') }}" >
+                                <i class="fas fa-play-circle"></i>Salaires
                             </a>
                         </li>
                         <hr>
