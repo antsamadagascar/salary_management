@@ -67,7 +67,9 @@
                 @error('date_debut')
                 <div class="invalid-feedback">{{ $message }}</div>
                 @enderror
-                 <div class="col-md-4">
+            </div>
+            
+            <div class="col-md-4">
                 <label for="date_fin" class="form-label fw-medium">
                     Date de fin <span class="text-danger">*</span>
                 </label>
@@ -79,33 +81,6 @@
                 @enderror
             </div>
             </div>
-              <div class="col-md-6">
-                <label for="conditions" class="form-label fw-medium">Condition</label>
-                <select id="conditions" name="conditions" class="form-select @error('conditions') is-invalid @enderror">
-                    <option value="">Sélectionner une condition</option>
-                    @foreach($conditions as $condition)
-                        <option value="{{ $condition['name'] }}" 
-                            {{ old('conditions', $request->conditions ?? '') == $condition['name'] ? 'selected' : '' }}>
-                            {{ ucfirst(str_replace('_', ' ', $condition['name'])) }}
-                        </option>
-                    @endforeach
-                </select>
-                @error('conditions')
-                <div class="invalid-feedback">{{ $message }}</div>
-                @enderror
-            </div>
-
-            <!-- Montant -->
-            <div class="col-md-6">
-                <label for="Montant" class="form-label fw-medium">Montant</label>
-                <input type="number" id="Montant" name="Montant" step="0.01" min="0"
-                    class="form-control @error('Montant') is-invalid @enderror" 
-                    value="{{ old('Montant', $request->Montant ?? '') }}">
-                @error('Montant')
-                    <div class="invalid-feedback">{{ $message }}</div>
-                @enderror
-            </div>
-
 
             <!-- Boutons -->
             <div class="col-12 text-end">
