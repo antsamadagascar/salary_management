@@ -80,15 +80,14 @@ Route::middleware([\App\Http\Middleware\FrappeAuthMiddleware::class])->group(fun
         Route::get('/config', [ConfigurationSalaryController::class, 'index'])->name('config.index');
         Route::post('/config/generate', [ConfigurationSalaryController::class, 'generate'])->name('config.generate');
         Route::post('/config/preview', [ConfigurationSalaryController::class, 'preview'])->name('config.preview');
-
         Route::get('/history', [HistoryController::class, 'index'])->name('history.index');
-        
+    
         Route::post('/history', [HistoryController::class, 'show'])->name('history.show');
-        
     });
 
     Route::prefix('filter')->name('filter.')->group(function() {
         Route::get('/',[FilterSalaryController::class,'index'])->name('salary.index');
+        Route::post('/filter/salary/result', [FilterSalaryController::class, 'getSalaryFilter'])->name('salary.result');
 
     });
 
