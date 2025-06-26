@@ -92,7 +92,6 @@ Route::middleware([\App\Http\Middleware\FrappeAuthMiddleware::class])->group(fun
 
     Route::prefix('filter')->name('filter.')->group(function() {
         Route::get('/',[FilterSalaryController::class,'index'])->name('salary.index');
-        Route::post('/filter/salary/result', [FilterSalaryController::class, 'getSalaryFilter'])->name('salary.result');
 
     });
 

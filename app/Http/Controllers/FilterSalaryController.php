@@ -37,11 +37,25 @@ class FilterSalaryController extends Controller {
         ]);
 
         try {
-            $salaries = $this->filterService->getSalaryByCriteria($validated);
-            return view('filter.salary.result', compact('salaries'));
+            $results = $this->filterService->getSalaryByCriteria($validated);
+
+            $conditions = [
+                ['name' => 'inferieur'],
+                ['name' => 'superieur'],
+                ['name' => 'egal'],
+                ['name' => 'inferieur_egal'],
+                ['name' => 'superieur_egal']
+            ];
+
+            return view('filter.salary.index', [
+                'salaryComponents' => $this->configSalary->getSalaryComponents(),
+                'conditions' => $conditions,
+                'results' => $results
+            ]);
         } catch (\Exception $e) {
             Log::error("Erreur lors de la récupération des salaires : " . $e->getMessage());
             return redirect()->route('filter.salary.index')->with('error', 'Erreur chargement des données : ' . $e->getMessage());
         }
     }
+
 }
