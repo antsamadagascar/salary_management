@@ -8,16 +8,18 @@ use Illuminate\Support\Facades\Log;
 use League\Csv\Reader;
 use League\Csv\Exception as CsvException;
 use Carbon\Carbon;
+use App\Services\payroll\PayrollDataService;
 
 class PayrollServiceImport
 {
-  //  private const REQUIRED_FIELDS = ['Mois', 'Ref Employe', 'Salaire Base', 'Salaire'];
 
     protected ErpApiService $apiService;
+    protected PayrollDataService $payrollDataService;
 
-    public function __construct(ErpApiService $apiService)
+    public function __construct(ErpApiService $apiService,PayrollDataService $payrollDataService)
     {
         $this->apiService = $apiService;
+        $this->payrollDataService = $payrollDataService;
     }
 
     public function import(UploadedFile $file): array
@@ -37,11 +39,7 @@ class PayrollServiceImport
             
             foreach ($records as $record) {
                 $lineNumber++;
-                // $validation = $this->validatePayrollData($record, $lineNumber);
-                // if (!$validation['valid']) {
-                //     $results['errors'][] = $validation['error'];
-                //     continue;
-                // }
+
                 
                 $validRecords[] = [
                     'record' => $record,
@@ -62,7 +60,7 @@ class PayrollServiceImport
             
             // PHASE 2: Création/vérification des employés et company
             $processedRecords = [];
-            $companyName = 'My Company'; // Valeur par défaut
+            $companyName = 'My Company';
             
             // Chargement des fiches de paie existantes UNE SEULE FOIS au début
             $existingPayrolls = $this->getExistingPayrolls();
@@ -171,50 +169,53 @@ class PayrollServiceImport
     }
 
 
-    public function createSalaryAssignment(string $employeeRef, string $salaryStructure, float $baseSalary, string $month, string $companyName): bool
+    public function createSalaryAssignment(string $employeeRef, string $salaryStructure, float $baseSalary, string $month, string $companyName, string $ecraserSalaire = null): bool
     {
         try {
             $payrollDate = Carbon::createFromFormat('d/m/Y', $month);
-            // Utilise le premier jour du mois pour l'assignment from_date
             $assignmentFromDate = $payrollDate->copy()->startOfMonth()->format('Y-m-d');
             
-            Log::info("Création salary assignment - Employé: {$employeeRef}, Structure: {$salaryStructure}, From Date: {$assignmentFromDate}, Salaire: {$baseSalary}");
-            
-            // Vérifie si un assignment existe déjà pour cette période (même mois/année)
-            $existingAssignments = $this->apiService->getResource('Salary Structure Assignment', [
-                'filters' => [
-                    ['employee', '=', $employeeRef],
-                    ['salary_structure', '=', $salaryStructure],
-                    ['from_date', '>=', $assignmentFromDate],
-                    ['from_date', '<', $payrollDate->copy()->addMonth()->startOfMonth()->format('Y-m-d')]
-                ],
-                'limit_page_length' => 10
-            ]);
+            Log::info("Création salary assignment - Employé: {$employeeRef}, Structure: {$salaryStructure}, From Date: {$assignmentFromDate}, Salaire: {$baseSalary}, Ecraser: {$ecraserSalaire}");
 
-            if (!empty($existingAssignments)) {
-                Log::info("Assignment déjà existant pour cette période");
-                
-                $assignment = $existingAssignments[0];
-                $updateData = [];
-                
-                if ($assignment['base'] != $baseSalary) {
-                    $updateData['base'] = $baseSalary;
+            if ($ecraserSalaire === '1') {
+                // Overwrite mode: Cancel or delete existing assignments for this period
+                $this->payrollDataService->cancelOrDeleteAssignment($employeeRef, $payrollDate->format('Y-m'));
+            } else {
+                // Check for existing assignments
+                $existingAssignments = $this->apiService->getResource('Salary Structure Assignment', [
+                    'filters' => [
+                        ['employee', '=', $employeeRef],
+                        ['salary_structure', '=', $salaryStructure],
+                        ['from_date', '>=', $assignmentFromDate],
+                        ['from_date', '<', $payrollDate->copy()->addMonth()->startOfMonth()->format('Y-m-d')]
+                    ],
+                    'limit_page_length' => 10
+                ]);
+
+                if (!empty($existingAssignments)) {
+                    Log::info("Assignment déjà existant pour cette période");
+                    $assignment = $existingAssignments[0];
+                    $updateData = [];
+
+                    if ($assignment['base'] != $baseSalary) {
+                        $updateData['base'] = $baseSalary;
+                    }
+
+                    if ($assignment['docstatus'] == 0) {
+                        $updateData['docstatus'] = 1;
+                    }
+
+                    if (!empty($updateData)) {
+                        $updated = $this->apiService->updateResource("Salary Structure Assignment/{$assignment['name']}", $updateData);
+                        Log::info("Assignment mis à jour: " . ($updated ? 'Succès' : 'Échec'));
+                        return $updated;
+                    }
+
+                    return true; 
                 }
-                
-                if ($assignment['docstatus'] == 0) {
-                    $updateData['docstatus'] = 1;
-                }
-                
-                if (!empty($updateData)) {
-                    $updated = $this->apiService->updateResource("Salary Structure Assignment/{$assignment['name']}", $updateData);
-                    Log::info("Assignment mis à jour: " . ($updated ? 'Succès' : 'Échec'));
-                    return $updated;
-                }
-                
-                return true; // Déjà correct
             }
-            
-            // Créer un nouvel assignment
+
+            // Create new assignment
             $assignmentData = [
                 'employee' => $employeeRef,
                 'salary_structure' => $salaryStructure,
@@ -227,7 +228,7 @@ class PayrollServiceImport
             Log::info("Création nouvel assignment avec données: " . json_encode($assignmentData));
 
             $assignmentName = $this->apiService->createResource('Salary Structure Assignment', $assignmentData);
-            
+
             if ($assignmentName) {
                 Log::info("Assignment créé avec succès: {$assignmentName}");
                 return true;
@@ -235,26 +236,24 @@ class PayrollServiceImport
                 Log::error("Échec de la création de l'assignment");
                 return false;
             }
-            
         } catch (\Exception $e) {
             Log::error("Erreur lors de la création du salary assignment pour {$employeeRef}: " . $e->getMessage());
             return false;
         }
     }
-
+    
     public function getExistingPayrolls(): array
     {
         try {
             $payrolls = $this->apiService->getResource('Salary Slip', ['limit_page_length' => 2000]);
             $existing = [];
             foreach ($payrolls as $payroll) {
-                // Utiliser start_date si disponible, sinon payroll_period
                 if (!empty($payroll['start_date'])) {
                     $period = Carbon::parse($payroll['start_date'])->format('Y-m');
                 } elseif (!empty($payroll['payroll_period'])) {
                     $period = $payroll['payroll_period'];
                 } else {
-                    continue; // Ignorer si pas de période identifiable
+                    continue; 
                 }
                 
                 $key = $this->generatePayrollKey($payroll['employee'], $period);
@@ -270,7 +269,6 @@ class PayrollServiceImport
 
     public function generatePayrollKey(string $employeeRef, string $monthOrPeriod): string
     {
-        // Normaliser la période au format Y-m
         if (preg_match('/^\d{2}\/\d{2}\/\d{4}$/', $monthOrPeriod)) {
             try {
                 $date = Carbon::createFromFormat('d/m/Y', $monthOrPeriod);
@@ -280,9 +278,9 @@ class PayrollServiceImport
                 $period = $monthOrPeriod;
             }
         } elseif (preg_match('/^\d{4}-\d{2}$/', $monthOrPeriod)) {
-            $period = $monthOrPeriod; // Déjà au bon format
+            $period = $monthOrPeriod;
         } else {
-            $period = $monthOrPeriod; // Garder tel quel
+            $period = $monthOrPeriod; 
         }
 
         return $employeeRef . '_' . $period;
@@ -303,27 +301,6 @@ class PayrollServiceImport
         }
     }
 
-    // private function validatePayrollData(array $record, int $lineNumber): array
-    // {
-    //     foreach (self::REQUIRED_FIELDS as $field) {
-    //         if (empty(trim($record[$field] ?? ''))) {
-    //             return ['valid' => false, 'error' => "Ligne {$lineNumber}: Le champ '{$field}' est requis"];
-    //         }
-    //     }
-
-    //     try {
-    //         Carbon::createFromFormat('d/m/Y', trim($record['Mois']));
-    //     } catch (\Exception $e) {
-    //         return ['valid' => false, 'error' => "Ligne {$lineNumber}: Format de date invalide pour le mois (attendu: jj/mm/aaaa)"];
-    //     }
-
-    //     if (!is_numeric($record['Salaire Base']) || $record['Salaire Base'] <= 0) {
-    //         return ['valid' => false, 'error' => "Ligne {$lineNumber}: Salaire Base doit être un nombre positif"];
-    //     }
-
-    //     return ['valid' => true];
-    // }
-
     public function preparePayrollData(array $record, string $companyName, string $employeeRef): array
     {
         $payrollDate = Carbon::createFromFormat('d/m/Y', trim($record['Mois']));
@@ -331,7 +308,6 @@ class PayrollServiceImport
         $endDate = $payrollDate->copy()->endOfMonth()->format('Y-m-d');
         
         // Le posting_date doit être le dernier jour du mois de paie
-        // pour  éviter les problèmes de validation dans ERPNext
         $postingDate = $payrollDate->copy()->endOfMonth()->format('Y-m-d');
         
         $data = [
@@ -350,4 +326,6 @@ class PayrollServiceImport
         
         return $data;
     }
+
+   
 }

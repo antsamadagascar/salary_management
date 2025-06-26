@@ -86,24 +86,50 @@
                             </a>
                         </li> -->
                       
-                     <li class="nav-item">
+                       <li class="nav-item">
                             <h6 class="sidebar-heading d-flex justify-content-between align-items-center px-3 mt-4 mb-1 text-muted">
-                                <span>CONFIGURATION</span>
+                                <span><i class="fas fa-cogs me-2"></i>Configuration</span>
                             </h6>
                         </li>
 
                         <li class="nav-item">
-                            <a class="nav-link {{ request()->routeIs('salaries.generate.index') ? 'active' : '' }} " href="{{ route('salaries.generate.index') }}" >
-                                <i class="fas fa-play-circle"></i> Générer Salaire
+                            <a class="nav-link {{ request()->routeIs('salaries.generate.index') ? 'active' : '' }}" href="{{ route('salaries.generate.index') }}">
+                                <i class="fas fa-play-circle me-2"></i> Générer Salaire
                             </a>
                         </li>
 
                         <li class="nav-item">
-                            <a class="nav-link {{ request()->routeIs('salaries.config.index') ? 'active' : '' }} " href="{{ route('salaries.config.index') }}">
-                                <i class="fas fa-sliders-h"></i> Salaire de Base
+                            <a class="nav-link {{ request()->routeIs('salaries.config.index') ? 'active' : '' }}" href="{{ route('salaries.config.index') }}">
+                                <i class="fas fa-sliders-h me-2"></i> Salaire de Base
                             </a>
                         </li>
+
+                        <li class="nav-item">
+                            <h6 class="sidebar-heading d-flex justify-content-between align-items-center px-3 mt-4 mb-1 text-muted">
+                                <span><i class="fas fa-history me-2"></i>Historique des Salaires</span>
+                            </h6>
+                        </li>
+
+                        <li class="nav-item">
+                            <a class="nav-link {{ request()->routeIs('salaries.history.index') ? 'active' : '' }}" href="{{ route('salaries.history.index') }}">
+                                <i class="fas fa-list-alt me-2"></i> Liste des Salaires
+                            </a>
+                        </li>
+
+                        <li class="nav-item">
+                            <h6 class="sidebar-heading d-flex justify-content-between align-items-center px-3 mt-4 mb-1 text-muted">
+                                <span><i class="fas fa-filter me-2"></i>Filtrage Avancé</span>
+                            </h6>
+                        </li>
+
+                        <li class="nav-item">
+                            <a class="nav-link {{ request()->routeIs('filter.salary.index') ? 'active' : '' }}" href="{{ route('filter.salary.index') }}">
+                                <i class="fas fa-search me-2"></i> Recherche Salaire
+                            </a>
+                        </li>
+
                         <hr>
+
                     </ul>
                 </div>
             </div>
