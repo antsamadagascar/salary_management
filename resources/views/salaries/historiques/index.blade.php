@@ -112,12 +112,6 @@
                 <button type="submit" class="btn btn-primary px-4 me-2">
                     Rechercher
                 </button>
-                <!-- @if(isset($salaryHistory) && count($salaryHistory) > 0)
-                <a href="?employe_id={{ $request->employe_id }}&date_debut={{ $request->date_debut }}&date_fin={{ $request->date_fin }}" 
-                   class="btn btn-outline-success px-4">
-                    Exporter CSV
-                </a>
-                @endif -->
             </div>
         </form>
 
