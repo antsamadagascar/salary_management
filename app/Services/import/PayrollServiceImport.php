@@ -11,7 +11,6 @@ use Carbon\Carbon;
 
 class PayrollServiceImport
 {
-  //  private const REQUIRED_FIELDS = ['Mois', 'Ref Employe', 'Salaire Base', 'Salaire'];
 
     protected ErpApiService $apiService;
 
@@ -37,11 +36,7 @@ class PayrollServiceImport
             
             foreach ($records as $record) {
                 $lineNumber++;
-                // $validation = $this->validatePayrollData($record, $lineNumber);
-                // if (!$validation['valid']) {
-                //     $results['errors'][] = $validation['error'];
-                //     continue;
-                // }
+
                 
                 $validRecords[] = [
                     'record' => $record,
@@ -304,27 +299,6 @@ class PayrollServiceImport
             return null;
         }
     }
-
-    // private function validatePayrollData(array $record, int $lineNumber): array
-    // {
-    //     foreach (self::REQUIRED_FIELDS as $field) {
-    //         if (empty(trim($record[$field] ?? ''))) {
-    //             return ['valid' => false, 'error' => "Ligne {$lineNumber}: Le champ '{$field}' est requis"];
-    //         }
-    //     }
-
-    //     try {
-    //         Carbon::createFromFormat('d/m/Y', trim($record['Mois']));
-    //     } catch (\Exception $e) {
-    //         return ['valid' => false, 'error' => "Ligne {$lineNumber}: Format de date invalide pour le mois (attendu: jj/mm/aaaa)"];
-    //     }
-
-    //     if (!is_numeric($record['Salaire Base']) || $record['Salaire Base'] <= 0) {
-    //         return ['valid' => false, 'error' => "Ligne {$lineNumber}: Salaire Base doit être un nombre positif"];
-    //     }
-
-    //     return ['valid' => true];
-    // }
 
     public function preparePayrollData(array $record, string $companyName, string $employeeRef): array
     {
