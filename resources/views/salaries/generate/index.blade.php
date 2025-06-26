@@ -83,15 +83,46 @@
             </div>
 
             <!-- Salaire de base -->
-            <div class="col-12">
+            <div class="col-12">    
                 <label for="salaire_base" class="form-label fw-medium">
                     Salaire de base <span class="text-danger">*</span>
                 </label>
-                <input type="number" id="salaire_base" name="salaire_base" step="0.01" min="0" required
+                <input type="number" id="salaire_base" name="salaire_base" step="0.01" min="0" 
                        class="form-control @error('salaire_base') is-invalid @enderror" placeholder="Ex: 50000.00">
                 @error('salaire_base')
                     <div class="invalid-feedback">{{ $message }}</div>
                 @enderror
+            </div>
+
+            <!-- Options avancées -->
+            <div class="col-12">
+                <div class="card border-0 bg-light p-3">
+                    <h6 class="fw-semibold mb-3 text-dark">Options avancées</h6>
+                    
+                    <div class="row g-3">
+                        <!-- Option écraser salaire -->
+                        <div class="col-md-6">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="ecraser_salaire" name="ecraser_salaire" value="1">
+                                <label class="form-check-label" for="ecraser_salaire">
+                                    <strong>Écraser les salaires existants</strong>
+                                    <small class="d-block text-muted">Remplace les fiches de paie existantes pour les mois sélectionnés</small>
+                                </label>
+                            </div>
+                        </div>
+
+                        <!-- Option moyenne salaire -->
+                        <div class="col-md-6">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="moyenne_salaire" name="moyenne_salaire" value="1">
+                                <label class="form-check-label" for="moyenne_salaire">
+                                    <strong>Utiliser la moyenne des salaires</strong>
+                                    <small class="d-block text-muted">Calcule automatiquement la moyenne des salaires de base des employés</small>
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
 
             <!-- Bouton -->
@@ -101,4 +132,22 @@
         </form>
     </div>
 </div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const moyenneSalaireCheckbox = document.getElementById('moyenne_salaire');
+    const salaireBaseInput = document.getElementById('salaire_base');
+    
+    moyenneSalaireCheckbox.addEventListener('change', function() {
+        if (this.checked) {
+            salaireBaseInput.disabled = true;
+            salaireBaseInput.value = '';
+            salaireBaseInput.placeholder = 'La moyenne sera calculée automatiquement';
+        } else {
+            salaireBaseInput.disabled = false;
+            salaireBaseInput.placeholder = 'Ex: 50000.00';
+        }
+    });
+});
+</script>
 @endsection
