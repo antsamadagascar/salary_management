@@ -6,6 +6,7 @@ use App\Services\api\ErpApiService;
 use App\Services\employee\EmployeeService;
 use Carbon\Carbon;
 use Exception;
+use Illuminate\Support\Facades\Log;
 
 class PayrollDataService
 {
@@ -17,7 +18,6 @@ class PayrollDataService
         $this->erpApiService = $erpApiService;
         $this->employeeService = $employeeService;
     }
-
 
     /**
      * Récupére une fiche de paie spécifique
@@ -252,6 +252,92 @@ class PayrollDataService
                 'value' => $currentMonth,
                 'label' => Carbon::now()->format('F Y')
             ]];
+        }
+    }
+
+     /**
+     * Cancel or delete existing salary slips for a specific employee and month.
+     *
+     * @param string $employeeRef Employee reference
+     * @param string $month Month in Y-m format
+     * @return bool Success status
+     */
+    public function cancelOrDeletePayroll(string $employeeRef, string $month): bool
+    {
+        try {
+            $startDate = Carbon::createFromFormat('Y-m', $month)->startOfMonth()->format('Y-m-d');
+            $endDate = Carbon::createFromFormat('Y-m', $month)->endOfMonth()->format('Y-m-d');
+
+            $existingSlips = $this->erpApiService->getResource('Salary Slip', [
+                'filters' => [
+                    ['employee', '=', $employeeRef],
+                    ['start_date', '=', $startDate],
+                    ['end_date', '=', $endDate],
+                    ['docstatus', '!=', 2]
+                ],
+                'fields' => ['name', 'docstatus']
+            ]);
+
+            foreach ($existingSlips as $slip) {
+                if ($slip['docstatus'] == 1) {
+                    $this->erpApiService->executeMethod('frappe.client', 'cancel', [
+                        'doctype' => 'Salary Slip',
+                        'name' => $slip['name']
+                    ]);
+                    Log::info("Salary slip {$slip['name']} annulé pour {$employeeRef} - Mois: {$month}");
+                } elseif ($slip['docstatus'] == 0) {
+                    $this->erpApiService->deleteResource('Salary Slip', $slip['name']);
+                    Log::info("Salary slip draft {$slip['name']} supprimé pour {$employeeRef} - Mois: {$month}");
+                }
+            }
+
+            return true;
+        } catch (\Exception $e) {
+            Log::error("Erreur lors de l'annulation/suppression des fiches de paie pour {$employeeRef} - Mois: {$month}: " . $e->getMessage());
+            return false;
+        }
+    }
+
+    /**
+     * Cancel or delete existing salary structure assignments for a specific employee and month.
+     *
+     * @param string $employeeRef Employee reference
+     * @param string $month Month in Y-m format
+     * @return bool Success status
+     */
+    public function cancelOrDeleteAssignment(string $employeeRef, string $month): bool
+    {
+        try {
+            $startDate = Carbon::createFromFormat('Y-m', $month)->startOfMonth()->format('Y-m-d');
+            $endDate = Carbon::createFromFormat('Y-m', $month)->endOfMonth()->format('Y-m-d');
+
+            $existingAssignments = $this->erpApiService->getResource('Salary Structure Assignment', [
+                'filters' => [
+                    ['employee', '=', $employeeRef],
+                    ['from_date', '>=', $startDate],
+                    ['from_date', '<=', $endDate],
+                    ['docstatus', '!=', 2]
+                ],
+                'fields' => ['name', 'docstatus']
+            ]);
+
+            foreach ($existingAssignments as $assignment) {
+                if ($assignment['docstatus'] == 1) {
+                    $this->erpApiService->executeMethod('frappe.client', 'cancel', [
+                        'doctype' => 'Salary Structure Assignment',
+                        'name' => $assignment['name']
+                    ]);
+                    Log::info("Assignment {$assignment['name']} annulé pour {$employeeRef} - Mois: {$month}");
+                } elseif ($assignment['docstatus'] == 0) {
+                    $this->erpApiService->deleteResource('Salary Structure Assignment', $assignment['name']);
+                    Log::info("Assignment draft {$assignment['name']} supprimé pour {$employeeRef} - Mois: {$month}");
+                }
+            }
+
+            return true;
+        } catch (\Exception $e) {
+            Log::error("Erreur lors de l'annulation/suppression des assignments pour {$employeeRef} - Mois: {$month}: " . $e->getMessage());
+            return false;
         }
     }
 }

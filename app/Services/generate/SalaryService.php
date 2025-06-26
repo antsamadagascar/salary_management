@@ -6,16 +6,20 @@ use App\Services\api\ErpApiService;
 use App\Services\import\PayrollServiceImport;
 use Illuminate\Support\Facades\Log;
 use Carbon\Carbon;
+use App\Services\payroll\PayrollDataService;
+
 
 class SalaryService
 {
     protected ErpApiService $apiService;
     protected PayrollServiceImport $payrollServiceImport;
+    protected PayrollDataService $payrollDataService;
 
-    public function __construct(ErpApiService $apiService, PayrollServiceImport $payrollServiceImport)
+    public function __construct(ErpApiService $apiService, PayrollServiceImport $payrollServiceImport,PayrollDataService $payrollDataService)
     {
         $this->apiService = $apiService;
         $this->payrollServiceImport = $payrollServiceImport;
+        $this->payrollDataService = $payrollDataService;
     }
 
     /**
@@ -84,8 +88,8 @@ class SalaryService
 
                 if ($ecraserSalaire === '1') {
                     // Overwrite mode: Cancel/delete existing assignments and slips
-                    $this->payrollServiceImport->cancelOrDeletePayroll($employee['name'], $monthStr);
-                    $this->payrollServiceImport->cancelOrDeleteAssignment($employee['name'], $monthStr);
+                    $this->payrollDataService->cancelOrDeletePayroll($employee['name'], $monthStr);
+                    $this->payrollDataService->cancelOrDeleteAssignment($employee['name'], $monthStr);
                 } else {
                     // Skip if payroll exists and not overwriting
                     if (isset($existingPayrolls[$payrollKey])) {

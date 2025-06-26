@@ -8,15 +8,18 @@ use Illuminate\Support\Facades\Log;
 use League\Csv\Reader;
 use League\Csv\Exception as CsvException;
 use Carbon\Carbon;
+use App\Services\payroll\PayrollDataService;
 
 class PayrollServiceImport
 {
 
     protected ErpApiService $apiService;
+    protected PayrollDataService $payrollDataService;
 
-    public function __construct(ErpApiService $apiService)
+    public function __construct(ErpApiService $apiService,PayrollDataService $payrollDataService)
     {
         $this->apiService = $apiService;
+        $this->payrollDataService = $payrollDataService;
     }
 
     public function import(UploadedFile $file): array
@@ -57,7 +60,7 @@ class PayrollServiceImport
             
             // PHASE 2: Création/vérification des employés et company
             $processedRecords = [];
-            $companyName = 'My Company'; // Valeur par défaut
+            $companyName = 'My Company';
             
             // Chargement des fiches de paie existantes UNE SEULE FOIS au début
             $existingPayrolls = $this->getExistingPayrolls();
@@ -176,7 +179,7 @@ class PayrollServiceImport
 
             if ($ecraserSalaire === '1') {
                 // Overwrite mode: Cancel or delete existing assignments for this period
-                $this->cancelOrDeleteAssignment($employeeRef, $payrollDate->format('Y-m'));
+                $this->payrollDataService->cancelOrDeleteAssignment($employeeRef, $payrollDate->format('Y-m'));
             } else {
                 // Check for existing assignments
                 $existingAssignments = $this->apiService->getResource('Salary Structure Assignment', [
@@ -245,13 +248,12 @@ class PayrollServiceImport
             $payrolls = $this->apiService->getResource('Salary Slip', ['limit_page_length' => 2000]);
             $existing = [];
             foreach ($payrolls as $payroll) {
-                // Utiliser start_date si disponible, sinon payroll_period
                 if (!empty($payroll['start_date'])) {
                     $period = Carbon::parse($payroll['start_date'])->format('Y-m');
                 } elseif (!empty($payroll['payroll_period'])) {
                     $period = $payroll['payroll_period'];
                 } else {
-                    continue; // Ignorer si pas de période identifiable
+                    continue; 
                 }
                 
                 $key = $this->generatePayrollKey($payroll['employee'], $period);
@@ -267,7 +269,6 @@ class PayrollServiceImport
 
     public function generatePayrollKey(string $employeeRef, string $monthOrPeriod): string
     {
-        // Normaliser la période au format Y-m
         if (preg_match('/^\d{2}\/\d{2}\/\d{4}$/', $monthOrPeriod)) {
             try {
                 $date = Carbon::createFromFormat('d/m/Y', $monthOrPeriod);
@@ -277,9 +278,9 @@ class PayrollServiceImport
                 $period = $monthOrPeriod;
             }
         } elseif (preg_match('/^\d{4}-\d{2}$/', $monthOrPeriod)) {
-            $period = $monthOrPeriod; // Déjà au bon format
+            $period = $monthOrPeriod;
         } else {
-            $period = $monthOrPeriod; // Garder tel quel
+            $period = $monthOrPeriod; 
         }
 
         return $employeeRef . '_' . $period;
@@ -307,7 +308,6 @@ class PayrollServiceImport
         $endDate = $payrollDate->copy()->endOfMonth()->format('Y-m-d');
         
         // Le posting_date doit être le dernier jour du mois de paie
-        // pour  éviter les problèmes de validation dans ERPNext
         $postingDate = $payrollDate->copy()->endOfMonth()->format('Y-m-d');
         
         $data = [
@@ -327,89 +327,5 @@ class PayrollServiceImport
         return $data;
     }
 
-    /**
-     * Cancel or delete existing salary slips for a specific employee and month.
-     *
-     * @param string $employeeRef Employee reference
-     * @param string $month Month in Y-m format
-     * @return bool Success status
-     */
-    public function cancelOrDeletePayroll(string $employeeRef, string $month): bool
-    {
-        try {
-            $startDate = Carbon::createFromFormat('Y-m', $month)->startOfMonth()->format('Y-m-d');
-            $endDate = Carbon::createFromFormat('Y-m', $month)->endOfMonth()->format('Y-m-d');
-
-            $existingSlips = $this->apiService->getResource('Salary Slip', [
-                'filters' => [
-                    ['employee', '=', $employeeRef],
-                    ['start_date', '=', $startDate],
-                    ['end_date', '=', $endDate],
-                    ['docstatus', '!=', 2]
-                ],
-                'fields' => ['name', 'docstatus']
-            ]);
-
-            foreach ($existingSlips as $slip) {
-                if ($slip['docstatus'] == 1) {
-                    $this->apiService->executeMethod('frappe.client', 'cancel', [
-                        'doctype' => 'Salary Slip',
-                        'name' => $slip['name']
-                    ]);
-                    Log::info("Salary slip {$slip['name']} annulé pour {$employeeRef} - Mois: {$month}");
-                } elseif ($slip['docstatus'] == 0) {
-                    $this->apiService->deleteResource('Salary Slip', $slip['name']);
-                    Log::info("Salary slip draft {$slip['name']} supprimé pour {$employeeRef} - Mois: {$month}");
-                }
-            }
-
-            return true;
-        } catch (\Exception $e) {
-            Log::error("Erreur lors de l'annulation/suppression des fiches de paie pour {$employeeRef} - Mois: {$month}: " . $e->getMessage());
-            return false;
-        }
-    }
-
-    /**
-     * Cancel or delete existing salary structure assignments for a specific employee and month.
-     *
-     * @param string $employeeRef Employee reference
-     * @param string $month Month in Y-m format
-     * @return bool Success status
-     */
-    public function cancelOrDeleteAssignment(string $employeeRef, string $month): bool
-    {
-        try {
-            $startDate = Carbon::createFromFormat('Y-m', $month)->startOfMonth()->format('Y-m-d');
-            $endDate = Carbon::createFromFormat('Y-m', $month)->endOfMonth()->format('Y-m-d');
-
-            $existingAssignments = $this->apiService->getResource('Salary Structure Assignment', [
-                'filters' => [
-                    ['employee', '=', $employeeRef],
-                    ['from_date', '>=', $startDate],
-                    ['from_date', '<=', $endDate],
-                    ['docstatus', '!=', 2]
-                ],
-                'fields' => ['name', 'docstatus']
-            ]);
-
-            foreach ($existingAssignments as $assignment) {
-                if ($assignment['docstatus'] == 1) {
-                    $this->apiService->executeMethod('frappe.client', 'cancel', [
-                        'doctype' => 'Salary Structure Assignment',
-                        'name' => $assignment['name']
-                    ]);
-                    Log::info("Assignment {$assignment['name']} annulé pour {$employeeRef} - Mois: {$month}");
-                } elseif ($assignment['docstatus'] == 0) {
-                    $this->apiService->deleteResource('Salary Structure Assignment', $assignment['name']);
-                    Log::info("Assignment draft {$assignment['name']} supprimé pour {$employeeRef} - Mois: {$month}");
-                }
-            }
-
-            return true;
-        } catch (\Exception $e) {
-            Log::error("Erreur lors de l'annulation/suppression des assignments pour {$employeeRef} - Mois: {$month}: " . $e->getMessage());
-            return false;
-        }
-    }
+   
 }
