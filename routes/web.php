@@ -13,6 +13,7 @@ use App\Http\Controllers\PayrollStatsController;
 use App\Http\Controllers\GenerateSalaryController;
 use App\Http\Controllers\ConfigurationSalaryController;
 use App\Http\Controllers\HistoryController;
+use App\Http\Controllers\FilterSalaryController;
 
 Route::get('/', function () {
     return redirect()->route('login');
@@ -87,6 +88,12 @@ Route::middleware([\App\Http\Middleware\FrappeAuthMiddleware::class])->group(fun
         
         // Route pour l'export CSV
        // Route::get('/history/export', [HistoryController::class, 'export'])->name('history.export');
+    });
+
+    Route::prefix('filter')->name('filter.')->group(function() {
+        Route::get('/',[FilterSalaryController::class,'index'])->name('salary.index');
+        Route::post('/filter/salary/result', [FilterSalaryController::class, 'getSalaryFilter'])->name('salary.result');
+
     });
 
     Route::prefix('reset-data')->name('reset-data.')->group(function () {

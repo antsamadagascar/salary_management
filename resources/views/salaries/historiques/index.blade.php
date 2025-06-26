@@ -29,7 +29,7 @@
                 <label for="employe_id" class="form-label fw-medium">
                     Employé <span class="text-danger">*</span>
                 </label>
-                <select id="employe_id" name="employe_id" required class="form-select @error('employe_id') is-invalid @enderror">
+                <select id="employe_id" name="employe_id"  class="form-select @error('employe_id') is-invalid @enderror">
                     <option value="">Sélectionner un employé</option>
                     @foreach($employees as $employee)
                    <option value="{{ $employee['name'] }}"
@@ -61,25 +61,51 @@
                 <label for="date_debut" class="form-label fw-medium">
                     Date de début <span class="text-danger">*</span>
                 </label>
-                <input type="date" id="date_debut" name="date_debut" required 
+                <input type="date" id="date_debut" name="date_debut"  
                        value="{{ old('date_debut', $request->date_debut ?? '') }}"
                        class="form-control @error('date_debut') is-invalid @enderror">
                 @error('date_debut')
                 <div class="invalid-feedback">{{ $message }}</div>
                 @enderror
-            </div>
-
-            <div class="col-md-4">
+                 <div class="col-md-4">
                 <label for="date_fin" class="form-label fw-medium">
                     Date de fin <span class="text-danger">*</span>
                 </label>
-                <input type="date" id="date_fin" name="date_fin" required 
+                <input type="date" id="date_fin" name="date_fin"  
                        value="{{ old('date_fin', $request->date_fin ?? '') }}"
                        class="form-control @error('date_fin') is-invalid @enderror">
                 @error('date_fin')
                 <div class="invalid-feedback">{{ $message }}</div>
                 @enderror
             </div>
+            </div>
+              <div class="col-md-6">
+                <label for="conditions" class="form-label fw-medium">Condition</label>
+                <select id="conditions" name="conditions" class="form-select @error('conditions') is-invalid @enderror">
+                    <option value="">Sélectionner une condition</option>
+                    @foreach($conditions as $condition)
+                        <option value="{{ $condition['name'] }}" 
+                            {{ old('conditions', $request->conditions ?? '') == $condition['name'] ? 'selected' : '' }}>
+                            {{ ucfirst(str_replace('_', ' ', $condition['name'])) }}
+                        </option>
+                    @endforeach
+                </select>
+                @error('conditions')
+                <div class="invalid-feedback">{{ $message }}</div>
+                @enderror
+            </div>
+
+            <!-- Montant -->
+            <div class="col-md-6">
+                <label for="Montant" class="form-label fw-medium">Montant</label>
+                <input type="number" id="Montant" name="Montant" step="0.01" min="0"
+                    class="form-control @error('Montant') is-invalid @enderror" 
+                    value="{{ old('Montant', $request->Montant ?? '') }}">
+                @error('Montant')
+                    <div class="invalid-feedback">{{ $message }}</div>
+                @enderror
+            </div>
+
 
             <!-- Boutons -->
             <div class="col-12 text-end">
@@ -115,7 +141,7 @@
                         <div class="card bg-primary text-white">
                             <div class="card-body text-center">
                                 <h5 class="card-title">Salaire Moyen</h5>
-                                <h3>{{ number_format($statistics['average_salary'], 2, ',', ' ') }} €</h3>
+                                <h3>{{ number_format($statistics['average_salary'], 2, ',', ' ') }} MGA</h3>
                             </div>
                         </div>
                     </div>
@@ -123,7 +149,7 @@
                         <div class="card bg-success text-white">
                             <div class="card-body text-center">
                                 <h5 class="card-title">Salaire Maximum</h5>
-                                <h3>{{ number_format($statistics['max_salary'], 2, ',', ' ') }} €</h3>
+                                <h3>{{ number_format($statistics['max_salary'], 2, ',', ' ') }} MGA</h3>
                             </div>
                         </div>
                     </div>
@@ -131,7 +157,7 @@
                         <div class="card bg-warning text-white">
                             <div class="card-body text-center">
                                 <h5 class="card-title">Salaire Minimum</h5>
-                                <h3>{{ number_format($statistics['min_salary'], 2, ',', ' ') }} €</h3>
+                                <h3>{{ number_format($statistics['min_salary'], 2, ',', ' ') }} MGA</h3>
                             </div>
                         </div>
                     </div>

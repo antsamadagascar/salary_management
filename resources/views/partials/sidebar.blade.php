@@ -115,6 +115,17 @@
                                 <i class="fas fa-play-circle"></i>Salaires
                             </a>
                         </li>
+                         <li class="nav-item">
+                            <h6 class="sidebar-heading d-flex justify-content-between align-items-center px-3 mt-4 mb-1 text-muted">
+                                <span>Filtrages</span>
+                            </h6>
+                        </li>
+
+                        <li class="nav-item">
+                            <a class="nav-link {{ request()->routeIs('filter.salary.index') ? 'active' : '' }} " href="{{ route('filter.salary.index') }}" >
+                                <i class="fas fa-play-circle"></i>Salaires
+                            </a>
+                        </li>
                         <hr>
                     </ul>
                 </div>
