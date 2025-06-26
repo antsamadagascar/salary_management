@@ -180,4 +180,25 @@ class SalaryService
             return [];
         }
     }
+
+    public function getAverageSalary(): float {
+        try {
+            $salaries = $this->apiService->getResource('Salary Structure Assignment', [
+                'fields' => ['base'],
+                'limit_page_length' => 1000
+            ]);
+
+            if (empty($salaries)) {
+                return 0;
+            }
+
+            $total = array_sum(array_column($salaries, 'base'));
+            $moyenne = $total / count($salaries);
+            return round($moyenne, 2);
+        } catch (\Exception $e) {
+            Log::error('Erreur moyenne salaires : ' . $e->getMessage());
+            return 0;
+        }   
+    }
+
 }

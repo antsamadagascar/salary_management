@@ -103,7 +103,7 @@
                         <!-- Option écraser salaire -->
                         <div class="col-md-6">
                             <div class="form-check">
-                                <input class="form-check-input" type="checkbox" id="ecraser_salaire" name="ecraser_salaire" value="1">
+                                <input class="form-check-input" type="checkbox" id="ecraser_salaire" name="ecraser_salaire" value="0">
                                 <label class="form-check-label" for="ecraser_salaire">
                                     <strong>Écraser les salaires existants</strong>
                                     <small class="d-block text-muted">Remplace les fiches de paie existantes pour les mois sélectionnés</small>
