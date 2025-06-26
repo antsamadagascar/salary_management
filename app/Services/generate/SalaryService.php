@@ -207,20 +207,25 @@ class SalaryService
     public function getAverageSalary(): float {
         try {
             $salaries = $this->apiService->getResource('Salary Structure Assignment', [
+                'filters' => [
+                    ['docstatus', '=', 1]
+                ],
                 'fields' => ['base'],
                 'limit_page_length' => 1000
             ]);
 
             if (empty($salaries)) {
+                Log::info("Aucun salaire soumis trouvé pour le calcul de la moyenne.");
                 return 0;
             }
 
             $total = array_sum(array_column($salaries, 'base'));
             $moyenne = $total / count($salaries);
+            Log::info("Moyenne des salaires calculée: {$moyenne} (basée sur " . count($salaries) . " assignments)");
             return round($moyenne, 2);
         } catch (\Exception $e) {
-            Log::error('Erreur moyenne salaires : ' . $e->getMessage());
+            Log::error('Erreur lors du calcul de la moyenne des salaires : ' . $e->getMessage());
             return 0;
-        }   
+        }
     }
 }
