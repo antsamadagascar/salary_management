@@ -171,50 +171,53 @@ class PayrollServiceImport
     }
 
 
-    public function createSalaryAssignment(string $employeeRef, string $salaryStructure, float $baseSalary, string $month, string $companyName): bool
+    public function createSalaryAssignment(string $employeeRef, string $salaryStructure, float $baseSalary, string $month, string $companyName, string $ecraserSalaire = null): bool
     {
         try {
             $payrollDate = Carbon::createFromFormat('d/m/Y', $month);
-            // Utilise le premier jour du mois pour l'assignment from_date
             $assignmentFromDate = $payrollDate->copy()->startOfMonth()->format('Y-m-d');
             
-            Log::info("Création salary assignment - Employé: {$employeeRef}, Structure: {$salaryStructure}, From Date: {$assignmentFromDate}, Salaire: {$baseSalary}");
-            
-            // Vérifie si un assignment existe déjà pour cette période (même mois/année)
-            $existingAssignments = $this->apiService->getResource('Salary Structure Assignment', [
-                'filters' => [
-                    ['employee', '=', $employeeRef],
-                    ['salary_structure', '=', $salaryStructure],
-                    ['from_date', '>=', $assignmentFromDate],
-                    ['from_date', '<', $payrollDate->copy()->addMonth()->startOfMonth()->format('Y-m-d')]
-                ],
-                'limit_page_length' => 10
-            ]);
+            Log::info("Création salary assignment - Employé: {$employeeRef}, Structure: {$salaryStructure}, From Date: {$assignmentFromDate}, Salaire: {$baseSalary}, Ecraser: {$ecraserSalaire}");
 
-            if (!empty($existingAssignments)) {
-                Log::info("Assignment déjà existant pour cette période");
-                
-                $assignment = $existingAssignments[0];
-                $updateData = [];
-                
-                if ($assignment['base'] != $baseSalary) {
-                    $updateData['base'] = $baseSalary;
+            if ($ecraserSalaire === '1') {
+                // Overwrite mode: Cancel or delete existing assignments for this period
+                $this->cancelOrDeleteAssignment($employeeRef, $payrollDate->format('Y-m'));
+            } else {
+                // Check for existing assignments
+                $existingAssignments = $this->apiService->getResource('Salary Structure Assignment', [
+                    'filters' => [
+                        ['employee', '=', $employeeRef],
+                        ['salary_structure', '=', $salaryStructure],
+                        ['from_date', '>=', $assignmentFromDate],
+                        ['from_date', '<', $payrollDate->copy()->addMonth()->startOfMonth()->format('Y-m-d')]
+                    ],
+                    'limit_page_length' => 10
+                ]);
+
+                if (!empty($existingAssignments)) {
+                    Log::info("Assignment déjà existant pour cette période");
+                    $assignment = $existingAssignments[0];
+                    $updateData = [];
+
+                    if ($assignment['base'] != $baseSalary) {
+                        $updateData['base'] = $baseSalary;
+                    }
+
+                    if ($assignment['docstatus'] == 0) {
+                        $updateData['docstatus'] = 1;
+                    }
+
+                    if (!empty($updateData)) {
+                        $updated = $this->apiService->updateResource("Salary Structure Assignment/{$assignment['name']}", $updateData);
+                        Log::info("Assignment mis à jour: " . ($updated ? 'Succès' : 'Échec'));
+                        return $updated;
+                    }
+
+                    return true; 
                 }
-                
-                if ($assignment['docstatus'] == 0) {
-                    $updateData['docstatus'] = 1;
-                }
-                
-                if (!empty($updateData)) {
-                    $updated = $this->apiService->updateResource("Salary Structure Assignment/{$assignment['name']}", $updateData);
-                    Log::info("Assignment mis à jour: " . ($updated ? 'Succès' : 'Échec'));
-                    return $updated;
-                }
-                
-                return true; // Déjà correct
             }
-            
-            // Créer un nouvel assignment
+
+            // Create new assignment
             $assignmentData = [
                 'employee' => $employeeRef,
                 'salary_structure' => $salaryStructure,
@@ -227,7 +230,7 @@ class PayrollServiceImport
             Log::info("Création nouvel assignment avec données: " . json_encode($assignmentData));
 
             $assignmentName = $this->apiService->createResource('Salary Structure Assignment', $assignmentData);
-            
+
             if ($assignmentName) {
                 Log::info("Assignment créé avec succès: {$assignmentName}");
                 return true;
@@ -235,13 +238,12 @@ class PayrollServiceImport
                 Log::error("Échec de la création de l'assignment");
                 return false;
             }
-            
         } catch (\Exception $e) {
             Log::error("Erreur lors de la création du salary assignment pour {$employeeRef}: " . $e->getMessage());
             return false;
         }
     }
-
+    
     public function getExistingPayrolls(): array
     {
         try {
@@ -349,5 +351,91 @@ class PayrollServiceImport
         Log::info("Données fiche de paie préparées - Employé: {$employeeRef}, Période: {$payrollDate->format('Y-m')}, Posting Date: {$postingDate}");
         
         return $data;
+    }
+
+    /**
+     * Cancel or delete existing salary slips for a specific employee and month.
+     *
+     * @param string $employeeRef Employee reference
+     * @param string $month Month in Y-m format
+     * @return bool Success status
+     */
+    public function cancelOrDeletePayroll(string $employeeRef, string $month): bool
+    {
+        try {
+            $startDate = Carbon::createFromFormat('Y-m', $month)->startOfMonth()->format('Y-m-d');
+            $endDate = Carbon::createFromFormat('Y-m', $month)->endOfMonth()->format('Y-m-d');
+
+            $existingSlips = $this->apiService->getResource('Salary Slip', [
+                'filters' => [
+                    ['employee', '=', $employeeRef],
+                    ['start_date', '=', $startDate],
+                    ['end_date', '=', $endDate],
+                    ['docstatus', '!=', 2]
+                ],
+                'fields' => ['name', 'docstatus']
+            ]);
+
+            foreach ($existingSlips as $slip) {
+                if ($slip['docstatus'] == 1) {
+                    $this->apiService->executeMethod('frappe.client', 'cancel', [
+                        'doctype' => 'Salary Slip',
+                        'name' => $slip['name']
+                    ]);
+                    Log::info("Salary slip {$slip['name']} annulé pour {$employeeRef} - Mois: {$month}");
+                } elseif ($slip['docstatus'] == 0) {
+                    $this->apiService->deleteResource('Salary Slip', $slip['name']);
+                    Log::info("Salary slip draft {$slip['name']} supprimé pour {$employeeRef} - Mois: {$month}");
+                }
+            }
+
+            return true;
+        } catch (\Exception $e) {
+            Log::error("Erreur lors de l'annulation/suppression des fiches de paie pour {$employeeRef} - Mois: {$month}: " . $e->getMessage());
+            return false;
+        }
+    }
+
+    /**
+     * Cancel or delete existing salary structure assignments for a specific employee and month.
+     *
+     * @param string $employeeRef Employee reference
+     * @param string $month Month in Y-m format
+     * @return bool Success status
+     */
+    public function cancelOrDeleteAssignment(string $employeeRef, string $month): bool
+    {
+        try {
+            $startDate = Carbon::createFromFormat('Y-m', $month)->startOfMonth()->format('Y-m-d');
+            $endDate = Carbon::createFromFormat('Y-m', $month)->endOfMonth()->format('Y-m-d');
+
+            $existingAssignments = $this->apiService->getResource('Salary Structure Assignment', [
+                'filters' => [
+                    ['employee', '=', $employeeRef],
+                    ['from_date', '>=', $startDate],
+                    ['from_date', '<=', $endDate],
+                    ['docstatus', '!=', 2]
+                ],
+                'fields' => ['name', 'docstatus']
+            ]);
+
+            foreach ($existingAssignments as $assignment) {
+                if ($assignment['docstatus'] == 1) {
+                    $this->apiService->executeMethod('frappe.client', 'cancel', [
+                        'doctype' => 'Salary Structure Assignment',
+                        'name' => $assignment['name']
+                    ]);
+                    Log::info("Assignment {$assignment['name']} annulé pour {$employeeRef} - Mois: {$month}");
+                } elseif ($assignment['docstatus'] == 0) {
+                    $this->apiService->deleteResource('Salary Structure Assignment', $assignment['name']);
+                    Log::info("Assignment draft {$assignment['name']} supprimé pour {$employeeRef} - Mois: {$month}");
+                }
+            }
+
+            return true;
+        } catch (\Exception $e) {
+            Log::error("Erreur lors de l'annulation/suppression des assignments pour {$employeeRef} - Mois: {$month}: " . $e->getMessage());
+            return false;
+        }
     }
 }

@@ -24,11 +24,12 @@ class SalaryService
      * @param string $employeeId Identifiant de l'employé (employee_number)
      * @param string $dateDebut Date de début au format 'd/m/Y'
      * @param string $dateFin Date de fin au format 'd/m/Y'
-     * @param float $salaireBase Salaire de base à utiliser si aucun salaire antérieur n'est trouvé
+     * @param float|null $salaireBase Salaire de base à utiliser si aucun salaire antérieur n'est trouvé
      * @param string $salaryStructure Nom de la structure salariale à utiliser
+     * @param string $ecraserSalaire Indique si les salaires existants doivent être écrasés
      * @return array Résultat avec les salaires créés, ignorés et erreurs
      */
-    public function generateMissingPayrolls(string $employeeId, string $dateDebut, string $dateFin, float $salaireBase, string $salaryStructure): array
+    public function generateMissingPayrolls(string $employeeId, string $dateDebut, string $dateFin, ?float $salaireBase, string $salaryStructure, string $ecraserSalaire): array
     {
         $results = ['success' => 0, 'skipped' => 0, 'errors' => []];
 
@@ -40,14 +41,14 @@ class SalaryService
                 return $results;
             }
 
-            // Vérifie si la structure salariale existe
+            // Verify if the salary structure exists
             if (!$this->apiService->resourceExists("Salary Structure/{$salaryStructure}")) {
                 $results['errors'][] = "Structure salariale non trouvée: {$salaryStructure}";
                 Log::error("Structure salariale non trouvée: {$salaryStructure}");
                 return $results;
             }
 
-            // Converti les dates
+            // Convert dates
             $startDate = Carbon::createFromFormat('d/m/Y', $dateDebut)->startOfMonth();
             $endDate = Carbon::createFromFormat('d/m/Y', $dateFin)->endOfMonth();
 
@@ -57,13 +58,21 @@ class SalaryService
                 return $results;
             }
 
-            // Charge les fiches de paie existantes
+            // Load existing payrolls
             $existingPayrolls = $this->payrollServiceImport->getExistingPayrolls();
             Log::info("Fiches de paie existantes pour vérification: " . count($existingPayrolls));
 
-            // Trouve le dernier salaire
-            $lastSalary = $this->findLastSalaryBefore($employee['name'], $startDate);
-            $baseSalaryToUse = $lastSalary ? (float) $lastSalary['base'] : $salaireBase;
+            // Determine base salary to use
+            $baseSalaryToUse = $salaireBase;
+            if (is_null($salaireBase)) {
+                $lastSalary = $this->findLastSalaryBefore($employee['name'], $startDate);
+                $baseSalaryToUse = $lastSalary ? (float) $lastSalary['base'] : 0.0;
+                if ($baseSalaryToUse === 0.0) {
+                    $results['errors'][] = "Aucun salaire de base fourni et aucun salaire antérieur trouvé pour {$employee['name']}";
+                    Log::error("Aucun salaire de base fourni et aucun salaire antérieur trouvé pour {$employee['name']}");
+                    return $results;
+                }
+            }
             Log::info("Salaire de base à utiliser: {$baseSalaryToUse} pour employé {$employee['name']}");
 
             $currentDate = $startDate->copy();
@@ -73,19 +82,28 @@ class SalaryService
                 $monthStr = $currentDate->format('Y-m');
                 $payrollKey = $this->payrollServiceImport->generatePayrollKey($employee['name'], $monthStr);
 
-                if (isset($existingPayrolls[$payrollKey])) {
-                    $results['skipped']++;
-                    Log::info("Fiche de paie existante pour {$employee['name']} - Mois: {$monthStr}, ignorée");
-                    $currentDate->addMonth();
-                    continue;
+                if ($ecraserSalaire === '1') {
+                    // Overwrite mode: Cancel/delete existing assignments and slips
+                    $this->payrollServiceImport->cancelOrDeletePayroll($employee['name'], $monthStr);
+                    $this->payrollServiceImport->cancelOrDeleteAssignment($employee['name'], $monthStr);
+                } else {
+                    // Skip if payroll exists and not overwriting
+                    if (isset($existingPayrolls[$payrollKey])) {
+                        $results['skipped']++;
+                        Log::info("Fiche de paie existante pour {$employee['name']} - Mois: {$monthStr}, ignorée");
+                        $currentDate->addMonth();
+                        continue;
+                    }
                 }
 
+                // Create new salary assignment
                 $assignmentResult = $this->payrollServiceImport->createSalaryAssignment(
                     $employee['name'],
                     $salaryStructure,
                     $baseSalaryToUse,
                     $currentDate->format('d/m/Y'),
-                    $companyName
+                    $companyName,
+                    $ecraserSalaire
                 );
 
                 if (!$assignmentResult) {
@@ -98,6 +116,7 @@ class SalaryService
                 $results['success']++;
                 Log::info("Assignment créé pour {$employee['name']} - Mois: {$monthStr}");
 
+                // Create new salary slip
                 $payrollData = $this->payrollServiceImport->preparePayrollData(
                     [
                         'Mois' => $currentDate->format('d/m/Y'),
@@ -200,5 +219,4 @@ class SalaryService
             return 0;
         }   
     }
-
 }

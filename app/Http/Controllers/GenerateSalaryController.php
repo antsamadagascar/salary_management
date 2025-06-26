@@ -37,10 +37,8 @@ class GenerateSalaryController extends Controller
             'date_debut' => 'required|date',
             'date_fin' => 'required|date|after_or_equal:date_debut',
             'salary_structure' => 'required|string',
-            'salaire_base' => $request->input('moyenne_salaire') == '1' ? 'nullable' : 'required|numeric|min:0'
+            'salaire_base' => $request->input('moyenne_salaire') == '1' ? 'nullable' : 'nullable|numeric|min:0'
         ]);
-
-
 
         try {
             $dateDebut = \Carbon\Carbon::createFromFormat('Y-m-d', $validated['date_debut'])->format('d/m/Y');
@@ -49,19 +47,21 @@ class GenerateSalaryController extends Controller
             $moyenneSalaire = $request->boolean('moyenne_salaire') ? '1' : '0';
             $ecraserSalaire = $request->boolean('ecraser_salaire') ? '1' : '0';
             
-            if($moyenneSalaire == 1) {
+            $salaireBase = null;
+            if ($moyenneSalaire == '1') {
                 $salaireBase = $this->salaryService->getAverageSalary();
-            }  else {
-                $salaireBase = $validated['salaire_base'];
+            } elseif (isset($validated['salaire_base']) && is_numeric($validated['salaire_base'])) {
+                $salaireBase = floatval($validated['salaire_base']);
             }
+            
             $result = $this->salaryService->generateMissingPayrolls(
                 $validated['employe_id'],
                 $dateDebut,
                 $dateFin,
                 $salaireBase,
-                $validated['salary_structure']
+                $validated['salary_structure'],
+                $ecraserSalaire
             );
-
 
             if (!empty($result['errors'])) {
                 return redirect()->route('salaries.generate.index')->with('error', implode(', ', $result['errors']));
