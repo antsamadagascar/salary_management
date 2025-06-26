@@ -5,7 +5,7 @@
 @section('content')
 <div class="container px-4 py-5">
     <div class="card shadow-sm p-4">
-        <h1 class="card-title fs-3 fw-bold text-dark mb-4">Génération des Salaires</h1>
+        <h1 class="card-title fs-3 fw-bold text-dark mb-4">Recherche  Salaires</h1>
 
         @if(session('success'))
             <div class="alert alert-success alert-dismissible fade show" role="alert">
