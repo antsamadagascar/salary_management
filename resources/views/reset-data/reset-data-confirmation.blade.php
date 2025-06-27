@@ -80,7 +80,7 @@
                                     <i class="fas fa-trash"></i>
                                     SUPPRIMER TOUTES LES DONNÉES
                                 </button>
-                                <a href="{{ route('dashboard') }}" class="btn btn-secondary">
+                                <a href="{{ route('payroll.stats.index') }}" class="btn btn-secondary">
                                     <i class="fas fa-arrow-left"></i>
                                     Annuler et retourner au tableau de bord
                                 </a>
@@ -90,7 +90,7 @@
                         <div class="alert alert-info">
                             <h5><i class="fas fa-info-circle"></i> Aucune donnée à supprimer</h5>
                             <p>Il n'y a actuellement aucune donnée dans les tables concernées.</p>
-                            <a href="{{ route('dashboard') }}" class="btn btn-primary">
+                            <a href="{{ route('payroll.stats.index') }}" class="btn btn-primary">
                                 Retourner au tableau de bord
                             </a>
                         </div>
