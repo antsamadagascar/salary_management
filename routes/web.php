@@ -1,7 +1,6 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\EmployeePayrollController;
 use App\Http\Controllers\SalaryDetailsController;
@@ -23,7 +22,6 @@ Route::post('/login', [AuthController::class, 'login']);
 Route::middleware([\App\Http\Middleware\FrappeAuthMiddleware::class])->group(function () {
     Route::get('/logout', [AuthController::class, 'logout'])->name('logout');
     Route::get('/user', [AuthController::class, 'getLoggedUser'])->name('user.info');
-    Route::get('/dashboard', [App\Http\Controllers\DashboardController::class, 'index'])->name('dashboard');
 
     Route::prefix('import')->name('import.')->group(function () {
         Route::get('/', [App\Http\Controllers\ImportController::class, 'showImportForm'])->name('form');
