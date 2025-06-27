@@ -54,21 +54,7 @@
                                 <i class="fas fa-calendar-alt"></i> Par Mois
                             </a>
                         </li>
-
-                        <!-- Section Import/Export -->
-                        <li class="nav-item">
-                            <h6 class="sidebar-heading d-flex justify-content-between align-items-center px-3 mt-4 mb-1 text-muted">
-                                <span>IMPORT/EXPORT</span>
-                            </h6>
-                        </li>
-
-                        <li class="nav-item">
-                         <a class="nav-link {{ request()->routeIs('import.form') ? 'active' : '' }} " href="{{ route('import.form') }}">
-                                <i class="fas fa-file-csv"></i> Import CSV
-                            </a>
-                        </li> 
                         
-                      
                        <li class="nav-item">
                             <h6 class="sidebar-heading d-flex justify-content-between align-items-center px-3 mt-4 mb-1 text-muted">
                                 <span><i class="fas fa-cogs me-2"></i>Configuration</span>
@@ -110,6 +96,20 @@
                                 <i class="fas fa-search me-2"></i> Recherche Salaire
                             </a>
                         </li>
+                        
+                        <!-- Section Import/Export -->
+                        <li class="nav-item">
+                            <h6 class="sidebar-heading d-flex justify-content-between align-items-center px-3 mt-4 mb-1 text-muted">
+                                <span>IMPORT/EXPORT</span>
+                            </h6>
+                        </li>
+
+                        <li class="nav-item">
+                         <a class="nav-link {{ request()->routeIs('import.form') ? 'active' : '' }} " href="{{ route('import.form') }}">
+                                <i class="fas fa-file-csv"></i> Import CSV
+                            </a>
+                        </li> 
+                        
                         <li class="nav-item">
                             <h6 class="sidebar-heading d-flex justify-content-between align-items-center px-3 mt-4 mb-1 text-muted">
                                 <span><i class="fas fa-trash-restore"></i>Reinitialisation </span>
