@@ -50,17 +50,41 @@ Une application web complète de gestion des salaires développée en **Laravel*
 - Tendances et projections salariales
 
 ### ⚙️ 6. Configuration et Automatisation
-![Génération Automatique](images/9.png) ![Salaire Généré](images/13.png)
-- **Génération automatique** des salaires manquants entre deux dates
-- Formulaire de configuration pour générer les mois manquants
-- Exemple : génération automatique de 1,500,000 Ar pour les périodes manquantes
+# Configuration et Automatisation
 
+![Génération Automatique](images/9.png) ![Salaire Généré](images/13.png)
+
+- **Génération automatique** des salaires manquants entre deux dates pour un employé spécifié.
+- Formulaire de configuration pour générer les mois manquants avec les options suivantes :
+  - **Écrasement des salaires existants** : Lorsque l'option `Écraser les salaires existants` est activée, les `Salary Structure Assignments` et `Salary Slips` existants pour les mois sélectionnés sont annulés (si soumis, `docstatus = 1`) ou supprimés (si brouillon, `docstatus = 0`), puis de nouveaux assignments et slips sont créés avec le salaire de base spécifié ou, si non fourni, le dernier salaire de référence avant la période.
+  - **Utilisation de la moyenne des salaires** : Lorsque l'option `Utiliser la moyenne des salaires` est activée, le salaire de base est calculé comme la moyenne des salaires de base des `Salary Structure Assignments` soumis (`docstatus = 1`) pour tous les employés.
+  - **Saisie manuelle du salaire de base** : Si un salaire de base est fourni dans le formulaire, il est utilisé pour la génération des salaires. Si aucun salaire de base n'est fourni et l'option de moyenne n'est pas activée, le système utilise le dernier salaire de base soumis avant la période sélectionnée comme référence. Une erreur est retournée si aucun salaire de référence n'est trouvé.
+- Exemple : Génération automatique de salaires de 1,500,000 Ar pour les périodes manquantes (par exemple, avril et mai 2025). Si l'option d'écrasement est activée, les salaires existants pour ces mois sont remplacés par 1,500,000 Ar. Si aucun salaire de base n'est fourni, le salaire de mars 2025 (par exemple, 150,000 Ar) est utilisé comme référence pour les deux mois.
+
+###  6. Modification salaire 
 ![Modification Salaire](images/10.png)
 - **Modification du salaire de base** par conditions et règles personnalisées
 - Gestion des augmentations et ajustements salariaux
 - Interface intuitive pour les modifications en masse
 
-### 📥 7. Import de Données CSV
+###  7. Historique des salaires avec statistiques
+![Historique Salaire](images/14.png)
+- **Historique des salaires avec statistiques** :
+  - Permet de consulter l'historique des salaires d'un employé spécifique sur une période donnée (définie par une date de début et de fin) ou pour une année spécifique.
+  - Affiche les détails des `Salary Structure Assignments` et `Salary Slips` pour l'employé, incluant les salaires de base et autres composants salariaux.
+  - Calcule des statistiques telles que la moyenne, le minimum, le maximum et l'écart-type des salaires sur la période sélectionnée, offrant une vue d'ensemble des tendances salariales.
+  - Interface utilisateur accessible via `salaries.historiques.index`, avec un formulaire pour sélectionner l'employé, la période ou l'année, et afficher les résultats avec des statistiques.
+  - Exemple : Consultation de l'historique des salaires pour un employé entre avril et mai 2025, avec une moyenne salariale calculée pour cette période.
+
+###  8. Recherche de salaires par critères
+![Recherche Salaire](images/15.png)
+- **Recherche de salaires par critères** :
+  - Permet de filtrer les employés selon des critères spécifiques basés sur les composants salariaux, un montant de référence et une condition (inférieur, supérieur, égal, inférieur ou égal, supérieur ou égal).
+  - Utilise une interface intuitive (`filter.salary.index`) pour sélectionner un composant salarial (par exemple, salaire de base, prime), un montant et une condition pour identifier les employés correspondants.
+  - Affiche les résultats de la recherche, incluant les employés dont les salaires répondent aux critères définis, avec les détails des composants salariaux.
+  - Exemple : Recherche des employés ayant un salaire de base supérieur à 1,000,000 Ar, affichant tous les employés correspondants avec leurs détails salariaux.
+
+### 📥 9. Import de Données CSV
 ![Import CSV](images/8.png)
 - **Import en masse** via fichiers CSV pour trois types de données
 - Validation automatique des données importées
@@ -132,6 +156,8 @@ L'application propose une interface intuitive avec :
 - Tableaux de bord avec statistiques complètes
 - Graphiques d'évolution temporelle
 - Outils de configuration et d'import
+- Recherche salaire et suivie avec statistques avec moyennes des salaires et historiques.
+- Outils de configuration et d'import
 
 ## 🔧 Installation et Configuration
 
@@ -141,65 +167,136 @@ L'application propose une interface intuitive avec :
 - **Node.js** et **npm** pour les assets frontend
 - **Serveur ERPNext** configuré et accessible
 - **Base de données** MySQL/MariaDB
-- **Serveur web** Apache/Nginx
 
-### Installation
+# Guide d'Installation - Salary Management
 
-1. **Cloner le repository**
+## 🔧 Prérequis
+
+Avant de commencer l'installation, assurez-vous d'avoir :
+- PHP 8.1 ou supérieur
+- Composer
+- Node.js et npm
+- Un serveur web (Apache/Nginx)
+- Accès à une instance ERPNext fonctionnelle
+
+## 📋 Étapes d'Installation
+
+### 1. Installation d'ERPNext
+
+Suivez les instructions officielles pour installer ERPNext : [Documentation ERPNext](https://frappeframework.com/docs/user/en/installation). 
+
+**Important :** Assurez-vous que l'environnement ERPNext est correctement configuré avant de procéder aux étapes suivantes.
+
+### 2. Installation du module HRMS
+
+Installez le module HR (HRMS) requis pour la gestion des salaires :
+
+```bash
+bench get-app hrms
+ls sites/
+bench --site erpnext.localhost install-app hrms
+```
+
+**Note :** La commande `ls sites/` permet de vérifier le nom du site ERPNext (par exemple, `erpnext.localhost`). Remplacez `erpnext.localhost` par le nom de votre site.
+
+### 3. Configuration ERPNext
+
+#### 3.1 Activer l'API REST
+- Aller dans ERPNext > Paramètres > Paramètres système
+- Activer "Allow REST API"
+
+#### 3.2 Créer les API Keys
+- Générer des clés API pour l'authentification
+- Configurer les permissions pour le module RH
+
+#### 3.3 Vérifier les modules RH requis
+Assurez-vous que les modules suivants sont disponibles :
+- Employee (Employé)
+- Salary Structure (Structure Salariale)
+- Salary Component (Composant de Salaire)
+- Salary Slip (Fiche de Paie)
+- Employment Type (Type d'Emploi)
+- Department (Département)
+
+### 4. Installation du projet Salary Management
+
+#### 4.1 Cloner le repository
 ```bash
 git clone https://github.com/antsamadagascar/salary_management.git
 cd salary_management
 ```
 
-2. **Installer les dépendances PHP**
+#### 4.2 Installer les dépendances
 ```bash
+# Dépendances PHP
 composer install
-```
 
-3. **Installer les dépendances JavaScript**
-```bash
+# Dépendances JavaScript
 npm install
 npm run build
 ```
 
-4. **Configuration Laravel**
+#### 4.3 Configuration Laravel
 ```bash
+# Copier le fichier de configuration
 cp .env.example .env
+
+# Générer la clé d'application
 php artisan key:generate
 ```
 
-5. **Configuration ERPNext dans .env**
+#### 4.4 Configuration des variables d'environnement
+Modifier le fichier `.env` avec vos paramètres ERPNext :
+
 ```env
 APP_KEY=votre_api_key_generate_laravel
 ERP_API_KEY=votre_api_key
 ERP_API_SECRET=votre_api_secret
 ERP_API_URL=https://votre-erpnext.com
-
 ```
 
-6. **Migration et configuration**
+### 5. Lancement de l'application
+
 ```bash
-php artisan migrate
-php artisan db:seed
+php artisan serve
 ```
 
-### Configuration ERPNext
+### 6. Accès à l'application
 
-1. **Activer l'API REST**
-   - Aller dans ERPNext > Paramètres > Paramètres système
-   - Activer "Allow REST API"
+Ouvrir [http://127.0.0.1:8000/](http://127.0.0.1:8000/) dans votre navigateur et se connecter avec les identifiants ERPNext.
 
-2. **Créer les API Keys**
-   - Générer des clés API pour l'authentification
-   - Configurer les permissions pour le module RH
+## 🚀 Démarrage Rapide
 
-3. **Module RH requis**
-   - Employee (Employé)
-   - Salary Structure (Structure Salariale)
-   - Salary Component (Composant de Salaire)
-   - Salary Slip (Fiche de Paie)
-   - Employment Type (Type d'Emploi)
-   - Department (Département)
+Pour une installation rapide (si ERPNext est déjà configuré) :
+
+```bash
+# 1. Cloner et installer
+git clone https://github.com/antsamadagascar/salary_management.git
+cd salary_management
+composer install
+npm install && npm run build
+
+# 2. Configurer
+cp .env.example .env
+php artisan key:generate
+
+# 3. Modifier .env avec vos paramètres ERPNext
+
+# 4. Lancer
+php artisan serve
+```
+
+## ⚠️ Notes importantes
+
+- Vérifiez que votre instance ERPNext est accessible avant de configurer l'application
+- Les clés API doivent avoir les permissions appropriées pour accéder aux modules RH
+- Le port par défaut est 8000, mais vous pouvez le modifier si nécessaire
+- Assurez-vous que tous les modules HRMS requis sont installés et configurés dans ERPNext
+
+## Importer les données
+
+Importer les données via les fichiers CSV d'exemple(data/data-test/data-true).
+
 
 ## 📊 Avantages de l'Architecture
 
@@ -229,33 +326,6 @@ php artisan db:seed
 - **Maintenance simplifiée** avec deux systèmes spécialisés
 - **Performance optimisée** avec cache Laravel
 
-## 🚀 Démarrage Rapide
-
-1. **Cloner et installer**
-```bash
-git clone https://github.com/antsamadagascar/salary_management.git
-cd salary_management
-composer install
-npm install && npm run build
-```
-
-2. **Configurer l'environnement**
-```bash
-cp .env.example .env
-php artisan key:generate
-# Configurer les paramètres ERPNext dans .env
-```
-
-3. **Lancer l'application**
-```bash
-php artisan serve
-```
-
-4. **Accéder à l'application**
-   - Ouvrir http://127.0.0.1:8001/
-   - Se connecter avec les identifiants ERPNext
-   - Importer les données via les fichiers CSV d'exemple
-
 ## 🏗️ Structure du Projet
 
 ```
@@ -263,31 +333,34 @@ salary_management/
 ├── app/
 │   ├── Http/
 │   │   ├── Controllers/
-│   │   │   ├── AuthController.php
-│   │   │   ├── Employee/
-│   │   │   │   ├── EmployeeController.php
-│   │   │   │   └── PayrollController.php
-│   │   │   ├── Salary/
-│   │   │   │   ├── ConfigurationController.php
-│   │   │   │   ├── GenerateController.php
-│   │   │   │   ├── ImportController.php
-│   │   │   │   ├── DetailsController.php
-│   │   │   │   └── StatsController.php
-│   │   │   └── System/
-│   │   │       └── ResetDataController.php
+│   │   │   ├──AuthController.php
+│   │   │   ├──ConfigurationSalaryController.php
+│   │   │   ├──EmployeeController.php
+│   │   │   ├──EmployeePayrollController.php
+│   │   │   ├──FilterSalaryController.php
+│   │   │   ├──GenerateSalaryController.php
+│   │   │   ├──HistoryController.php
+│   │   │   ├──ImportController.php
+│   │   │   ├──PayrollStatsController.php
+│   │   │   ├──ResetDataController.php
+│   │   │   └──SalaryDetailsController.php
 │
 │   ├── Services/
-│   │   ├── Api/
+│   │   ├── api/
 │   │   │   └── ErpApiService.php
-│   │   ├── Config/
+│   │   ├── config/
 │   │   │   └── SalaryConfigService.php
-│   │   ├── Employee/
+│   │   ├── employee/
 │   │   │   └── EmployeeService.php
-│   │   ├── Export/
+|   |   ├── filter/
+│   │   │   └── FilterService.php
+│   │   ├── export/
 │   │   │   └── ExportService.php
-│   │   ├── Generate/
+│   │   ├── generate/
 │   │   │   └── SalaryService.php
-│   │   ├── Import/
+|   |   ├── history/
+│   │   │   └── HistorySalaryService.php
+│   │   ├── import/
 │   │   │   ├── EmployeeServiceImport.php
 │   │   │   ├── FiscalYearManagerService.php
 │   │   │   ├── PayrollServiceImport.php
@@ -296,16 +369,21 @@ salary_management/
 │   │   │   ├── PayrollDataService.php
 │   │   │   ├── PayrollEmployeeService.php
 │   │   │   └── PayrollStatsService.php
-│
+│   │   ├── resetData/
+│   │   │   ├── ResetDataService.php
+│   |   |
 │   ├── Models/
 │   │   └── User.php
 │
 ├── resources/
 │   ├── views/
+│   │   ├── auth/
 │   │   ├── employees/
+│   │   ├── filter/
 │   │   ├── configuration/
 │   │   ├── import/
 │   │   ├── payroll/
+│   │   ├── layouts/
 │   │   ├── reset-data/
 │   │   ├── salaries/
 │   │   └── dashboard/
