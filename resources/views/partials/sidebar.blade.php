@@ -67,12 +67,7 @@
                                 <i class="fas fa-file-csv"></i> Import CSV
                             </a>
                         </li> 
-                        <!-- <li class="nav-item">
-                            <a class="nav-link" href="{{ route('reset-data.show') }}">
-                             <i class="fas fa-trash-restore"></i> Reset Data
-
-                            </a>
-                        </li> -->
+                        
                       
                        <li class="nav-item">
                             <h6 class="sidebar-heading d-flex justify-content-between align-items-center px-3 mt-4 mb-1 text-muted">
@@ -113,6 +108,17 @@
                         <li class="nav-item">
                             <a class="nav-link {{ request()->routeIs('filter.salary.index') ? 'active' : '' }}" href="{{ route('filter.salary.index') }}">
                                 <i class="fas fa-search me-2"></i> Recherche Salaire
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <h6 class="sidebar-heading d-flex justify-content-between align-items-center px-3 mt-4 mb-1 text-muted">
+                                <span><i class="fas fa-trash-restore"></i>Reinitialisation </span>
+                            </h6>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="{{ route('reset-data.show') }}">
+                             <i class="fas fa-trash-restore"></i> Reset Data
+
                             </a>
                         </li>
 
