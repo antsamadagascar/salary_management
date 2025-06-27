@@ -84,7 +84,19 @@ Une application web complète de gestion des salaires développée en **Laravel*
   - Affiche les résultats de la recherche, incluant les employés dont les salaires répondent aux critères définis, avec les détails des composants salariaux.
   - Exemple : Recherche des employés ayant un salaire de base supérieur à 1,000,000 Ar, affichant tous les employés correspondants avec leurs détails salariaux.
 
-### 📥 9. Import de Données CSV
+### 9. Réinitialisation des Données
+![Confirmation de suppression](images/16.png)
+
+- **Réinitialisation totale ou partielle des données liées aux salaires**.
+- Permet à un administrateur de :
+  - Vérifier les données existantes à supprimer (employés, fiches de paie, composants, etc.).
+  - Supprimer toutes les données après confirmation stricte (`CONFIRMER_SUPPRESSION`).
+  - Supprimer uniquement une table spécifique (ex. : `tabEmployee`, `tabSalary Slip`).
+  - Utiliser une confirmation en deux étapes avec phrase clé (`SUPPRIMER_TOUTES_LES_DONNEES`) pour éviter les erreurs critiques.
+- Toutes les opérations sont traitées via le service `ResetDataService`.
+- Interface intuitive pour suivre les étapes de confirmation, affichage des volumes par table, et retour utilisateur clair après action.
+
+### 📥 10. Import de Données CSV
 ![Import CSV](images/8.png)
 - **Import en masse** via fichiers CSV pour trois types de données
 - Validation automatique des données importées
