@@ -36,9 +36,6 @@ Route::middleware([\App\Http\Middleware\FrappeAuthMiddleware::class])->group(fun
         Route::get('/create', [App\Http\Controllers\EmployeeController::class, 'create'])->name('create');
         Route::post('/', [App\Http\Controllers\EmployeeController::class, 'store'])->name('store');
         Route::get('/{name}', [App\Http\Controllers\EmployeeController::class, 'show'])->name('show');
-        Route::get('/{name}/edit', [App\Http\Controllers\EmployeeController::class, 'edit'])->name('edit');
-        Route::put('/{name}', [App\Http\Controllers\EmployeeController::class, 'update'])->name('update');
-        Route::delete('/{name}', [App\Http\Controllers\EmployeeController::class, 'destroy'])->name('destroy');
     });
     
     Route::prefix('payroll')->name('payroll.')->group(function () {
@@ -59,7 +56,6 @@ Route::middleware([\App\Http\Middleware\FrappeAuthMiddleware::class])->group(fun
             Route::get('/month/{month}', [PayrollStatsController::class, 'showMonthDetails'])->name('month-details');
             Route::get('/export/year', [PayrollStatsController::class, 'exportMonthlyStats'])->name('export.year');
             Route::get('/export/month/{month}', [PayrollStatsController::class, 'exportMonthDetails'])->name('export-month');
-            Route::get('/graphs', [PayrollStatsController::class, 'graphsIndex'])->name('graphs');
             Route::get('/chart-data', [PayrollStatsController::class, 'getChartData'])->name('chart-data');
             Route::get('/api/chart-data', [PayrollStatsController::class, 'getChartData'])->name('api.chart-data');
             Route::get('/api/yearly-stats', [PayrollStatsController::class, 'getYearlyStats'])->name('api.yearly-stats');
@@ -76,7 +72,6 @@ Route::middleware([\App\Http\Middleware\FrappeAuthMiddleware::class])->group(fun
         Route::post('/config/generate', [ConfigurationSalaryController::class, 'generate'])->name('config.generate');
         Route::post('/config/preview', [ConfigurationSalaryController::class, 'preview'])->name('config.preview');
         Route::get('/history', [HistoryController::class, 'index'])->name('history.index');
-    
         Route::post('/history', [HistoryController::class, 'show'])->name('history.show');
     });
 
