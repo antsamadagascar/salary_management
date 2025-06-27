@@ -3,10 +3,7 @@
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\AuthController;
-use App\Http\Controllers\ErpController;
-use App\Http\Controllers\InvoiceController;
 use App\Http\Controllers\EmployeePayrollController;
-
 use App\Http\Controllers\SalaryDetailsController;
 use App\Http\Controllers\ResetDataController;
 use App\Http\Controllers\PayrollStatsController;
@@ -99,7 +96,4 @@ Route::middleware([\App\Http\Middleware\FrappeAuthMiddleware::class])->group(fun
         Route::post('/confirm', [ResetDataController::class, 'confirmReset'])->name('confirm');
     });
 
-    Route::get('/dashboard/formulaire', [DashboardController::class, 'formulaire'])->name('dashboard.formulaire');
-    Route::get('/dashboard/tableau', [DashboardController::class, 'tableau'])->name('dashboard.tableau');
-    Route::post('/dashboard/store', [DashboardController::class, 'store'])->name('dashboard.store');
 });
