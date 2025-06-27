@@ -161,13 +161,6 @@ L'application propose une interface intuitive avec :
 
 ## 🔧 Installation et Configuration
 
-### Prérequis
-- **PHP** 8.1 ou supérieur
-- **Composer** pour la gestion des dépendances
-- **Node.js** et **npm** pour les assets frontend
-- **Serveur ERPNext** configuré et accessible
-- **Base de données** MySQL/MariaDB
-
 # Guide d'Installation - Salary Management
 
 ## 🔧 Prérequis
