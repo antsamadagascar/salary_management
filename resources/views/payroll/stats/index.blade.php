@@ -10,7 +10,7 @@
                 <h4 class="page-title">Statistiques de Paie</h4>
                 <div class="page-title-right">
                     <ol class="breadcrumb m-0">
-                        <li class="breadcrumb-item"><a href="{{ route('dashboard') }}">Accueil</a></li>
+                        <li class="breadcrumb-item"><a href="{{ route('payroll.stats.index') }}">Accueil</a></li>
                         <li class="breadcrumb-item"><a href="{{ route('payroll.index') }}">Paie</a></li>
                         <li class="breadcrumb-item active">Statistiques</li>
                     </ol>
