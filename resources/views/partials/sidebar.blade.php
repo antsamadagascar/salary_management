@@ -29,32 +29,20 @@
                         <a class="nav-link {{ request()->routeIs('employees.index') ? 'active' : '' }}" href="{{ route('employees.index') }}">
                             <i class="fas fa-users me-2"></i>Liste des Employés
                         </a>
-                        <!-- <a class="nav-link {{ request()->routeIs('employees.create') ? 'active' : '' }}" href="{{ route('employees.create') }}">
-                            <i class="fas fa-user-plus me-2"></i>Ajouter Employé
-                        </a>
-                         -->
-                            
+
                         <!-- Section Salaires -->
                         <li class="nav-item">
                             <h6 class="sidebar-heading d-flex justify-content-between align-items-center px-3 mt-4 mb-1 text-muted">
                                 <span>GESTION SALAIRES</span>
                             </h6>
                         </li>
-                        <!-- <li class="nav-item">
-                            <a class="nav-link" href="{{ route('payroll.index') }}">
-                                <i class="fas fa-money-bill-wave"></i> Éléments de Salaire
-                            </a>
-                        </li> -->
+
                         <li class="nav-item">
                             <a class="nav-link {{ request()->routeIs('payroll.index') ? 'active' : '' }} "href="{{ route('payroll.index') }}">
                                 <i class="fas fa-file-invoice-dollar"></i> Fiches Employés  
                             </a>
                         </li>
-                        <!-- <li class="nav-item">
-                            <a class="nav-link" href="">
-                                <i class="fas fa-chart-bar"></i> Rapport Mensuel
-                            </a>
-                        </li> -->
+
                         <li class="nav-item">
                             <h6 class="sidebar-heading d-flex justify-content-between align-items-center px-3 mt-4 mb-1 text-muted">
                                 <span>STATISTIQUES SALAIRE</span>
