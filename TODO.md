@@ -1,144 +1,166 @@
-# Jour1 :
-I-  Fonctionnalites :
+# 📋 Frappe ERPNext HR - Guide Complet
 
-1.Authentification login/logout compte erpnext (ok)
+## 🚀 INSTALLATION MODULE HR
 
-2.Documentation swagger complet des api erpenxt (ok)
-
-3.Creation service erpnextService (pour l'appele des methode:get,update,getByID,post,delete)
-
-3.Multi Import donnees csv(3 fichiers) (yes):
-    -Traitement validation import sur le format de date:
-        -retourne erreur si date inexistantes 
-
-    -Validation import toutes ou rien :
-        -check Validation ensemble
-        -Si contient un  erreur :auccun donnes ne s'insert
-
-4.Gestions Employés(yes) :
-    -Listes Employés 
-    -Filtrage Employés par criteres de recherche
-
-5.Fiche de paie employés (salaire par mois) (yes) :
-    -Affichage fiche de paie d'un employés specifique 
-    -Export pdf du fiche de paie specifique d'un employés 
-
-6.Filtrage par mois contenent (informations pour chaque employer) (no)
-    -Affichage tableau(employe,elements de salaires,total)
-    -Total global (nombre employer,salaires,elements salaires)
-
-
-## Api AND DOCTYPE:
-
-### Doctypes:
--company:
-    ->select * from `tabCompany`;
-
--branche (name)
-    ->SELECT * from `tabBranch` tb 
-
--Department (name,departement_name) :
-    ->SELECT  * from `tabDepartment` td 
-
--Employee(last_name,first_name,gender,date_of_birth,salutation,date_of_joining,status,branch,department,employee_number,ctc,salary_currency,salary_mode):
-    ->SELECT * from `tabEmployee` te 
-
--Holiday List :
-    ->SELECT * FROM `tabHoliday List` thl
-
--Salary Structure :
-    ->SELECT * FROM `tabSalary Structure` tss 
-
--Salary Component:
-    ->select * from `tabSalary Component` tsc 
-
--Salary Structure Assignment:
-    ->select * from `tabSalary Structure Assignment` tssa
-
--Salary Detail:
-    ->select * from `tabSalary Detail` tsd 
-
-Salary Slip:
-    ->select * from `tabSalary Slip` tss 
-
-
-### API (endoint:epnext.localhost:8000/):
--branche:
-    -/api/resource/branch
-
-## workflow :
-Company
-   ↓
-Employee (Fichier 1)
-   ↓
-Salary Component (Fichier 2A)
-   ↓
-Salary Structure + Salary Detail (Fichier 2B)
-   ↓
-Salary Structure Assignment (optionnel)
-   ↓
-Salary Slip (Fichier 3)
-
-## INSTALLATION MODULE HR :
+```bash
+# 1. Télécharger le module HRMS
 bench get-app https://github.com/frappe/hrms
+
+# 2. Installer sur le site
 bench --site erpnext.localhost install-app hrms
+
+# 3. Migrer la base de données
 bench --site erpnext.localhost migrate
+
+# 4. Redémarrer
 bench stop
-bench start 
+bench start
+```
 
-## Modele et format import csv:
-Mappage : colone doctype ->colonnes csv
-Fichier 1: 
--Employee:
-    last_name ->Nom
-    first_name ->Prenom
-    gender -> genre
-    date_of_joining ->Date embauche
-    date_of_birth ->date naissance
-    company ->company
+## 🔗 API ENDPOINTS
 
--Company:
-    company_name ->company
-    default_currency(Default :USD) 
+**Base URL:** `http://erpnext.localhost:8000/`
 
-->Dependance :doctype company doit existe avant d'inserer dans employee 
+### Endpoints Disponibles
+| DocType | Endpoint | Méthode |
+|---------|----------|---------|
+| Branch | `/api/resource/Branch` | GET, POST |
+| Company | `/api/resource/Company` | GET, POST |
+| Department | `/api/resource/Department` | GET, POST |
+| Employee | `/api/resource/Employee` | GET, POST |
+| Holiday List | `/api/resource/Holiday List` | GET, POST |
+| Salary Component | `/api/resource/Salary Component` | GET, POST |
+| Salary Structure | `/api/resource/Salary Structure` | GET, POST |
+| Salary Structure Assignment | `/api/resource/Salary Structure Assignment` | GET, POST |
+| Salary Slip | `/api/resource/Salary Slip` | GET, POST |
 
-Fichier 2: 
--Salary Structure 
-    -name ->salary structure
+### Exemples d'utilisation
+```bash
+# Lister toutes les branches
+curl -X GET "http://erpnext.localhost:8000/api/resource/Branch"
 
--Salary Component:
-    -salary_component ->name
-    -salary_component_abbr ->abbr
-    -type ->type
+# Créer un employé
+curl -X POST "http://erpnext.localhost:8000/api/resource/Employee" \
+  -H "Content-Type: application/json" \
+  -d '{"first_name": "Jean", "last_name": "Dupont"}'
+```
 
--Salary Detail:
-    -Salary Structure(name) -> salary structure
-    -Salary Component(name) ->name
-    -Salary Component(salary_component_abbr) ->abbr
-    -type ->type
-    -formula ->valeur
-    -condition ->Remarque
+## 🗄️ STRUCTURE DES DOCTYPES
 
-FIchier 3:
--Salary Slip:
-    -employe
+### Doctypes Principaux
 
-Salary Structure: "gasy1"
-├── Earnings:
-│   ├── Salary Detail 1:
-│   │   ├── salary_component: "Salaire Base"
-│   │   ├── abbr: "SB"  
-│   │   ├── formula: "base"
-│   │   └── amount: 0
-│   └── Salary Detail 2:
-│       ├── salary_component: "Indemnité"
-│       ├── abbr: "IND"
-│       ├── formula: "SB * 0.30"
-│       └── condition: "SB > 0"
-└── Deductions:
-    └── Salary Detail 3:
-        ├── salary_component: "Taxe sociale"
-        ├── abbr: "TS"
-        ├── formula: "(SB + IND) * 0.20"
-        └── condition: "(SB + IND) > 0"
+#### 🏢 Company
+```sql
+SELECT * FROM `tabCompany`;
+```
+**Champs:** `name`, `company_name`, `default_currency`, `country`
+
+#### 🌿 Branch
+```sql
+SELECT * FROM `tabBranch`;
+```
+**Champs:** `name`, `branch`
+
+#### 🏛️ Department
+```sql
+SELECT name, department_name FROM `tabDepartment`;
+```
+**Champs:** `name`, `department_name`
+
+#### 👤 Employee
+```sql
+SELECT last_name, first_name, gender, date_of_birth, salutation, 
+       date_of_joining, status, branch, department, employee_number, 
+       ctc, salary_currency, salary_mode 
+FROM `tabEmployee`;
+```
+
+#### 🏖️ Holiday List
+```sql
+SELECT * FROM `tabHoliday List`;
+```
+
+#### 💰 Salary Structure
+```sql
+SELECT * FROM `tabSalary Structure`;
+```
+
+#### 🧮 Salary Component
+```sql
+SELECT * FROM `tabSalary Component`;
+```
+
+#### 📋 Salary Structure Assignment
+```sql
+SELECT * FROM `tabSalary Structure Assignment`;
+```
+
+#### 📊 Salary Detail
+```sql
+SELECT * FROM `tabSalary Detail`;
+```
+
+#### 💸 Salary Slip
+```sql
+SELECT * FROM `tabSalary Slip`;
+```
+
+## 🔄 WORKFLOW D'IMPORT
+
+```mermaid
+graph TD
+    A[Company] --> B[Branch/Department]
+    B --> C[Employee - Fichier 1]
+    C --> D[Salary Component - Fichier 2A]
+    D --> E[Salary Structure + Salary Detail - Fichier 2B]
+    E --> F[Salary Structure Assignment - Optionnel]
+    F --> G[Salary Slip - Fichier 3]
+```
+
+### Ordre d'Exécution Obligatoire
+
+1. **Company** - Configuration de base
+2. **Branch/Department** - Organisation (optionnel)
+3. **Employee** - Import du fichier 1 (employés)
+4. **Salary Component** - Import du fichier 2A (composants salariaux)
+5. **Salary Structure + Salary Detail** - Import du fichier 2B (structures)
+6. **Salary Structure Assignment** - Attribution (optionnel mais recommandé)
+7. **Salary Slip** - Import du fichier 3 (bulletins de paie)
+
+## 📁 FICHIERS CSV À TRAITER
+
+### Fichier 1: `employees.csv`
+- Employés de base
+- **Cible:** DocType `Employee`
+
+### Fichier 2A: `salary_components.csv`
+- Composants salariaux (Salaire Base, Indemnités, Déductions)
+- **Cible:** DocType `Salary Component`
+
+### Fichier 2B: `salary_structure.csv`
+- Structures salariales avec détails
+- **Cible:** DocType `Salary Structure` + `Salary Detail`
+
+### Fichier 3: `salary_slips.csv`
+- Bulletins de paie mensuels
+- **Cible:** DocType `Salary Slip`
+
+## ⚠️ POINTS IMPORTANTS
+
+- **Dépendances:** Respecter l'ordre du workflow
+- **Relations:** Vérifier les liens entre doctypes
+- **API Authentication:** Configurer les tokens d'accès
+- **Validation:** Tester chaque étape avant de passer à la suivante
+
+## 🔧 DÉPANNAGE
+
+```bash
+# Vérifier le statut des services
+bench status
+
+# Logs en temps réel
+bench watch
+
+# Redémarrer en cas de problème
+bench restart
+```
