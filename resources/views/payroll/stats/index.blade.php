@@ -35,12 +35,6 @@
                                     </option>
                                 @endforeach
                             </select>
-
-                            <!-- <select name="year" id="year" class="form-select" onchange="this.form.submit()">
-                                <option value="2023" {{ $year == 2023 ? 'selected' : '' }}>2023</option>
-                                <option value="2024" {{ $year == 2024 ? 'selected' : '' }}>2024</option>
-                                <option value="2025" {{ $year == 2025 ? 'selected' : '' }}>2025</option>
-                            </select> -->
                         </div>
                         <div>
                             <button type="submit" class="btn btn-primary">Filtrer</button>
@@ -107,29 +101,6 @@
 
     <!-- Statistiques globales -->
     <div class="row mb-4">
-        <!-- <div class="col-lg-3 col-md-6">
-            <div class="card bg-primary text-white">
-                <div class="card-body">
-                    <div class="d-flex justify-content-between align-items-center">
-                        <div>
-                            <h3 class="mb-1">
-                                @if(!empty($monthlyStats))
-                                    {{ number_format(collect($monthlyStats)->sum('total_employees'), 0, ',', ' ') }}
-                                @else
-                                    0
-                                @endif
-                            </h3>
-                            <p class="mb-0">Total Employés</p>
-                        </div>
-                        <div class="avatar-sm">
-                            <span class="avatar-title bg-white-10 rounded">
-                                <i class="mdi mdi-account-group font-20"></i>
-                            </span>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div> -->
         @php
             $currency = null;
             if (!empty($monthlyStats)) {
@@ -253,12 +224,6 @@
                                             </span>
                                         </td>
                                         <td class="text-end">
-                                            <!-- <a href="{{ route('payroll.stats.month-details', $stats['month']) }}" 
-                                               class="text-decoration-none">
-                                                <span class="text-info fw-bold">
-                                                    {{ number_format($stats['total_net_pay'], 0, ',', ' ') }} 
-                                                </span>
-                                            </a> -->
                                             <a href="{{ route('payroll.stats.salary-details') }}?month={{ $stats['month'] }}"
                                                class="text-decoration-none">
                                                 <span class="text-info fw-bold">
@@ -271,11 +236,7 @@
                                         </td>
                                         <td class="text-center">
                                         <div class="btn-group" role="group">
-                                            <!-- <a href="{{ route('payroll.stats.month-details', $stats['month']) }}" 
-                                            class="btn btn-sm btn-outline-primary"
-                                            title="Voir les détails du mois {{ $stats['month'] }}">
-                                                <i class="mdi mdi-eye"></i> voir plus
-                                            </a> -->
+                                            
                                             <a href="{{ route('payroll.stats.salary-details') }}?month={{ $stats['month'] }}"
                                             class="btn btn-sm btn-outline-primary"
                                             title="Voir les détails du mois {{ $stats['month'] }}">
