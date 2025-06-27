@@ -136,17 +136,6 @@
                                    title="Voir les détails">Voir fiche
                                     <i class="fas fa-eye"></i>
                                 </a>
-                                <!-- <a href="{{ route('employees.edit', $employee['name']) }}" 
-                                   class="btn btn-sm btn-outline-warning btn-action mb-1" 
-                                   title="Modifier">
-                                    <i class="fas fa-edit"></i>
-                                </a>
-                                <button type="button" 
-                                        class="btn btn-sm btn-outline-danger btn-action" 
-                                        onclick="confirmDelete('{{ $employee['name'] }}', '{{ $employee['employee_name'] ?? 'Cet employé' }}')"
-                                        title="Supprimer">
-                                    <i class="fas fa-trash"></i>
-                                </button> -->
                             </div>
                         </td>
                     </tr>
