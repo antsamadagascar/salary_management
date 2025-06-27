@@ -7,7 +7,7 @@ I-  Fonctionnalites :
 
 3.Creation service erpnextService (pour l'appele des methode:get,update,getByID,post,delete)
 
-3.Multi Import donnees csv(3 fichiers) (no):
+3.Multi Import donnees csv(3 fichiers) (yes):
     -Traitement validation import sur le format de date:
         -retourne erreur si date inexistantes 
 
@@ -15,11 +15,11 @@ I-  Fonctionnalites :
         -check Validation ensemble
         -Si contient un  erreur :auccun donnes ne s'insert
 
-4.Gestions Employés(no) :
+4.Gestions Employés(yes) :
     -Listes Employés 
     -Filtrage Employés par criteres de recherche
 
-5.Fiche de paie employés (salaire par mois) (no) :
+5.Fiche de paie employés (salaire par mois) (yes) :
     -Affichage fiche de paie d'un employés specifique 
     -Export pdf du fiche de paie specifique d'un employés 
 
