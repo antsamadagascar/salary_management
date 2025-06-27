@@ -8,11 +8,6 @@
             <h1 class="h3 mb-0 text-gray-800">Gestion des Employés</h1>
             <p class="text-muted">Liste et gestion des employés de l'entreprise</p>
         </div>
-        <div class="col-md-6 text-end">
-            <a href="{{ route('employees.create') }}" class="btn btn-primary">
-                <i class="fas fa-plus me-2"></i>Nouvel Employé
-            </a>
-        </div>
     </div>
 
     <!-- Messages d'alerte -->
