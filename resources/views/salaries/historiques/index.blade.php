@@ -149,10 +149,10 @@
                         <div class="row">
                             <div class="col-md-6">
                                 <p><strong>Premier salaire:</strong> 
-                                   <span class="text-primary">{{ number_format($statistics['first_salary'], 2, ',', ' ') }} €</span>
+                                   <span class="text-primary">{{ number_format($statistics['first_salary'], 2, ',', ' ') }} MGA</span>
                                 </p>
                                 <p><strong>Dernier salaire:</strong> 
-                                   <span class="text-success">{{ number_format($statistics['last_salary'], 2, ',', ' ') }} €</span>
+                                   <span class="text-success">{{ number_format($statistics['last_salary'], 2, ',', ' ') }} MGA</span>
                                 </p>
                             </div>
                             <div class="col-md-6">
@@ -163,7 +163,7 @@
                                 </p>
                                 <p><strong>Évolution moyenne/mois:</strong> 
                                    <span class="{{ $statistics['avg_monthly_evolution'] >= 0 ? 'text-success' : 'text-danger' }}">
-                                       {{ $statistics['avg_monthly_evolution'] >= 0 ? '+' : '' }}{{ number_format($statistics['avg_monthly_evolution'], 2, ',', ' ') }} €
+                                       {{ $statistics['avg_monthly_evolution'] >= 0 ? '+' : '' }}{{ number_format($statistics['avg_monthly_evolution'], 2, ',', ' ') }} MGA
                                    </span>
                                 </p>
                             </div>
@@ -194,7 +194,7 @@
                                         <td><strong>{{ $salary['period'] }}</strong></td>
                                         <td>
                                             <span class="badge bg-primary">
-                                                {{ number_format($salary['amount'], 2, ',', ' ') }} €
+                                                {{ number_format($salary['amount'], 2, ',', ' ') }} MGA
                                             </span>
                                         </td>
                                         <td>
