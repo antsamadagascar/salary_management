@@ -16,11 +16,7 @@ class DashboardController extends Controller
         $this->erpApiService = $erpApiService;
     }
 
-    public function index(Request $request)
-    {
-        return view('dashboard.index');
-    }
-
+   
     // MÉTHODE FORMULAIRE
     public function formulaire()
     {
