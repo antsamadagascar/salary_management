@@ -1,9 +1,4 @@
 <?php
-/*   
-fonctionnalites (ALEA POSSIBLES) :
-    -export csv des donnes dans chaque section afficher dans le dashboard 
-
-*/
 namespace App\Http\Controllers;
 
 use App\Services\payroll\PayrollStatsService;
