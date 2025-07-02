@@ -74,35 +74,4 @@ class HistoryController extends Controller
             return redirect()->back()->with('error', 'Erreur lors de la récupération des données: ' . $e->getMessage());
         }
     }
-
-    // public function export(Request $request)
-    // {
-    //     $request->validate([
-    //         'employe_id' => 'required|string',
-    //         'date_debut' => 'required|date',
-    //         'date_fin' => 'required|date|after_or_equal:date_debut'
-    //     ]);
-
-    //     try {
-    //         $salaryHistory = $this->historySalaryService->getSalaryHistory([
-    //             'employe_id' => $request->employe_id,
-    //             'date_debut' => $request->date_debut,
-    //             'date_fin' => $request->date_fin
-    //         ]);
-
-    //         $statistics = $this->historySalaryService->calculateSalaryStatistics($salaryHistory);
-    //         $employee = $this->employeeService->getEmployeeById($request->employe_id);
-
-    //         return $this->historySalaryService->exportSalaryHistory(
-    //             $salaryHistory, 
-    //             $statistics, 
-    //             $employee, 
-    //             'csv'
-    //         );
-
-    //     } catch (\Exception $e) {
-    //         Log::error("Erreur lors de l'export: " . $e->getMessage());
-    //         return redirect()->back()->with('error', 'Erreur lors de l\'export: ' . $e->getMessage());
-    //     }
-    // }
 }
