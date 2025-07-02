@@ -131,46 +131,4 @@ class EmployeePayrollController extends Controller
         }
     }
 
-    /**
-     * Exporter la liste des employés avec leurs salaires en Excel
-     */
-    // public function exportEmployeesExcel(): Response|RedirectResponse
-    // {
-    //     try {
-    //         $employees = $this->payrollEmployeeService->getEmployees();
-    //         $data = [];
-            
-    //         foreach ($employees as $employee) {
-    //             $stats = $this->payrollEmployeeService->getPayrollStats($employee['name']);
-    //             $data[] = [
-    //                 $employee['employee_number'] ?? '',
-    //                 $employee['employee_name'] ?? '',
-    //                 $employee['department'] ?? '',
-    //                 $employee['designation'] ?? '',
-    //                 number_format($stats['total_gross_pay'], 2),
-    //                 number_format($stats['total_deductions'], 2),
-    //                 number_format($stats['total_net_pay'], 2),
-    //                 number_format($stats['average_net_pay'], 2),
-    //                 $stats['months_count']
-    //             ];
-    //         }
-
-    //         $headers = [
-    //             'Matricule',
-    //             'Nom',
-    //             'Département',
-    //             'Poste',
-    //             'Total Brut',
-    //             'Total Déductions',
-    //             'Total Net',
-    //             'Moyenne Net',
-    //             'Nb Mois'
-    //         ];
-
-    //         return $this->exportService->exportToExcel($data, $headers, 'employes_salaires.xlsx');
-    //     } catch (\Exception $e) {
-    //         return redirect()->route('payroll.index')->withError('Erreur lors de l\'export Excel: ' . $e->getMessage());
-    //     }
-    // }
-
 }
