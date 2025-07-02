@@ -89,39 +89,39 @@ class ConfigurationSalaryController extends Controller
     }
 
     /**
- * Prévisualiser les modifications avant application
- */
-public function preview(Request $request)
-{
-    $validated = $request->validate([
-        'salary_components' => 'required|string',
-        'Montant' => 'required|numeric|min:0',  
-        'conditions' => 'required|in:inferieur,superieur,egal,inferieur_egal,superieur_egal',
-        'options' => 'required|in:augmentation,deductions',
-        'pourcentage' => 'required|numeric|min:0'
-    ]);
-
-    try {
-        $employees = $this->employeeService->getEmployees(['status' => 'Active']);
-        $preview = $this->configSalaryService->previewSalaryModification(
-            $employees,
-            $validated['salary_components'],
-            $validated['Montant'],
-            $validated['conditions'],
-            $validated['options'],
-            $validated['pourcentage']
-        );
-
-        return response()->json([
-            'success' => true,
-            'preview' => $preview,
-            'count' => count($preview)
+    * Prévisualiser les modifications avant application
+    */
+    public function preview(Request $request)
+    {
+        $validated = $request->validate([
+            'salary_components' => 'required|string',
+            'Montant' => 'required|numeric|min:0',  
+            'conditions' => 'required|in:inferieur,superieur,egal,inferieur_egal,superieur_egal',
+            'options' => 'required|in:augmentation,deductions',
+            'pourcentage' => 'required|numeric|min:0'
         ]);
-    } catch (\Exception $e) {
-        return response()->json([
-            'success' => false,
-            'message' => $e->getMessage()
-        ]);
+
+        try {
+            $employees = $this->employeeService->getEmployees(['status' => 'Active']);
+            $preview = $this->configSalaryService->previewSalaryModification(
+                $employees,
+                $validated['salary_components'],
+                $validated['Montant'],
+                $validated['conditions'],
+                $validated['options'],
+                $validated['pourcentage']
+            );
+
+            return response()->json([
+                'success' => true,
+                'preview' => $preview,
+                'count' => count($preview)
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => $e->getMessage()
+            ]);
+        }
     }
-}
 }
